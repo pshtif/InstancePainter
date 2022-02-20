@@ -1,0 +1,18 @@
+{
+    "name": "PrefabPainter.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:a6d84fd2e61e50e4cabb1bc628d7a0e6"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
