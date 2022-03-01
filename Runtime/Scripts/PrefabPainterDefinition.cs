@@ -16,6 +16,9 @@ namespace PrefabPainter.Runtime
         public float minScale = 1;
         public float maxScale = 1;
 
+        public float minYRotation = 0;
+        public float maxYRotation = 0;
+
         public float weight = 1;
 
         public bool rotateToNormal = false;

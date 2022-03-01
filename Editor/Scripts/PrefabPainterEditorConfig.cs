@@ -5,6 +5,7 @@
 using System.Collections.Generic;
 using PrefabPainter.Runtime;
 using UnityEditor;
+using UnityEngine.Serialization;
 
 namespace PrefabPainter.Editor
 {
@@ -27,7 +28,7 @@ namespace PrefabPainter.Editor
 
         public int density = 1;
         public bool minimizePrefabDefinitions = false;
-        public List<PrefabPainterDefinition> prefabDefinition; 
+        public List<PrefabPainterDefinition> prefabDefinitions = new List<PrefabPainterDefinition>();
 
         public float maximumSlope = 0;
         public float minimalDistance = 1;
