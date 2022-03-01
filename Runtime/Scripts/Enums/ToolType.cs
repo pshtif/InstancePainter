@@ -9,6 +9,7 @@ namespace PrefabPainter.Runtime
         PAINT,
         ERASE,
         MODIFY,
+        RECT,
         NONE
     }
 }

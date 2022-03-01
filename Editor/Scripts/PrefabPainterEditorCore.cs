@@ -50,7 +50,7 @@ namespace PrefabPainter.Editor
             if (!Config.enabled)
                 return;
 
-            if (!new Rect(p_sceneView.camera.pixelRect.width / 2 - 130, 5, 340, 55).Contains(Event.current.mousePosition))
+            if (!new Rect(p_sceneView.camera.GetScaledPixelRect().width / 2 - 130, 5, 340, 55).Contains(Event.current.mousePosition))
                 DrawToolGUI();
 
             DrawGUI(p_sceneView);
@@ -72,7 +72,8 @@ namespace PrefabPainter.Editor
             switch (Config.toolType)
             {
                 case ToolType.PAINT:
-                    PaintTool.Handle(_mouseRaycastHit);
+                    //PaintTool.Handle(_mouseRaycastHit);
+                    RectTool.Handle(_mouseRaycastHit);
                     break;
                 
                 case ToolType.ERASE:
@@ -91,10 +92,10 @@ namespace PrefabPainter.Editor
         private static void DrawGUI(SceneView p_sceneView)
         {
             Handles.BeginGUI();
+
+            var rect = p_sceneView.camera.GetScaledPixelRect();
             
-            var rect = p_sceneView.camera.pixelRect;
-            
-            GUILayout.BeginArea(new Rect(rect.width/2 - 130, 5, 340, 55));
+            GUILayout.BeginArea(new Rect(rect.width / 2 - 130, 5, 340, 55));
 
             GUILayout.BeginHorizontal();
             GUI.color = Config.toolType == ToolType.PAINT ? new Color(1, .5f, .25f) : Color.white;

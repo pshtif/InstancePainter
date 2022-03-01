@@ -61,7 +61,7 @@ namespace PrefabPainter.Editor
             {
                 EditorGUILayout.LabelField("Paint Tool", Skin.GetStyle("tooltitle"), GUILayout.Height(24));
                 
-                Config.density = EditorGUILayout.IntSlider("Density", Config.density, 1, 100);
+                Config.density = EditorGUILayout.IntField("Density", Config.density);
                 
                 Config.minimalDistance = EditorGUILayout.FloatField("Minimal Distance", Config.minimalDistance);
 
@@ -78,7 +78,7 @@ namespace PrefabPainter.Editor
                 if (!Config.minimizePrefabDefinitions)
                 {
                     int i = 0;
-                    foreach (var prefabDefinition in Config.prefabDefinition)
+                    foreach (var prefabDefinition in Config.prefabDefinitions)
                     {
                         if (DrawPrefabDefinitionGUI(prefabDefinition, ++i))
                             break;
@@ -86,7 +86,7 @@ namespace PrefabPainter.Editor
 
                     if (GUILayout.Button("Add Prefab Definition"))
                     {
-                        Config.prefabDefinition.Add(new PrefabPainterDefinition());
+                        Config.prefabDefinitions.Add(new PrefabPainterDefinition());
                     }
                 }
             }
@@ -106,7 +106,7 @@ namespace PrefabPainter.Editor
             var rect = GUILayoutUtility.GetLastRect();
             if (GUI.Button(new Rect(rect.x+rect.width-18, rect.y+2, 16, 16), IconManager.GetIcon("remove_icon"), Skin.GetStyle("removebutton")))
             {
-                Config.prefabDefinition.Remove(p_prefabDefinition);
+                Config.prefabDefinitions.Remove(p_prefabDefinition);
                 return true;
             }
             GUILayout.EndHorizontal();
@@ -118,6 +118,10 @@ namespace PrefabPainter.Editor
 
             p_prefabDefinition.minScale = EditorGUILayout.FloatField("Min Scale", p_prefabDefinition.minScale);
             p_prefabDefinition.maxScale = EditorGUILayout.FloatField("Max Scale", p_prefabDefinition.maxScale);
+            
+            p_prefabDefinition.minYRotation = EditorGUILayout.FloatField("Min Y Rotation", p_prefabDefinition.minYRotation);
+            p_prefabDefinition.maxYRotation = EditorGUILayout.FloatField("Max Y Rotation", p_prefabDefinition.maxYRotation);
+            
             p_prefabDefinition.rotateToNormal =
                 EditorGUILayout.Toggle("Rotate To Normal", p_prefabDefinition.rotateToNormal);
                     

@@ -2,21 +2,22 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
+using System;
 using System.Collections.Generic;
 using PrefabPainter.Runtime;
 using UnityEditor;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace PrefabPainter.Editor
 {
-    public enum PaintToolState
+    public enum RectToolState
     {
         PAINT,
-        UPDATE,
         NONE
     }
 
-    public class PaintTool
+    public class RectTool
     {
         static public PrefabPainterEditorConfig Config => PrefabPainterEditorCore.Config;
         
@@ -30,18 +31,17 @@ namespace PrefabPainter.Editor
         private static float _currentScale = 1;
         private static float _currentRotation = 0;
         private static List<PaintInstance> _paintInstances = new List<PaintInstance>();
-        private static PaintToolState _state = PaintToolState.NONE;
+        private static RectToolState _state = RectToolState.NONE;
         
         public static void Handle(RaycastHit p_hit)
         {
             switch (_state)
             {
-                case PaintToolState.NONE:
-                case PaintToolState.PAINT:
-                    DrawPaintHandle(p_hit.point, p_hit.normal, Config.brushSize);
+                case RectToolState.NONE:
+                    DrawStartHandle(p_hit.point, p_hit.normal);
                     break;
-                case PaintToolState.UPDATE:
-                    DrawUpdateHandle(_paintStartHit.point, _paintStartHit.normal, Config.brushSize);
+                case RectToolState.PAINT:
+                    DrawRectHandle(p_hit.point, p_hit.normal);
                     break;
             }
 
@@ -58,112 +58,69 @@ namespace PrefabPainter.Editor
             if (Event.current.button == 0 && !Event.current.alt && (Event.current.type == EventType.MouseDrag ||
                                                                     Event.current.type == EventType.MouseDown))
             {
-                if (Event.current.control)
-                {
-                    if (_state != PaintToolState.UPDATE) {
-                        _state = PaintToolState.UPDATE;
+                if (_state != RectToolState.PAINT) {
+                        _state = RectToolState.PAINT;
                     
                         _paintStartHit = p_hit;
                         _paintStartMousePosition = Event.current.mousePosition;
                         _paintInstances.Clear();
-                        Paint(p_hit);
-                    }
-                    else
-                    {
-                        Update();
-                    }
-                }
-                else
-                {
-                    _state = PaintToolState.PAINT;
-                    Paint(p_hit);
                 }
             }
 
             if (Event.current.button == 0 && !Event.current.alt && Event.current.type == EventType.MouseUp)
             {
-                _state = PaintToolState.NONE;
+                if (_state == RectToolState.PAINT)
+                {
+                    Paint(_paintStartHit.point, p_hit.point);
+                }
+                
+                _state = RectToolState.NONE;
                 Undo.CollapseUndoOperations(_undoId);
             }
         }
 
-        static void DrawPaintHandle(Vector3 p_position, Vector3 p_normal, float p_size)
+        static void DrawRectHandle(Vector3 p_position, Vector3 p_normal)
         {
-            Handles.color = new Color(0,1,0,.2f);
-            Handles.DrawSolidDisc(p_position, p_normal, p_size);
-            Handles.color = Color.white;
-            Handles.DrawWireDisc(p_position, p_normal, p_size);
+            Vector3[] verts = new Vector3[]
+            {
+                _paintStartHit.point,
+                new Vector3(_paintStartHit.point.x, _paintStartHit.point.y, p_position.z),
+                new Vector3(p_position.x, _paintStartHit.point.y, p_position.z),
+                new Vector3(p_position.x, _paintStartHit.point.y, _paintStartHit.point.z),
+            };
+            
+            //Handles.color = new Color(0,1,0,.2f);
+            Handles.DrawSolidRectangleWithOutline(verts, new Color(0,1,0,.2f), Color.white);
+            //Handles.color = Color.white;
+            //Handles.DrawWireDisc(p_position, p_normal, p_size);
         }
         
-        static void DrawUpdateHandle(Vector3 p_position, Vector3 p_normal, float p_size)
+        static void DrawStartHandle(Vector3 p_position, Vector3 p_normal)
         {
             var offset = Event.current.mousePosition - _paintStartMousePosition;
             
-            Handles.color = new Color(1,1,1,.1f);
-            Handles.DrawSolidDisc(p_position, p_normal, p_size + p_size * offset.y/10);
-            Handles.color = new Color(1,0,0,.2f);
-            Handles.DrawSolidArc(p_position, p_normal, Vector3.Cross(p_normal, Vector3.up), offset.x, p_size + p_size * offset.y/10);
-            
-            Handles.color = new Color(0,1,0,.2f);
-            Handles.DrawSolidDisc(p_position, p_normal, p_size);
-            Handles.color = Color.white;
-            Handles.DrawWireDisc(p_position, p_normal, p_size + p_size * offset.y/10);
+            var gizmoSize = HandleUtility.GetHandleSize(p_position) / 2f;
+
+            Handles.color = new Color(0,1,0,1f);
+            Handles.ConeHandleCap(0, p_position + Vector3.up * gizmoSize/2, Quaternion.LookRotation(Vector3.down), gizmoSize, EventType.Repaint);
         }
 
-        static void Update()
+        static void Paint(Vector3 p_startPoint, Vector3 p_endPoint)
         {
-            var offset = Event.current.mousePosition - _paintStartMousePosition;
+            var minX = Math.Min(p_startPoint.x, p_endPoint.x);
+            var maxX = Math.Max(p_startPoint.x, p_endPoint.x);
+            
+            var minZ = Math.Min(p_startPoint.z, p_endPoint.z);
+            var maxZ = Math.Max(p_startPoint.z, p_endPoint.z);
+            
+            EditorUtility.DisplayProgressBar("PrefabPainter", "Filling mesh instances...", .5f);
 
-            List<PrefabPainterRenderer> renderers = new List<PrefabPainterRenderer>();
-            foreach (var instance in _paintInstances)
+            for (int i = 0; i < Config.density; i++)
             {
-                Quaternion originalRotation = Quaternion.LookRotation(
-                    instance.matrix.GetColumn(2),
-                    instance.matrix.GetColumn(1)
-                );
-                var rotation = Quaternion.AngleAxis(offset.x, Vector3.up);
-
-                var position = (Vector3)instance.matrix.GetColumn(3) - _paintStartHit.point;
-                position = position + position * offset.y / 10;
-                position = rotation * position;
-
-                Vector3 originalScale = new Vector3(
-                    instance.matrix.GetColumn(0).magnitude,
-                    instance.matrix.GetColumn(1).magnitude,
-                    instance.matrix.GetColumn(2).magnitude
-                );
-                var scale = Vector3.one * offset.y / 10;
-
-                instance.renderer.matrixData[instance.index] = Matrix4x4.TRS(_paintStartHit.point + position + instance.definition.positionOffset, rotation * originalRotation, originalScale + scale);
-                if (!renderers.Contains(instance.renderer))
-                    renderers.Add(instance.renderer);
+                PaintInstance(new Vector3(Random.Range(minX, maxX), p_startPoint.y, Random.Range(minZ, maxZ)));
             }
             
-            renderers.ForEach(r => r.Invalidate());
-        }
-        
-        static void Paint(RaycastHit p_hit)
-        {
-            if (Vector3.Distance(_lastPaintPosition, p_hit.point) <= 0.1f)
-                return;
-            
-            _lastPaintPosition = p_hit.point;
-
-            if (Config.density == 1)
-            {
-                PaintInstance(p_hit.point);
-            }
-            else
-            {
-                for (int i = 0; i < Config.density; i++)
-                {
-                    Vector3 direction = Quaternion.AngleAxis(Random.Range(0, 360), Vector3.up) * Vector3.right;
-                    Vector3 position = direction * Random.Range(0, Config.brushSize) +
-                                       p_hit.point;
-
-                    PaintInstance(position);
-                }
-            }
+            EditorUtility.ClearProgressBar();
         }
         
         static void PaintInstance(Vector3 p_position)
@@ -202,7 +159,7 @@ namespace PrefabPainter.Editor
 
             if (Config.prefabDefinitions.Count == 0)
                 return;
-            
+
             PrefabPainterDefinition prefabDefinition = prefabDefinition = Config.prefabDefinitions[0];
             if (Config.prefabDefinitions.Count > 1)
             {

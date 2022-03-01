@@ -16,7 +16,7 @@ namespace PrefabPainter.Runtime
         {
             get
             {
-                return new Material(Shader.Find("PrefabPainter/InstancedIndirect"));
+                return new Material(Shader.Find("PrefabPainter/InstancedIndirectNoShadows"));
             }
         }
         

@@ -4,8 +4,6 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using ICSharpCode.NRefactory.Ast;
-using PlasticGui.Configuration;
 using PrefabPainter.Runtime;
 using UnityEditor;
 using UnityEngine;
