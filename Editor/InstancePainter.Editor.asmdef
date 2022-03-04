@@ -1,5 +1,5 @@
 {
-    "name": "PrefabPainter.Editor",
+    "name": "InstancePainter.Editor",
     "rootNamespace": "",
     "references": [
         "GUID:a6d84fd2e61e50e4cabb1bc628d7a0e6"

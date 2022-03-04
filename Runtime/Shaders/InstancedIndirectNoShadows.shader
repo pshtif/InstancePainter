@@ -1,4 +1,8 @@
-﻿Shader "PrefabPainter/InstancedIndirectNoShadows"
+﻿/*
+ *	Created by:  Peter @sHTiF Stefcek
+ */
+
+Shader "PrefabPainter/InstancedIndirectNoShadows"
 {
     Properties
     {
@@ -60,7 +64,7 @@
 
                 StructuredBuffer<float4> _colorBuffer;
                 StructuredBuffer<float4x4> _matrixBuffer;
-                StructuredBuffer<uint> _visibleIdBuffer;
+                //StructuredBuffer<uint> _visibleIdBuffer;
             CBUFFER_END
 
             Varyings vert(Attributes IN, uint instanceID : SV_InstanceID)
@@ -106,7 +110,7 @@
                 half3 lighting = mainLight.color * (mainLight.shadowAttenuation * mainLight.distanceAttenuation);
                 //half3 result = albedo/2 + (albedo * directDiffuse) * lighting;
                 
-                OUT.color = lighting * IN.color.xyz;
+                OUT.color = lighting * _colorBuffer[instanceID] * IN.color.xyz;
 
                 return OUT;
             }

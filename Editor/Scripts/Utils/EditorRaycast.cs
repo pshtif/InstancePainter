@@ -2,7 +2,7 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
-namespace PrefabPainter.Editor
+namespace InstancePainter.Editor
 {
     using System.Linq;
     using System.Reflection;

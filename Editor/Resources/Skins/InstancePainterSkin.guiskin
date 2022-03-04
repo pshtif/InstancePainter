@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 1
   m_Script: {fileID: 12001, guid: 0000000000000000e000000000000000, type: 0}
-  m_Name: PrefabPainterSkin
+  m_Name: InstancePainterSkin
   m_EditorClassIdentifier: 
   m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
   m_box:
@@ -1816,7 +1816,7 @@ MonoBehaviour:
     m_FixedHeight: 0
     m_StretchWidth: 0
     m_StretchHeight: 0
-  - m_Name: prefabdefinitions
+  - m_Name: paintdefinitions
     m_Normal:
       m_Background: {fileID: 2800000, guid: b48c0d42e94a08e4182f7539844af0bd, type: 3}
       m_ScaledBackgrounds: []

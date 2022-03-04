@@ -2,21 +2,18 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using PrefabPainter.Runtime;
+using InstancePainter.Runtime;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.Rendering;
-using Object = UnityEngine.Object;
 
-namespace PrefabPainter.Editor
+namespace InstancePainter.Editor
 {
     [InitializeOnLoad]
-    public class PrefabPainterEditorCore
+    public class InstancePainterEditorCore
     {
-        public static GUISkin Skin => (GUISkin)Resources.Load("Skins/PrefabPainterSkin");
+        public static GUISkin Skin => (GUISkin)Resources.Load("Skins/InstancePainterSkin");
         
         private static RaycastHit _mouseRaycastHit;
         private static Vector3 _lastMousePosition;
@@ -27,11 +24,11 @@ namespace PrefabPainter.Editor
         
         const string VERSION = "0.1.0";
 
-        static public PrefabPainterEditorConfig Config { get; private set; }
+        static public InstancePainterEditorConfig Config { get; private set; }
 
-        static PrefabPainterEditorCore()
+        static InstancePainterEditorCore()
         {
-            Config = PrefabPainterEditorConfig.Create();
+            Config = InstancePainterEditorConfig.Create();
             
             SceneView.duringSceneGui -= OnSceneGUI;
             SceneView.duringSceneGui += OnSceneGUI;
@@ -42,7 +39,7 @@ namespace PrefabPainter.Editor
 
         static void UndoRedoCallback()
         {
-            GameObject.FindObjectsOfType<PrefabPainterRenderer>().ToList().ForEach(r => r.Invalidate());
+            GameObject.FindObjectsOfType<InstancePainterRenderer>().ToList().ForEach(r => r.Invalidate());
             
             SceneView.RepaintAll();
         }
@@ -61,17 +58,19 @@ namespace PrefabPainter.Editor
 
         private static void DrawToolGUI()
         {
-            Tools.current = Tool.None;
+            if (Config.toolType != ToolType.NONE)
+                Tools.current = Tool.None;
+            
             HandleUtility.AddDefaultControl(GUIUtility.GetControlID(FocusType.Passive));
 
             if (Event.current.isMouse)
             {
                 HandleMouseHit();
             }
-
+            
             if (_mouseHitTransform?.GetComponent<MeshFilter>() == null)
                 return;
-
+            
             switch (Config.toolType)
             {
                 case ToolType.PAINT:
@@ -109,7 +108,7 @@ namespace PrefabPainter.Editor
             if (GUILayout.Button(IconManager.GetIcon("paint_icon"), GUILayout.Height(40), GUILayout.MinWidth(80)))
             {
                 Config.toolType = Config.toolType == ToolType.PAINT ? ToolType.NONE : ToolType.PAINT;
-                PrefabPainterEditor.Instance?.Repaint();
+                InstancePainterEditor.Instance?.Repaint();
             }
             GUILayout.Label("Paint", Skin.GetStyle("toollabel"), GUILayout.ExpandWidth(true));
             GUILayout.EndVertical();
@@ -118,7 +117,7 @@ namespace PrefabPainter.Editor
             if (GUILayout.Button(IconManager.GetIcon("erase_icon"), GUILayout.Height(40), GUILayout.MinWidth(80)))
             {
                 Config.toolType = Config.toolType == ToolType.ERASE ? ToolType.NONE : ToolType.ERASE;
-                PrefabPainterEditor.Instance?.Repaint();
+                InstancePainterEditor.Instance?.Repaint();
             }
             GUILayout.Label("Erase", Skin.GetStyle("toollabel"), GUILayout.ExpandWidth(true));
             GUILayout.EndVertical();
@@ -127,7 +126,7 @@ namespace PrefabPainter.Editor
             if (GUILayout.Button(IconManager.GetIcon("modify_icon"), GUILayout.Height(40), GUILayout.MinWidth(80)))
             {
                 Config.toolType = Config.toolType == ToolType.MODIFY ? ToolType.NONE : ToolType.MODIFY;
-                PrefabPainterEditor.Instance?.Repaint();
+                InstancePainterEditor.Instance?.Repaint();
             }
             GUILayout.Label("Modify", Skin.GetStyle("toollabel"), GUILayout.ExpandWidth(true));
             GUILayout.EndVertical();
@@ -137,7 +136,7 @@ namespace PrefabPainter.Editor
             if (GUILayout.Button(IconManager.GetIcon("rect_icon"), GUILayout.Height(40), GUILayout.MinWidth(80)))
             {
                 Config.toolType = Config.toolType == ToolType.RECT ? ToolType.NONE : ToolType.RECT;
-                PrefabPainterEditor.Instance?.Repaint();
+                InstancePainterEditor.Instance?.Repaint();
             }
             GUILayout.Label("Rect", Skin.GetStyle("toollabel"), GUILayout.ExpandWidth(true));
             GUILayout.EndVertical();
@@ -147,7 +146,7 @@ namespace PrefabPainter.Editor
             GUILayout.BeginVertical();
             if (GUILayout.Button(IconManager.GetIcon("settings_icon"), GUILayout.Height(40), GUILayout.MinWidth(60)))
             {
-                PrefabPainterEditor.InitEditorWindow();
+                InstancePainterEditor.InitEditorWindow();
             }
             GUILayout.Label("Settings", Skin.GetStyle("toollabel"), GUILayout.ExpandWidth(true));
             GUILayout.EndVertical();
@@ -163,8 +162,8 @@ namespace PrefabPainter.Editor
             RaycastHit hit;
 
             var include = LayerUtils.GetAllMeshObjectsInLayers(Config.includeLayers.ToArray());
-            var exclude = LayerUtils.GetAllMeshObjectsInLayers(Config.includeLayers.ToArray());
-
+            var exclude = LayerUtils.GetAllMeshObjectsInLayers(Config.excludeLayers.ToArray());
+            
             if (EditorRaycast.RaycastWorld(Event.current.mousePosition, out hit, out _mouseHitTransform,
                 out _mouseHitMesh, exclude.Length == 0 ? null : exclude, include.Length == 0 ? null : include))
             {
@@ -177,20 +176,21 @@ namespace PrefabPainter.Editor
             return p_object.transform.GetComponentsInChildren<MeshFilter>().Select(mf => mf.gameObject).ToArray();
         }
         
-        public static PrefabPainterRenderer AddInstance(PrefabPainterDefinition p_definition, Vector3 p_position, Quaternion p_rotation, Vector3 p_scale)
+        public static InstancePainterRenderer AddInstance(PaintDefinition p_definition, Mesh p_mesh, Vector3 p_position, Quaternion p_rotation, Vector3 p_scale, Vector4 p_color)
         {
-            var mesh = p_definition.prefab.GetComponent<MeshFilter>().sharedMesh;
-            var renderers = Config.target.GetComponents<PrefabPainterRenderer>().ToList();
-            var renderer = renderers.Find(r => r.mesh == mesh);
+            var renderers = Config.target.GetComponents<InstancePainterRenderer>().ToList();
+            var renderer = renderers.Find(r => r.mesh == p_mesh);
             if (renderer == null)
             {
-                renderer = Config.target.gameObject.AddComponent<PrefabPainterRenderer>();
-                renderer.mesh = mesh;
+                renderer = Config.target.gameObject.AddComponent<InstancePainterRenderer>();
+                renderer.mesh = p_mesh;
                 renderer.instanceMaterial = p_definition.material;
                 renderer.matrixData = new List<Matrix4x4>();
+                renderer.colorData = new List<Vector4>();
             }
 
             renderer.matrixData.Add(Matrix4x4.TRS(p_position, p_rotation, p_scale));
+            renderer.colorData.Add(p_color);
             renderer.Definitions.Add(p_definition);
 
             return renderer;
@@ -200,8 +200,104 @@ namespace PrefabPainter.Editor
         {
             if (Config.target == null)
             {
-                Config.target = new GameObject("PrefabPainted").transform;
+                Config.target = new GameObject("PaintedInstances").transform;
             }
+        }
+        
+        public static InstancePainterRenderer PaintInstance(Vector3 p_position, MeshFilter[] p_validMeshes, List<PaintInstance> p_paintedInstances)
+        {
+            p_position += Vector3.up * 100;
+            Ray ray = new Ray(p_position, -Vector3.up);
+
+            RaycastHit hit;
+            
+            //if (!EditorRaycast.Raycast(ray, PrefabPainterEditorCore.HitMeshFilter, out hit))
+            if (p_validMeshes == null || !EditorRaycast.Raycast(ray, p_validMeshes, out hit))
+                return null;
+            
+            p_position = hit.point;
+            float slope = 0;
+            
+            if (hit.normal != Vector3.up)
+            {
+                var project = Vector3.ProjectOnPlane(hit.normal, Vector3.up);
+                slope = 90 - Vector3.Angle(project, hit.normal);
+            }
+            
+            if (slope > Config.maximumSlope)
+                 return null;
+
+            var renderers = Config.target.GetComponents<InstancePainterRenderer>();
+            foreach (var renderer in renderers)
+            {
+                foreach (var matrix in renderer.matrixData)
+                {
+                    if (Vector3.Distance(p_position, matrix.GetColumn(3)) < Config.minimalDistance)
+                    {
+                        return null;
+                    }
+                }
+            }
+
+            if (Config.paintDefinitions.Count == 0)
+                return null;
+
+            PaintDefinition paintDefinition = null;
+            if (Config.paintDefinitions.Count > 1)
+            {
+                float sum = 0;
+                foreach (var def in Config.paintDefinitions)
+                {
+                    sum += def.weight;
+                }
+                var random = Random.Range(0, sum);
+                foreach (var def in Config.paintDefinitions)
+                {
+                    random -= def.weight;
+                    if (random < 0)
+                    {
+                        paintDefinition = def;
+                        break;
+                    }
+                }
+            }
+
+            if (paintDefinition == null)
+                return null;
+            
+            MeshFilter[] filters = paintDefinition.prefab.GetComponentsInChildren<MeshFilter>();
+            
+            foreach (var filter in filters)
+            {
+                var position = p_position + paintDefinition.positionOffset;
+                var rotation = filter.transform.rotation *
+                    (paintDefinition.rotateToNormal
+                        ? Quaternion.FromToRotation(Vector3.up, hit.normal)
+                        : Quaternion.identity) *
+                    Quaternion.Euler(paintDefinition.rotationOffset);
+
+                rotation = rotation * Quaternion.Euler(
+                    Random.Range(paintDefinition.minRotation.x, paintDefinition.maxRotation.x),
+                    Random.Range(paintDefinition.minRotation.y, paintDefinition.maxRotation.y),
+                    Random.Range(paintDefinition.minRotation.z, paintDefinition.maxRotation.z));
+
+                var scale = Vector3.Scale(paintDefinition.prefab.transform.localScale, paintDefinition.scaleOffset) *
+                            Random.Range(paintDefinition.minScale, paintDefinition.maxScale);
+
+                if (filter.sharedMesh != null)
+                {
+                    var renderer = AddInstance(paintDefinition, filter.sharedMesh, position, rotation,
+                        scale, Config.color);
+
+                    var instance = new PaintInstance(renderer, renderer.matrixData[renderer.matrixData.Count - 1],
+                        renderer.matrixData.Count - 1, paintDefinition);
+                    p_paintedInstances?.Add(instance);
+
+                    return renderer;
+                }
+            }
+
+            return null;
         }
     }
 }

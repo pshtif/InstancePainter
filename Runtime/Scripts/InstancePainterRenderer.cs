@@ -7,10 +7,10 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace PrefabPainter.Runtime
+namespace InstancePainter.Runtime
 {
     [ExecuteAlways]
-    public class PrefabPainterRenderer : MonoBehaviour
+    public class InstancePainterRenderer : MonoBehaviour
     {
         public Material DefaultInstanceMaterial
         {
@@ -26,6 +26,9 @@ namespace PrefabPainter.Runtime
         [HideInInspector]
         public List<Matrix4x4> matrixData;
 
+        [HideInInspector]
+        public List<Vector4> colorData;
+
         private ComputeBuffer _colorBuffer;
         private ComputeBuffer _matrixBuffer;
         private ComputeBuffer[] _drawIndirectBuffers;
@@ -38,7 +41,7 @@ namespace PrefabPainter.Runtime
         public bool enableEditorPreview = true;
 
         [HideInInspector]
-        public List<PrefabPainterDefinition> Definitions = new List<PrefabPainterDefinition>();
+        public List<PaintDefinition> Definitions = new List<PaintDefinition>();
         #endif
 
         public void Start()
@@ -46,17 +49,22 @@ namespace PrefabPainter.Runtime
             Invalidate();
         }
 
-        public void Invalidate(List<Matrix4x4> p_matrixData = null)
+        public void Invalidate(List<Matrix4x4> p_matrixData = null, List<Vector4> p_colorData = null)
         {
             if (instanceMaterial == null)
+            {
                 instanceMaterial = DefaultInstanceMaterial;
-            
+            }
+
             instanceMaterial.SetVector("_PivotPosWS", transform.position);
             instanceMaterial.SetVector("_BoundSize", new Vector2(transform.localScale.x, transform.localScale.z));
 
             int count = matrixData.Count;
 
-            var colorArray = Enumerable.Repeat(new Vector4(1, 1, 1, 1), count).ToArray();
+            if (colorData == null)
+            {
+                colorData = Enumerable.Repeat(new Vector4(1, 1, 1, 1), count).ToList();
+            }
 
             _colorBuffer?.Release();
             _matrixBuffer?.Release();
@@ -64,12 +72,13 @@ namespace PrefabPainter.Runtime
             _drawIndirectBuffers = new ComputeBuffer[mesh.subMeshCount];
             
             _initialized = true;
+            
 
             if (count == 0)
                 return;
             
             _colorBuffer = new ComputeBuffer(count, sizeof(float) * 4);
-            _colorBuffer.SetData(colorArray);
+            _colorBuffer.SetData(colorData);
             
             _matrixBuffer = new ComputeBuffer(count, sizeof(float) * 16);
             _matrixBuffer.SetData(p_matrixData != null ? p_matrixData : matrixData);
@@ -147,7 +156,8 @@ namespace PrefabPainter.Runtime
         
         public void Hide()
         {
-            var outsideData = new List<Matrix4x4>();
+            var outsideMatrixData = new List<Matrix4x4>();
+            var outsideColorData = new List<Vector4>();
 
             var boundsList = new List<Bounds>();
             modifiers.ForEach(m =>
@@ -160,8 +170,9 @@ namespace PrefabPainter.Runtime
                 }
             });
             
-            foreach (var m in matrixData)
+            for (int i=0; i<matrixData.Count; i++)
             {
+                var m = matrixData[i];
                 var contains = false;
                 foreach (var b in boundsList)
                 {
@@ -172,11 +183,12 @@ namespace PrefabPainter.Runtime
 
                 if (!contains)
                 {
-                    outsideData.Add(m);
+                    outsideMatrixData.Add(m);
+                    outsideColorData.Add(colorData[i]);
                 }
             }
             
-            Invalidate(outsideData);
+            Invalidate(outsideMatrixData);
         }
     }
 }

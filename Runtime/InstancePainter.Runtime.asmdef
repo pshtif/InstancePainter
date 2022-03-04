@@ -1,5 +1,5 @@
 {
-    "name": "PrefabPainter.Runtime",
+    "name": "InstancePainter.Runtime",
     "rootNamespace": "",
     "references": [],
     "includePlatforms": [],

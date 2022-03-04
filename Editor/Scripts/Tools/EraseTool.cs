@@ -4,11 +4,11 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using PrefabPainter.Runtime;
+using InstancePainter.Runtime;
 using UnityEditor;
 using UnityEngine;
 
-namespace PrefabPainter.Editor
+namespace InstancePainter.Editor
 {
     public class EraseTool
     {
@@ -16,13 +16,13 @@ namespace PrefabPainter.Editor
 
         public static void Handle(RaycastHit p_hit)
         {
-            DrawHandle(p_hit.point, p_hit.normal, PrefabPainterEditorCore.Config.brushSize);
+            DrawHandle(p_hit.point, p_hit.normal, InstancePainterEditorCore.Config.brushSize);
             
             if (Event.current.button == 0 && !Event.current.alt && Event.current.type == EventType.MouseDown)
             {
                 Undo.IncrementCurrentGroup();
-                Undo.SetCurrentGroupName("Erase Prefabs");
-                Undo.RegisterCompleteObjectUndo(PrefabPainterEditorCore.Config.target.GetComponents<PrefabPainterRenderer>(), "Record Renderers");
+                Undo.SetCurrentGroupName("Erase Instances");
+                Undo.RegisterCompleteObjectUndo(InstancePainterEditorCore.Config.target.GetComponents<InstancePainterRenderer>(), "Record Renderers");
                 _undoId = Undo.GetCurrentGroup();
             }
             
@@ -49,17 +49,18 @@ namespace PrefabPainter.Editor
 
         public static void Erase(RaycastHit p_hit)
         {
-            List<PrefabPainterRenderer> invalidateRenderers = new List<PrefabPainterRenderer>();
+            List<InstancePainterRenderer> invalidateRenderers = new List<InstancePainterRenderer>();
             
-            var renderers = PrefabPainterEditorCore.Config.target.GetComponents<PrefabPainterRenderer>();
-            foreach (PrefabPainterRenderer renderer in renderers)
+            var renderers = InstancePainterEditorCore.Config.target.GetComponents<InstancePainterRenderer>();
+            foreach (InstancePainterRenderer renderer in renderers)
             {
                 for (int i = 0; i<renderer.matrixData.Count; i++)
                 {
                     var position = renderer.matrixData[i].GetColumn(3);
-                    if (Vector3.Distance(position, p_hit.point) < PrefabPainterEditorCore.Config.brushSize)
+                    if (Vector3.Distance(position, p_hit.point) < InstancePainterEditorCore.Config.brushSize)
                     {
                         renderer.matrixData.RemoveAt(i);
+                        renderer.colorData.RemoveAt(i);
                         renderer.Definitions.RemoveAt(i);
                         
                         if (!invalidateRenderers.Contains(renderer))

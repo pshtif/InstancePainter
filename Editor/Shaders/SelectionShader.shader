@@ -2,7 +2,7 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
-Shader "Hidden/PrefabPainter/SelectionShader"
+Shader "Hidden/InstancePainter/SelectionShader"
 {
     Properties
     {

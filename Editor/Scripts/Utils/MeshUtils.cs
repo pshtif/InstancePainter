@@ -5,7 +5,7 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace PrefabPainter.Editor
+namespace InstancePainter.Editor
 {
     public class MeshUtils
     {

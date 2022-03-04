@@ -1,4 +1,8 @@
-﻿Shader "PrefabPainter/InstancedIndirect"
+﻿/*
+ *	Created by:  Peter @sHTiF Stefcek
+ */
+
+Shader "PrefabPainter/InstancedIndirect"
 {
     Properties
     {
@@ -103,7 +107,7 @@
                 half3 lighting = mainLight.color * (mainLight.shadowAttenuation * mainLight.distanceAttenuation);
                 half3 result = albedo/2 + (albedo * directDiffuse) * lighting;
                 
-                OUT.color = result * IN.color.xyz;
+                OUT.color = result * _colorBuffer[instanceID] * IN.color.xyz;
 
                 return OUT;
             }

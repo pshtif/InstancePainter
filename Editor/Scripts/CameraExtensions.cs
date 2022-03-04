@@ -5,7 +5,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace PrefabPainter.Editor
+namespace InstancePainter.Editor
 {
     #if UNITY_EDITOR
     public static class CameraExtensions

@@ -5,7 +5,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace PrefabPainter.Editor
+namespace InstancePainter.Editor
 {
     public class LayerUtils
     {

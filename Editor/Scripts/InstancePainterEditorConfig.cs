@@ -3,17 +3,17 @@
  */
 
 using System.Collections.Generic;
-using PrefabPainter.Runtime;
+using InstancePainter.Runtime;
 using UnityEditor;
 using UnityEngine.Serialization;
 
-namespace PrefabPainter.Editor
+namespace InstancePainter.Editor
 {
     using System;
     using UnityEngine;
 
     [Serializable]
-    public class PrefabPainterEditorConfig : ScriptableObject
+    public class InstancePainterEditorConfig : ScriptableObject
     {
         public Transform target;
         
@@ -24,11 +24,13 @@ namespace PrefabPainter.Editor
         [Range(1,100)]
         public float brushSize = 1;
 
+        public Color color = Color.white;
+
         #region PAINT
 
         public int density = 1;
-        public bool minimizePrefabDefinitions = false;
-        public List<PrefabPainterDefinition> prefabDefinitions = new List<PrefabPainterDefinition>();
+        public bool minimizePaintDefinitions = false;
+        public List<PaintDefinition> paintDefinitions = new List<PaintDefinition>();
 
         public float maximumSlope = 0;
         public float minimalDistance = 1;
@@ -45,15 +47,15 @@ namespace PrefabPainter.Editor
         public List<LayerMask> includeLayers;
         public List<LayerMask> excludeLayers;
         
-        static public PrefabPainterEditorConfig Create()
+        static public InstancePainterEditorConfig Create()
         {
-            var config = (PrefabPainterEditorConfig)AssetDatabase.LoadAssetAtPath(
-                "Assets/Resources/Editor/PrefabPainterEditorConfig.asset",
-                typeof(PrefabPainterEditorConfig));
+            var config = (InstancePainterEditorConfig)AssetDatabase.LoadAssetAtPath(
+                "Assets/Resources/Editor/InstancePainterEditorConfig.asset",
+                typeof(InstancePainterEditorConfig));
 
             if (config == null)
             {
-                config = ScriptableObject.CreateInstance<PrefabPainterEditorConfig>();
+                config = ScriptableObject.CreateInstance<InstancePainterEditorConfig>();
                 if (config != null)
                 {
                     if (!AssetDatabase.IsValidFolder("Assets/Resources"))
@@ -66,7 +68,7 @@ namespace PrefabPainter.Editor
                         AssetDatabase.CreateFolder("Assets/Resources", "Editor");
                     }
 
-                    AssetDatabase.CreateAsset(config, "Assets/Resources/Editor/PrefabPainterEditorConfig.asset");
+                    AssetDatabase.CreateAsset(config, "Assets/Resources/Editor/InstancePainterEditorConfig.asset");
                     AssetDatabase.SaveAssets();
                     AssetDatabase.Refresh();
                 }

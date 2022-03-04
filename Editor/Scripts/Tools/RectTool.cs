@@ -5,12 +5,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using PrefabPainter.Runtime;
+using InstancePainter.Runtime;
 using UnityEditor;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-namespace PrefabPainter.Editor
+namespace InstancePainter.Editor
 {
     public enum RectToolState
     {
@@ -20,7 +20,7 @@ namespace PrefabPainter.Editor
 
     public class RectTool
     {
-        static public PrefabPainterEditorConfig Config => PrefabPainterEditorCore.Config;
+        static public InstancePainterEditorConfig Config => InstancePainterEditorCore.Config;
         
         private static int _undoId;
         private static int _selectedSubmesh;
@@ -31,7 +31,7 @@ namespace PrefabPainter.Editor
 
         private static float _currentScale = 1;
         private static float _currentRotation = 0;
-        private static List<PaintInstance> _paintInstances = new List<PaintInstance>();
+        private static List<PaintInstance> _paintedInstances = new List<PaintInstance>();
         private static RectToolState _state = RectToolState.NONE;
         
         public static void Handle(RaycastHit p_hit)
@@ -46,13 +46,13 @@ namespace PrefabPainter.Editor
                     break;
             }
 
-            PrefabPainterEditorCore.CheckValidTarget();
+            InstancePainterEditorCore.CheckValidTarget();
 
             if (Event.current.button == 0 && !Event.current.alt && Event.current.type == EventType.MouseDown)
             {
                 Undo.IncrementCurrentGroup();
                 Undo.SetCurrentGroupName("Paint");
-                Undo.RegisterCompleteObjectUndo(Config.target.GetComponents<PrefabPainterRenderer>(), "Record Renderers");
+                Undo.RegisterCompleteObjectUndo(Config.target.GetComponents<InstancePainterRenderer>(), "Record Renderers");
                 _undoId = Undo.GetCurrentGroup();
             }
             
@@ -64,7 +64,7 @@ namespace PrefabPainter.Editor
                 
                     _paintStartHit = p_hit;
                     _paintStartMousePosition = Event.current.mousePosition;
-                    _paintInstances.Clear();
+                    _paintedInstances.Clear();
                 }
             }
 
@@ -125,10 +125,10 @@ namespace PrefabPainter.Editor
 
             var rect = new Rect(minX, minZ, maxX - minX, maxZ - minZ);
             
-            List<PrefabPainterRenderer> invalidateRenderers = new List<PrefabPainterRenderer>();
+            List<InstancePainterRenderer> invalidateRenderers = new List<InstancePainterRenderer>();
             
-            var renderers = PrefabPainterEditorCore.Config.target.GetComponents<PrefabPainterRenderer>();
-            foreach (PrefabPainterRenderer renderer in renderers)
+            var renderers = InstancePainterEditorCore.Config.target.GetComponents<InstancePainterRenderer>();
+            foreach (InstancePainterRenderer renderer in renderers)
             {
                 for (int i = 0; i<renderer.matrixData.Count; i++)
                 {
@@ -137,6 +137,7 @@ namespace PrefabPainter.Editor
                     if (rect.Contains(position2d))
                     {
                         renderer.matrixData.RemoveAt(i);
+                        renderer.colorData.RemoveAt(i);
                         renderer.Definitions.RemoveAt(i);
                         
                         if (renderer != null && !invalidateRenderers.Contains(renderer))
@@ -162,13 +163,13 @@ namespace PrefabPainter.Editor
             var minZ = Math.Min(p_startPoint.z, p_endPoint.z);
             var maxZ = Math.Max(p_startPoint.z, p_endPoint.z);
 
-            List<PrefabPainterRenderer> invalidateRenderers = new List<PrefabPainterRenderer>();
+            List<InstancePainterRenderer> invalidateRenderers = new List<InstancePainterRenderer>();
             
-            EditorUtility.DisplayProgressBar("PrefabPainter", "Filling mesh instances...", .5f);
+            EditorUtility.DisplayProgressBar("InstancePainter", "Filling painted instances...", .5f);
 
             for (int i = 0; i < Config.density; i++)
             {
-                var renderer = PaintInstance(new Vector3(Random.Range(minX, maxX), p_startPoint.y, Random.Range(minZ, maxZ)), validMeshes);
+                var renderer = InstancePainterEditorCore.PaintInstance(new Vector3(Random.Range(minX, maxX), p_startPoint.y, Random.Range(minZ, maxZ)), validMeshes, _paintedInstances);
                 if (renderer != null && !invalidateRenderers.Contains(renderer))
                     invalidateRenderers.Add(renderer);
             }
@@ -176,89 +177,6 @@ namespace PrefabPainter.Editor
             invalidateRenderers.ForEach(r => r.Invalidate());
             
             EditorUtility.ClearProgressBar();
-        }
-        
-        static PrefabPainterRenderer PaintInstance(Vector3 p_position, MeshFilter[] p_validMeshes)
-        {
-            p_position += Vector3.up * 100;
-            Ray ray = new Ray(p_position, -Vector3.up);
-
-            RaycastHit hit;
-            
-            //if (!EditorRaycast.Raycast(ray, PrefabPainterEditorCore.HitMeshFilter, out hit))
-            if (!EditorRaycast.Raycast(ray, p_validMeshes, out hit))
-                return null;
-            
-            p_position = hit.point;
-            float slope = 0;
-            
-            if (hit.normal != Vector3.up)
-            {
-                var project = Vector3.ProjectOnPlane(hit.normal, Vector3.up);
-                slope = 90 - Vector3.Angle(project, hit.normal);
-            }
-            
-            if (slope > Config.maximumSlope)
-                 return null;
-
-            // var renderers = Config.target.GetComponents<PrefabPainterRenderer>();
-            // foreach (var renderer in renderers)
-            // {
-            //     foreach (var matrix in renderer.matrixData)
-            //     {
-            //         if (Vector3.Distance(p_position, matrix.GetColumn(3)) < Config.minimalDistance)
-            //         {
-            //             return;
-            //         }
-            //     }
-            // }
-
-            if (Config.prefabDefinitions.Count == 0)
-                return null;
-
-            PrefabPainterDefinition prefabDefinition = prefabDefinition = Config.prefabDefinitions[0];
-            if (Config.prefabDefinitions.Count > 1)
-            {
-                float sum = 0;
-                foreach (var def in Config.prefabDefinitions)
-                {
-                    sum += def.weight;
-                }
-                var random = Random.Range(0, sum);
-                foreach (var def in Config.prefabDefinitions)
-                {
-                    random -= def.weight;
-                    if (random < 0)
-                    {
-                        prefabDefinition = def;
-                        break;
-                    }
-                }
-            }
-            var position = p_position + prefabDefinition.positionOffset;
-            var rotation =
-                (prefabDefinition.rotateToNormal ? Quaternion.FromToRotation(Vector3.up, hit.normal) : Quaternion.identity) *
-                Quaternion.Euler(prefabDefinition.rotationOffset); 
-            
-            rotation = rotation * Quaternion.Euler(0, Random.Range(prefabDefinition.minYRotation, prefabDefinition.maxYRotation), 0);
-            
-            var scale = Vector3.Scale(Vector3.one, prefabDefinition.scaleOffset) *
-                        Random.Range(prefabDefinition.minScale, prefabDefinition.maxScale);
-            
-            if (prefabDefinition.prefab.GetComponent<MeshFilter>() != null &&
-                prefabDefinition.prefab.GetComponent<MeshFilter>().sharedMesh != null)
-            {
-                var renderer = PrefabPainterEditorCore.AddInstance(prefabDefinition, position, rotation,
-                    scale);
-                
-                var instance = new PaintInstance(renderer, renderer.matrixData[renderer.matrixData.Count - 1],
-                    renderer.matrixData.Count - 1, prefabDefinition);
-                _paintInstances?.Add(instance);
-
-                return renderer;
-            }
-            
-            return null;
         }
     }
 }

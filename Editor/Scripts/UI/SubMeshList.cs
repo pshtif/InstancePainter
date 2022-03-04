@@ -9,7 +9,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace PrefabPainter.Editor
+namespace InstancePainter.Editor
 {
     public class SubMeshList : PopupWindowContent
     {

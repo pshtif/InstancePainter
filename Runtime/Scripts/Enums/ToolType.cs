@@ -2,7 +2,7 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
-namespace PrefabPainter.Runtime
+namespace InstancePainter.Runtime
 {
     public enum ToolType
     {

@@ -6,10 +6,10 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace PrefabPainter.Runtime
+namespace InstancePainter.Runtime
 {
     [Serializable]
-    public class PrefabPainterDefinition
+    public class PaintDefinition
     {
         public GameObject prefab;
         public Material material;
@@ -17,8 +17,8 @@ namespace PrefabPainter.Runtime
         public float minScale = 1;
         public float maxScale = 1;
 
-        public float minYRotation = 0;
-        public float maxYRotation = 0;
+        public Vector3 minRotation = Vector3.zero;
+        public Vector3 maxRotation = Vector3.zero;
 
         public float weight = 1;
 

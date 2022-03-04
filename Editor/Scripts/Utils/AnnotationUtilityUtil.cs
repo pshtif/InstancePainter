@@ -7,7 +7,7 @@ using System.Linq;
 using System.Reflection;
 using UnityEditor;
 
-namespace PrefabPainter.Editor
+namespace InstancePainter.Editor
 {
     public class AnnotationUtilityUtil
     {

@@ -2,19 +2,19 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
+using InstancePainter.Runtime;
 using UnityEngine;
-using PrefabPainter.Runtime;
 
-namespace PrefabPainter.Editor
+namespace InstancePainter.Editor
 {
     public class PaintInstance
     {
-        public PrefabPainterRenderer renderer;
+        public InstancePainterRenderer renderer;
         public Matrix4x4 matrix;
         public int index;
-        public PrefabPainterDefinition definition;
+        public PaintDefinition definition;
 
-        public PaintInstance(PrefabPainterRenderer p_renderer, Matrix4x4 p_matrix, int p_index, PrefabPainterDefinition p_definition)
+        public PaintInstance(InstancePainterRenderer p_renderer, Matrix4x4 p_matrix, int p_index, PaintDefinition p_definition)
         {
             renderer = p_renderer;
             matrix = p_matrix;

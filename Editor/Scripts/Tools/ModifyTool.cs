@@ -4,11 +4,11 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using PrefabPainter.Runtime;
+using InstancePainter.Runtime;
 using UnityEditor;
 using UnityEngine;
 
-namespace PrefabPainter.Editor
+namespace InstancePainter.Editor
 {
     public enum ModifyToolState
     {
@@ -20,7 +20,7 @@ namespace PrefabPainter.Editor
     
     public class ModifyTool
     {
-        static public PrefabPainterEditorConfig Config => PrefabPainterEditorCore.Config;
+        static public InstancePainterEditorConfig Config => InstancePainterEditorCore.Config;
         
         private static int _undoId;
         
@@ -53,7 +53,7 @@ namespace PrefabPainter.Editor
             {
                 Undo.IncrementCurrentGroup();
                 Undo.SetCurrentGroupName("Modify");
-                Undo.RegisterCompleteObjectUndo(Config.target.GetComponents<PrefabPainterRenderer>(), "Record Renderers");
+                Undo.RegisterCompleteObjectUndo(Config.target.GetComponents<InstancePainterRenderer>(), "Record Renderers");
                 _undoId = Undo.GetCurrentGroup();
             }
             
@@ -105,7 +105,7 @@ namespace PrefabPainter.Editor
         {
             GetHitInstances(p_hit);
             
-            List<PrefabPainterRenderer> renderers = new List<PrefabPainterRenderer>();
+            List<InstancePainterRenderer> renderers = new List<InstancePainterRenderer>();
             foreach (var instance in _modifyInstances)
             {
                 if (AlreadyModified.Exists(a => a == instance))
@@ -128,7 +128,7 @@ namespace PrefabPainter.Editor
         {
             _modifyInstances.Clear();
 
-            Config.target.GetComponents<PrefabPainterRenderer>().ToList().ForEach(r =>
+            Config.target.GetComponents<InstancePainterRenderer>().ToList().ForEach(r =>
             {
                 r.matrixData.ForEach(m =>
                 {
@@ -145,7 +145,7 @@ namespace PrefabPainter.Editor
         {
             var offset = Event.current.mousePosition - _modifyStartMousePosition;
 
-            List<PrefabPainterRenderer> renderers = new List<PrefabPainterRenderer>();
+            List<InstancePainterRenderer> renderers = new List<InstancePainterRenderer>();
             
             foreach (var instance in _modifyInstances)
             {
@@ -178,7 +178,7 @@ namespace PrefabPainter.Editor
         {
             var offset = p_hit.point - _modifyStartHit.point;
 
-            List<PrefabPainterRenderer> renderers = new List<PrefabPainterRenderer>();
+            List<InstancePainterRenderer> renderers = new List<InstancePainterRenderer>();
             foreach (var instance in _modifyInstances)
             {
                 Quaternion originalRotation = Quaternion.LookRotation(

@@ -5,25 +5,25 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using PrefabPainter.Editor;
-using PrefabPainter.Runtime;
+using InstancePainter.Runtime;
+using InstancePainter.Editor;
 using UnityEditor;
 using UnityEngine;
 
-namespace PrefabPainter.Editor
+namespace InstancePainter.Editor
 {
-    public class PrefabPainterEditor : UnityEditor.EditorWindow
+    public class InstancePainterEditor : UnityEditor.EditorWindow
     {
-        public PrefabPainterEditorConfig Config => PrefabPainterEditorCore.Config;
+        public InstancePainterEditorConfig Config => InstancePainterEditorCore.Config;
         
-        public GUISkin Skin => (GUISkin)Resources.Load("Skins/PrefabPainterSkin");
+        public GUISkin Skin => (GUISkin)Resources.Load("Skins/InstancePainterSkin");
 
-        public static PrefabPainterEditor Instance { get; private set; } 
+        public static InstancePainterEditor Instance { get; private set; } 
         
-        public static PrefabPainterEditor InitEditorWindow()
+        public static InstancePainterEditor InitEditorWindow()
         {
-            Instance = GetWindow<PrefabPainterEditor>();
-            Instance.titleContent = new GUIContent("Prefab Painter");
+            Instance = GetWindow<InstancePainterEditor>();
+            Instance.titleContent = new GUIContent("Instance Painter");
             Instance.minSize = new Vector2(200, 400);
 
             return Instance;
@@ -42,7 +42,7 @@ namespace PrefabPainter.Editor
             style.alignment = TextAnchor.MiddleCenter;
             style.fontSize = 14;
 
-            EditorGUILayout.LabelField("Prefab Painter Editor", style, GUILayout.Height(28));
+            EditorGUILayout.LabelField("Instance Painter Editor", style, GUILayout.Height(28));
             GUILayout.Space(4);
 
             GUI.color = new Color(1, 0.5f, 0);
@@ -95,6 +95,8 @@ namespace PrefabPainter.Editor
             EditorGUILayout.LabelField("Paint Tool", Skin.GetStyle("tooltitle"), GUILayout.Height(24));
             
             Config.brushSize = EditorGUILayout.Slider("Brush Size", Config.brushSize, 0.1f, 100);
+            
+            Config.color = EditorGUILayout.ColorField("Color", Config.color);
 
             Config.density = EditorGUILayout.IntField("Density", Config.density);
                 
@@ -102,7 +104,7 @@ namespace PrefabPainter.Editor
 
             Config.maximumSlope = EditorGUILayout.Slider("Maximum Slope", Config.maximumSlope, 0, 90);
 
-            DrawPrefabDefinitionsGUI();
+            DrawPaintDefinitionsGUI();
             
             DrawLayersGUI();
         }
@@ -124,36 +126,36 @@ namespace PrefabPainter.Editor
 
             Config.maximumSlope = EditorGUILayout.Slider("Maximum Slope", Config.maximumSlope, 0, 90);
 
-            DrawPrefabDefinitionsGUI();
+            DrawPaintDefinitionsGUI();
         }
 
-        void DrawPrefabDefinitionsGUI()
+        void DrawPaintDefinitionsGUI()
         {
-            EditorGUILayout.LabelField("Definitions", Skin.GetStyle("prefabdefinitions"), GUILayout.Height(24));
-                
+            EditorGUILayout.LabelField("Paint Definitions", Skin.GetStyle("paintdefinitions"), GUILayout.Height(24));
+
             var rect = GUILayoutUtility.GetLastRect();
-            if (GUI.Button(new Rect(rect.x+rect.width-14, rect.y, 16, 16), Config.minimizePrefabDefinitions ? "+" : "-", Skin.GetStyle("minimizebutton")))
+            if (GUI.Button(new Rect(rect.x+rect.width-14, rect.y, 16, 16), Config.minimizePaintDefinitions ? "+" : "-", Skin.GetStyle("minimizebutton")))
             {
-                Config.minimizePrefabDefinitions = !Config.minimizePrefabDefinitions;
+                Config.minimizePaintDefinitions = !Config.minimizePaintDefinitions;
             }
 
-            if (!Config.minimizePrefabDefinitions)
+            if (!Config.minimizePaintDefinitions)
             {
                 int i = 0;
-                foreach (var prefabDefinition in Config.prefabDefinitions)
+                foreach (var paintDefinition in Config.paintDefinitions)
                 {
-                    if (DrawPrefabDefinitionGUI(prefabDefinition, ++i))
+                    if (DrawPaintDefinitionGUI(paintDefinition, ++i))
                         break;
                 }
 
-                if (GUILayout.Button("Add Prefab Definition"))
+                if (GUILayout.Button("Add Paint Definition"))
                 {
-                    Config.prefabDefinitions.Add(new PrefabPainterDefinition());
+                    Config.paintDefinitions.Add(new PaintDefinition());
                 }
             }
         }
 
-        bool DrawPrefabDefinitionGUI(PrefabPainterDefinition p_prefabDefinition, int p_index)
+        bool DrawPaintDefinitionGUI(PaintDefinition p_paintDefinition, int p_index)
         {
             var style = new GUIStyle();
             style.normal.background = TextureUtils.GetColorTexture(new Color(.15f, .15f, .15f));
@@ -163,38 +165,38 @@ namespace PrefabPainter.Editor
             style.fontSize = 12;
             
             GUILayout.BeginHorizontal();
-            GUILayout.Label(" Prefab Definition #"+p_index, style, GUILayout.Height(20));
+            GUILayout.Label(" Paint Definition #"+p_index, style, GUILayout.Height(20));
             var rect = GUILayoutUtility.GetLastRect();
             if (GUI.Button(new Rect(rect.x+rect.width-18, rect.y+2, 16, 16), IconManager.GetIcon("remove_icon"), Skin.GetStyle("removebutton")))
             {
-                Config.prefabDefinitions.Remove(p_prefabDefinition);
+                Config.paintDefinitions.Remove(p_paintDefinition);
                 return true;
             }
             GUILayout.EndHorizontal();
                     
-            p_prefabDefinition.prefab =
-                (GameObject)EditorGUILayout.ObjectField("Prefab", p_prefabDefinition.prefab, typeof(GameObject), false);
+            p_paintDefinition.prefab =
+                (GameObject)EditorGUILayout.ObjectField("Prefab", p_paintDefinition.prefab, typeof(GameObject), false);
             
-            p_prefabDefinition.material =
-                (Material)EditorGUILayout.ObjectField("Material", p_prefabDefinition.material, typeof(Material), false);
+            p_paintDefinition.material =
+                (Material)EditorGUILayout.ObjectField("Material", p_paintDefinition.material, typeof(Material), false);
 
-            p_prefabDefinition.weight = EditorGUILayout.FloatField("Weight Probability", p_prefabDefinition.weight);
+            p_paintDefinition.weight = EditorGUILayout.FloatField("Weight Probability", p_paintDefinition.weight);
 
-            p_prefabDefinition.minScale = EditorGUILayout.FloatField("Min Scale", p_prefabDefinition.minScale);
-            p_prefabDefinition.maxScale = EditorGUILayout.FloatField("Max Scale", p_prefabDefinition.maxScale);
+            p_paintDefinition.minScale = EditorGUILayout.FloatField("Min Scale", p_paintDefinition.minScale);
+            p_paintDefinition.maxScale = EditorGUILayout.FloatField("Max Scale", p_paintDefinition.maxScale);
             
-            p_prefabDefinition.minYRotation = EditorGUILayout.FloatField("Min Y Rotation", p_prefabDefinition.minYRotation);
-            p_prefabDefinition.maxYRotation = EditorGUILayout.FloatField("Max Y Rotation", p_prefabDefinition.maxYRotation);
+            p_paintDefinition.minRotation = EditorGUILayout.Vector3Field("Min Rotation", p_paintDefinition.minRotation);
+            p_paintDefinition.maxRotation = EditorGUILayout.Vector3Field("Max Rotation", p_paintDefinition.maxRotation);
             
-            p_prefabDefinition.rotateToNormal =
-                EditorGUILayout.Toggle("Rotate To Normal", p_prefabDefinition.rotateToNormal);
+            p_paintDefinition.rotateToNormal =
+                EditorGUILayout.Toggle("Rotate To Normal", p_paintDefinition.rotateToNormal);
                     
-            p_prefabDefinition.positionOffset =
-                EditorGUILayout.Vector3Field("Position Offset", p_prefabDefinition.positionOffset);
-            p_prefabDefinition.rotationOffset =
-                EditorGUILayout.Vector3Field("Rotation Offset", p_prefabDefinition.rotationOffset);
-            p_prefabDefinition.scaleOffset =
-                EditorGUILayout.Vector3Field("Scale Offset", p_prefabDefinition.scaleOffset);
+            p_paintDefinition.positionOffset =
+                EditorGUILayout.Vector3Field("Position Offset", p_paintDefinition.positionOffset);
+            p_paintDefinition.rotationOffset =
+                EditorGUILayout.Vector3Field("Rotation Offset", p_paintDefinition.rotationOffset);
+            p_paintDefinition.scaleOffset =
+                EditorGUILayout.Vector3Field("Scale Offset", p_paintDefinition.scaleOffset);
 
             return false;
         }
