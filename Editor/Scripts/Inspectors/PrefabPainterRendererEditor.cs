@@ -27,6 +27,11 @@ namespace PrefabPainter.Editor
             {
                 GenerateGameObjects();
             }
+
+            if (GUILayout.Button("Hide"))
+            {
+                Renderer.Hide();
+            }
         }
 
         void GenerateGameObjects()

@@ -49,6 +49,8 @@ namespace PrefabPainter.Editor
 
         public static void Erase(RaycastHit p_hit)
         {
+            List<PrefabPainterRenderer> invalidateRenderers = new List<PrefabPainterRenderer>();
+            
             var renderers = PrefabPainterEditorCore.Config.target.GetComponents<PrefabPainterRenderer>();
             foreach (PrefabPainterRenderer renderer in renderers)
             {
@@ -59,11 +61,16 @@ namespace PrefabPainter.Editor
                     {
                         renderer.matrixData.RemoveAt(i);
                         renderer.Definitions.RemoveAt(i);
-                        renderer.Invalidate();
+                        
+                        if (!invalidateRenderers.Contains(renderer))
+                            invalidateRenderers.Add(renderer);
+                        
                         i--;
                     }
                 }
             }
+            
+            invalidateRenderers.ForEach(r => r.Invalidate());
         }
 
     }

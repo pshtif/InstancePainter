@@ -4,7 +4,11 @@
     {
         [HideInInspector]_BoundSize("_BoundSize", Vector) = (1,1,1)
         
+         [Toggle(ENABLE_WIND)] _EnableWind ("Enable Wind", Float) = 0
+        
          _WindIntensity ("_WindIntensity", Float) = .5
+        
+        [Toggle(ENABLE_BILLBOARD)] _EnableBillboard ("Enable Billboard", Float) = 0
     }
 
     SubShader
@@ -28,6 +32,9 @@
             #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
             #pragma multi_compile _ _ADDITIONAL_LIGHT_SHADOWS
             #pragma multi_compile _ _SHADOWS_SOFT
+
+            #pragma multi_compile _ ENABLE_WIND
+            #pragma multi_compile _ ENABLE_BILLBOARD
 
             #pragma multi_compile_fog
 
@@ -69,31 +76,35 @@
                 //OUT.positionCS = TransformWorldToHClip(positionWS);
 
                 float4 position = IN.positionOS;
+                #if ENABLE_WIND
                 position.x += _WindIntensity * sin(_Time.y) * position.y*position.y;
-                
+                #endif
+
+                #if ENABLE_BILLBOARD
                 float4x4 v = UNITY_MATRIX_V;
                 float3 right = normalize(v._m00_m01_m02);
                 float3 up = normalize(v._m10_m11_m12);
                 float3 forward = normalize(v._m20_m21_m22);
-                //get the rotation parts of the matrix
                 float4x4 rotationMatrix = float4x4(right, 0,
     	            up, 0,
     	            forward, 0,
     	            0, 0, 0, 1);
                 float4x4 rotationMatrixInverse = transpose(rotationMatrix);
                 
-                float4 positionWS = mul(rotationMatrixInverse, position);
-                positionWS = mul(instanceMatrix, positionWS);
-                positionWS = mul(UNITY_MATRIX_V, positionWS);
-                OUT.positionCS = mul(UNITY_MATRIX_P, positionWS);
+                position = mul(rotationMatrixInverse, position);
+                #endif
+                
+                float4 positionWS = mul(instanceMatrix, position);
 
                 Light mainLight = GetMainLight(TransformWorldToShadowCoord(positionWS));
                 
-                half3 albedo = _colorBuffer[instanceID];
+                positionWS = mul(UNITY_MATRIX_V, positionWS);
+                OUT.positionCS = mul(UNITY_MATRIX_P, positionWS);
                 
-                half directDiffuse = dot(normalWS, mainLight.direction);
+                //half4 albedo = _colorBuffer[instanceID];
+                //half directDiffuse = dot(normalWS, mainLight.direction);
                 half3 lighting = mainLight.color * (mainLight.shadowAttenuation * mainLight.distanceAttenuation);
-                half3 result = albedo/2 + (albedo * directDiffuse) * lighting;
+                //half3 result = albedo/2 + (albedo * directDiffuse) * lighting;
                 
                 OUT.color = lighting * IN.color.xyz;
 

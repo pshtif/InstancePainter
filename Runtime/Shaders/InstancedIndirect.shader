@@ -5,6 +5,9 @@
         [HideInInspector]_BoundSize("_BoundSize", Vector) = (1,1,1)
         
         _WindIntensity ("_WindIntensity", Float) = .5
+        
+        [Toggle(ENABLE_WIND)] _ExampleFeatureEnabled ("Enable Wind", Float) = 0
+        [Toggle(ENABLE_BILLBOARD)] _ExampleFeatureEnabled ("Enable Billboard", Float) = 0
     }
 
     SubShader
@@ -28,6 +31,9 @@
             #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
             #pragma multi_compile _ _ADDITIONAL_LIGHT_SHADOWS
             #pragma multi_compile _ _SHADOWS_SOFT
+            
+            #pragma multi_compile _ ENABLE_WIND
+            #pragma multi_compile _ ENABLE_BILLBOARD
 
             #pragma multi_compile_fog
 
@@ -67,8 +73,11 @@
                 //OUT.positionCS = TransformWorldToHClip(positionWS);
                 
                 float4 position = IN.positionOS;
+                #if ENABLE_WIND
                 position.x += _WindIntensity * sin(_Time.y) * position.y*position.y;
+                #endif
 
+                #if ENABLE_BILLBOARD
                 float4x4 v = UNITY_MATRIX_V;
                 float3 right = normalize(v._m00_m01_m02);
                 float3 up = normalize(v._m10_m11_m12);
@@ -80,18 +89,19 @@
     	            0, 0, 0, 1);
                 float4x4 rotationMatrixInverse = transpose(rotationMatrix);
                 
-                float4 positionWS = mul(rotationMatrixInverse, position);
-                positionWS = mul(instanceMatrix, positionWS);
+                position = mul(rotationMatrixInverse, position);
+                #endif
+                
+                float4 positionWS = mul(instanceMatrix, position);
                 positionWS = mul(UNITY_MATRIX_V, positionWS);
                 OUT.positionCS = mul(UNITY_MATRIX_P, positionWS);
 
                 Light mainLight = GetMainLight(TransformWorldToShadowCoord(positionWS));
                 
                 half3 albedo = _colorBuffer[instanceID];
-                
-                half directDiffuse = dot(normalWS, mainLight.direction);
+                //half directDiffuse = dot(normalWS, mainLight.direction);
                 half3 lighting = mainLight.color * (mainLight.shadowAttenuation * mainLight.distanceAttenuation);
-                half3 result = albedo/2 + (albedo * directDiffuse) * lighting;
+                //half3 result = albedo/2 + (albedo * directDiffuse) * lighting;
                 
                 OUT.color = lighting * IN.color.xyz;
 

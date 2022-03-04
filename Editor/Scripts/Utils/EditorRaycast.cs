@@ -20,20 +20,48 @@ namespace PrefabPainter.Editor
                 handleUtility.GetMethod("IntersectRayMesh", (BindingFlags.Static | BindingFlags.NonPublic));
         }
 
-        public static bool Raycast(Ray ray, MeshFilter meshFilter, out RaycastHit hit)
+        public static bool Raycast(Ray p_ray, MeshFilter p_meshFilter, out RaycastHit p_hit)
         {
             if (_internalRaycast == null) CacheUnityInternalCall();
 
-            return Raycast(ray, meshFilter.sharedMesh, meshFilter.transform.localToWorldMatrix, out hit);
+            return Raycast(p_ray, p_meshFilter.sharedMesh, p_meshFilter.transform.localToWorldMatrix, out p_hit);
         }
 
-        private static bool Raycast(Ray ray, Mesh mesh, Matrix4x4 matrix, out RaycastHit hit)
+        public static bool Raycast(Ray p_ray, MeshFilter[] p_meshFilters, out RaycastHit p_hit)
+        {
+            p_hit = new RaycastHit();
+            float minT = Mathf.Infinity;
+            foreach (MeshFilter filter in p_meshFilters)
+            {
+                Mesh mesh = filter.sharedMesh;
+                if (!mesh)
+                    continue;
+                
+                RaycastHit localHit;
+
+                if (Raycast(p_ray, mesh, filter.transform.localToWorldMatrix, out localHit))
+                {
+                    if (localHit.distance < minT)
+                    {
+                        p_hit = localHit;
+                        minT = p_hit.distance;
+                    }
+                }
+            }
+
+            if (minT == Mathf.Infinity)
+                return false;
+
+            return true;
+        }
+
+        private static bool Raycast(Ray p_ray, Mesh p_mesh, Matrix4x4 p_matrix, out RaycastHit p_hit)
         {
             if (_internalRaycast == null) CacheUnityInternalCall();
 
-            var parameters = new object[] { ray, mesh, matrix, null };
+            var parameters = new object[] { p_ray, p_mesh, p_matrix, null };
             bool result = (bool)_internalRaycast.Invoke(null, parameters);
-            hit = (RaycastHit)parameters[3];
+            p_hit = (RaycastHit)parameters[3];
             return result;
         }
         
