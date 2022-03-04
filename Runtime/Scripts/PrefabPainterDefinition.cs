@@ -12,6 +12,7 @@ namespace PrefabPainter.Runtime
     public class PrefabPainterDefinition
     {
         public GameObject prefab;
+        public Material material;
 
         public float minScale = 1;
         public float maxScale = 1;

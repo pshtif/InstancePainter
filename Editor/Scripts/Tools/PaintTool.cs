@@ -191,7 +191,7 @@ namespace PrefabPainter.Editor
             RaycastHit hit;
             
             //if (!EditorRaycast.Raycast(ray, PrefabPainterEditorCore.HitMeshFilter, out hit))
-            if (!EditorRaycast.Raycast(ray, p_validMeshes, out hit))
+            if (p_validMeshes == null || !EditorRaycast.Raycast(ray, p_validMeshes, out hit))
                 return null;
             
             p_position = hit.point;

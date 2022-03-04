@@ -6,8 +6,8 @@
         
         _WindIntensity ("_WindIntensity", Float) = .5
         
-        [Toggle(ENABLE_WIND)] _ExampleFeatureEnabled ("Enable Wind", Float) = 0
-        [Toggle(ENABLE_BILLBOARD)] _ExampleFeatureEnabled ("Enable Billboard", Float) = 0
+        [Toggle(ENABLE_WIND)] _EnableWind ("Enable Wind", Float) = 0
+        [Toggle(ENABLE_BILLBOARD)] _EnableBillboard ("Enable Billboard", Float) = 0
     }
 
     SubShader
@@ -99,11 +99,11 @@
                 Light mainLight = GetMainLight(TransformWorldToShadowCoord(positionWS));
                 
                 half3 albedo = _colorBuffer[instanceID];
-                //half directDiffuse = dot(normalWS, mainLight.direction);
+                half directDiffuse = dot(normalWS, mainLight.direction);
                 half3 lighting = mainLight.color * (mainLight.shadowAttenuation * mainLight.distanceAttenuation);
-                //half3 result = albedo/2 + (albedo * directDiffuse) * lighting;
+                half3 result = albedo/2 + (albedo * directDiffuse) * lighting;
                 
-                OUT.color = lighting * IN.color.xyz;
+                OUT.color = result * IN.color.xyz;
 
                 return OUT;
             }

@@ -186,6 +186,7 @@ namespace PrefabPainter.Editor
             {
                 renderer = Config.target.gameObject.AddComponent<PrefabPainterRenderer>();
                 renderer.mesh = mesh;
+                renderer.instanceMaterial = p_definition.material;
                 renderer.matrixData = new List<Matrix4x4>();
             }
 

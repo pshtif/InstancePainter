@@ -174,6 +174,9 @@ namespace PrefabPainter.Editor
                     
             p_prefabDefinition.prefab =
                 (GameObject)EditorGUILayout.ObjectField("Prefab", p_prefabDefinition.prefab, typeof(GameObject), false);
+            
+            p_prefabDefinition.material =
+                (Material)EditorGUILayout.ObjectField("Material", p_prefabDefinition.material, typeof(Material), false);
 
             p_prefabDefinition.weight = EditorGUILayout.FloatField("Weight Probability", p_prefabDefinition.weight);
 

@@ -28,7 +28,7 @@ namespace PrefabPainter.Runtime
 
         private ComputeBuffer _colorBuffer;
         private ComputeBuffer _matrixBuffer;
-        private ComputeBuffer _drawIndirectBuffer;
+        private ComputeBuffer[] _drawIndirectBuffers;
         private uint[] _indirectArgs;
 
         [NonSerialized]
@@ -60,7 +60,8 @@ namespace PrefabPainter.Runtime
 
             _colorBuffer?.Release();
             _matrixBuffer?.Release();
-            _drawIndirectBuffer?.Release();
+            _drawIndirectBuffers?.ToList().ForEach(cb => cb?.Release());
+            _drawIndirectBuffers = new ComputeBuffer[mesh.subMeshCount];
             
             _initialized = true;
 
@@ -77,19 +78,28 @@ namespace PrefabPainter.Runtime
             instanceMaterial.SetBuffer("_matrixBuffer", _matrixBuffer);
             
             _indirectArgs = new uint[5] { 0, 0, 0, 0, 0 };
-            _drawIndirectBuffer = new ComputeBuffer(1, _indirectArgs.Length * sizeof(uint), ComputeBufferType.IndirectArguments);
-        
-            _indirectArgs[0] = (uint)mesh.GetIndexCount(0);
-            _indirectArgs[1] = (uint)count;
-            _indirectArgs[2] = (uint)mesh.GetIndexStart(0);
-            _indirectArgs[3] = (uint)mesh.GetBaseVertex(0);
-            _indirectArgs[4] = 0;
 
-            _drawIndirectBuffer.SetData(_indirectArgs);
+            for (int i = 0; i < mesh.subMeshCount; i++)
+            {
+                var drawIndirectBuffer = new ComputeBuffer(1, _indirectArgs.Length * sizeof(uint),
+                    ComputeBufferType.IndirectArguments);
+
+                _indirectArgs[0] = (uint)mesh.GetIndexCount(i);
+                _indirectArgs[1] = (uint)count;
+                _indirectArgs[2] = (uint)mesh.GetIndexStart(i);
+                _indirectArgs[3] = (uint)mesh.GetBaseVertex(i);
+                _indirectArgs[4] = 0;
+
+                drawIndirectBuffer.SetData(_indirectArgs);
+                _drawIndirectBuffers[i] = drawIndirectBuffer;
+            }
 
             Bounds renderBound = new Bounds();
             renderBound.SetMinMax(new Vector3(-1000, -1000, -1000), new Vector3(1000, 1000, 1000));
-            Graphics.DrawMeshInstancedIndirect(mesh, 0, instanceMaterial, renderBound, _drawIndirectBuffer);
+            for (int i = 0; i < mesh.subMeshCount; i++)
+            {
+                Graphics.DrawMeshInstancedIndirect(mesh, i, instanceMaterial, renderBound, _drawIndirectBuffers[i]);
+            }
         }
 
         void Update()
@@ -110,7 +120,10 @@ namespace PrefabPainter.Runtime
             if (_matrixBuffer == null || !_matrixBuffer.IsValid() || _matrixBuffer.count == 0)
                 return;
             
-            Graphics.DrawMeshInstancedIndirect(mesh, 0, instanceMaterial, renderBound, _drawIndirectBuffer);
+            for (int i = 0; i < mesh.subMeshCount; i++)
+            {
+                Graphics.DrawMeshInstancedIndirect(mesh, i, instanceMaterial, renderBound, _drawIndirectBuffers[i]);
+            }
         }
 
         private void OnDestroy()
@@ -127,8 +140,7 @@ namespace PrefabPainter.Runtime
             _matrixBuffer = null;
             _colorBuffer?.Release();
             _colorBuffer = null;
-            _drawIndirectBuffer?.Release();
-            _drawIndirectBuffer = null;
+            _drawIndirectBuffers.ToList().ForEach(cb => cb?.Release());
         }
 
         public List<MeshRenderer> modifiers = new List<MeshRenderer>();
