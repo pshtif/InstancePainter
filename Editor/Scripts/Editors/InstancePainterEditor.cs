@@ -57,11 +57,11 @@ namespace InstancePainter.Editor
             GUILayout.Space(4);
             GUI.color = Color.white;
             
+            InstancePainterEditorCore.CurrentTool?.DrawInspectorGUI();
+            
             DrawPaintDefinitionsGUI();
         
             DrawLayersGUI();
-
-            InstancePainterEditorCore.CurrentTool?.DrawInspectorGUI();
 
             EditorGUILayout.EndScrollView();
         }
@@ -78,21 +78,25 @@ namespace InstancePainter.Editor
 
             if (!Config.minimizePaintDefinitions)
             {
-                int i = 0;
-                foreach (var paintDefinition in Config.paintDefinitions)
+                for (int i=0; i<Config.paintDefinitions.Count; i++)
                 {
-                    if (DrawPaintDefinitionGUI(paintDefinition, ++i))
+                    var definition = Config.paintDefinitions[i];
+                    if (DrawPaintDefinitionGUI(ref definition, i))
                         break;
+
+                    if (Config.paintDefinitions[i] != definition)
+                        Config.paintDefinitions[i] = definition;
+
                 }
 
                 if (GUILayout.Button("Add Paint Definition"))
                 {
-                    Config.paintDefinitions.Add(new PaintDefinition());
+                    Config.paintDefinitions.Add(null);
                 }
             }
         }
 
-        bool DrawPaintDefinitionGUI(PaintDefinition p_paintDefinition, int p_index)
+        bool DrawPaintDefinitionGUI(ref PaintDefinition p_paintDefinition, int p_index)
         {
             var style = new GUIStyle();
             style.normal.background = TextureUtils.GetColorTexture(new Color(.15f, .15f, .15f));
@@ -102,38 +106,65 @@ namespace InstancePainter.Editor
             style.fontSize = 12;
             
             GUILayout.BeginHorizontal();
-            GUILayout.Label(" Paint Definition #"+p_index, style, GUILayout.Height(20));
+            GUILayout.Label("          Paint Definition #"+p_index, style, GUILayout.Height(20));
             var rect = GUILayoutUtility.GetLastRect();
-            if (GUI.Button(new Rect(rect.x+rect.width-18, rect.y+2, 16, 16), IconManager.GetIcon("remove_icon"), Skin.GetStyle("removebutton")))
+            if (GUI.Button(new Rect(rect.x+2, rect.y+2, 16, 16), IconManager.GetIcon("remove_icon"), Skin.GetStyle("removebutton")))
             {
-                //Config.paintDefinitions.Remove(p_paintDefinition);
+                Config.paintDefinitions.Remove(p_paintDefinition);
                 return true;
             }
+
+            if (p_paintDefinition != null)
+            {
+                if (GUI.Button(new Rect(rect.x + rect.width - 18, rect.y + 2, 16, 16),
+                    p_paintDefinition.minimized ? "+" : "-", Skin.GetStyle("minimizebutton")))
+                {
+                    p_paintDefinition.minimized = !p_paintDefinition.minimized;
+                }
+            }
+
             GUILayout.EndHorizontal();
-                    
-            p_paintDefinition.prefab =
-                (GameObject)EditorGUILayout.ObjectField("Prefab", p_paintDefinition.prefab, typeof(GameObject), false);
-            
-            p_paintDefinition.material =
-                (Material)EditorGUILayout.ObjectField("Material", p_paintDefinition.material, typeof(Material), false);
 
-            p_paintDefinition.weight = EditorGUILayout.FloatField("Weight Probability", p_paintDefinition.weight);
+            if (p_paintDefinition == null || !p_paintDefinition.minimized)
+            {
+                p_paintDefinition =
+                    (PaintDefinition)EditorGUILayout.ObjectField("Definition", p_paintDefinition, typeof(PaintDefinition));
 
-            p_paintDefinition.minScale = EditorGUILayout.FloatField("Min Scale", p_paintDefinition.minScale);
-            p_paintDefinition.maxScale = EditorGUILayout.FloatField("Max Scale", p_paintDefinition.maxScale);
-            
-            p_paintDefinition.minRotation = EditorGUILayout.Vector3Field("Min Rotation", p_paintDefinition.minRotation);
-            p_paintDefinition.maxRotation = EditorGUILayout.Vector3Field("Max Rotation", p_paintDefinition.maxRotation);
-            
-            p_paintDefinition.rotateToNormal =
-                EditorGUILayout.Toggle("Rotate To Normal", p_paintDefinition.rotateToNormal);
-                    
-            p_paintDefinition.positionOffset =
-                EditorGUILayout.Vector3Field("Position Offset", p_paintDefinition.positionOffset);
-            p_paintDefinition.rotationOffset =
-                EditorGUILayout.Vector3Field("Rotation Offset", p_paintDefinition.rotationOffset);
-            p_paintDefinition.scaleOffset =
-                EditorGUILayout.Vector3Field("Scale Offset", p_paintDefinition.scaleOffset);
+                if (p_paintDefinition != null)
+                {
+                    p_paintDefinition.enabled = EditorGUILayout.Toggle("Enabled", p_paintDefinition.enabled);
+                    GUI.enabled = p_paintDefinition.enabled;
+                    p_paintDefinition.prefab =
+                        (GameObject)EditorGUILayout.ObjectField("Prefab", p_paintDefinition.prefab, typeof(GameObject),
+                            false);
+
+                    p_paintDefinition.material =
+                        (Material)EditorGUILayout.ObjectField("Material", p_paintDefinition.material, typeof(Material),
+                            false);
+
+                    p_paintDefinition.weight =
+                        EditorGUILayout.FloatField("Weight Probability", p_paintDefinition.weight);
+
+                    p_paintDefinition.minScale = EditorGUILayout.FloatField("Min Scale", p_paintDefinition.minScale);
+                    p_paintDefinition.maxScale = EditorGUILayout.FloatField("Max Scale", p_paintDefinition.maxScale);
+
+                    p_paintDefinition.minRotation =
+                        EditorGUILayout.Vector3Field("Min Rotation", p_paintDefinition.minRotation);
+                    p_paintDefinition.maxRotation =
+                        EditorGUILayout.Vector3Field("Max Rotation", p_paintDefinition.maxRotation);
+
+                    p_paintDefinition.rotateToNormal =
+                        EditorGUILayout.Toggle("Rotate To Normal", p_paintDefinition.rotateToNormal);
+
+                    p_paintDefinition.positionOffset =
+                        EditorGUILayout.Vector3Field("Position Offset", p_paintDefinition.positionOffset);
+                    p_paintDefinition.rotationOffset =
+                        EditorGUILayout.Vector3Field("Rotation Offset", p_paintDefinition.rotationOffset);
+                    p_paintDefinition.scaleOffset =
+                        EditorGUILayout.Vector3Field("Scale Offset", p_paintDefinition.scaleOffset);
+                    GUI.enabled = true;
+                }
+            }
 
             return false;
         }

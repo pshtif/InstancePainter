@@ -28,7 +28,7 @@ namespace InstancePainter.Editor
                 HandleMouseHit();
             }
             
-            if (_mouseHitTransform?.GetComponent<MeshFilter>() == null)
+            if (_mouseHitTransform?.GetComponent<MeshFilter>() == null && _mouseHitTransform?.GetComponent<Collider>() == null)
                 return;
             
             HandleInternal(_mouseRaycastHit);
@@ -41,8 +41,8 @@ namespace InstancePainter.Editor
         {
             RaycastHit hit;
 
-            var include = LayerUtils.GetAllMeshObjectsInLayers(Config.includeLayers.ToArray());
-            var exclude = LayerUtils.GetAllMeshObjectsInLayers(Config.excludeLayers.ToArray());
+            var include = LayerUtils.GetAllGameObjectsInLayers(Config.includeLayers.ToArray());
+            var exclude = LayerUtils.GetAllGameObjectsInLayers(Config.excludeLayers.ToArray());
             
             if (EditorRaycast.RaycastWorld(Event.current.mousePosition, out hit, out _mouseHitTransform,
                 out _mouseHitMesh, exclude.Length == 0 ? null : exclude, include.Length == 0 ? null : include))

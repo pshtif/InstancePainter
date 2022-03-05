@@ -19,7 +19,7 @@ namespace InstancePainter.Editor
 
             var rect = p_sceneView.camera.GetScaledPixelRect();
 
-            GUILayout.BeginArea(new Rect(rect.width / 2 - 130, 5, 420, 55));
+            GUILayout.BeginArea(new Rect(rect.width / 2 - 210, 5, 420, 55));
 
             GUILayout.BeginHorizontal();
             GUI.color = InstancePainterEditorCore.CurrentTool?.GetType() == typeof(PaintTool) ? new Color(1, .5f, .25f) : Color.white;
@@ -67,7 +67,8 @@ namespace InstancePainter.Editor
             {
                 InstancePainterEditor.InitEditorWindow();
             }
-
+            GUI.color = Color.white;
+            
             GUILayout.Label("Settings", Config.Skin.GetStyle("toollabel"), GUILayout.ExpandWidth(true));
             GUILayout.EndVertical();
             GUILayout.EndHorizontal();

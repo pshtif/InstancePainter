@@ -54,6 +54,9 @@ namespace InstancePainter.Editor
             var renderers = InstancePainterEditorCore.Config.target.GetComponents<InstancePainterRenderer>();
             foreach (InstancePainterRenderer renderer in renderers)
             {
+                if (renderer.Definitions.Count == 0 || !IsActiveDefinition(renderer.Definitions[0]))
+                    continue;
+                
                 for (int i = 0; i<renderer.matrixData.Count; i++)
                 {
                     var position = renderer.matrixData[i].GetColumn(3);
@@ -74,9 +77,33 @@ namespace InstancePainter.Editor
             invalidateRenderers.ForEach(r => r.Invalidate());
         }
 
+        private bool IsActiveDefinition(PaintDefinition p_definition)
+        {
+            foreach (var definition in Config.paintDefinitions)
+            {
+                if (definition == null || !definition.enabled)
+                    continue;
+
+                if (definition == p_definition)
+                    return true;
+            }
+
+            return false;
+        }
+
         public override void DrawSceneGUI(SceneView p_sceneView)
         {
+            var rect = p_sceneView.camera.GetScaledPixelRect();
+            GUILayout.BeginArea(new Rect(rect.width / 2 - 500, 65, 1000, 85));
+            GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+
+            GUILayout.Label(" Ctrl + Mouse Wheel: ", Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
+            GUILayout.Label("Brush Size ", Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
             
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+            GUILayout.EndArea();
         }
 
         public override void DrawInspectorGUI()
@@ -84,6 +111,8 @@ namespace InstancePainter.Editor
             EditorGUILayout.LabelField("Erase Tool", Config.Skin.GetStyle("tooltitle"), GUILayout.Height(24));
             
             Config.brushSize = EditorGUILayout.Slider("Erase Size", Config.brushSize, 0.1f, 100);
+            
+            Config.eraseActiveDefinition = EditorGUILayout.Toggle("Erase Only Active Definition", Config.eraseActiveDefinition);
         }
     }
 }

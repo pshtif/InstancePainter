@@ -153,7 +153,11 @@ namespace InstancePainter.Editor
         {
             var validMeshes = Config.includeLayers.Count == 0
                 ? GameObject.FindObjectsOfType<MeshFilter>()
-                : LayerUtils.GetAllMeshFiltersInLayers(Config.includeLayers.ToArray());
+                : LayerUtils.GetAllComponentsInLayers<MeshFilter>(Config.includeLayers.ToArray());
+            
+            var validColliders = Config.includeLayers.Count == 0
+                ? GameObject.FindObjectsOfType<Collider>()
+                : LayerUtils.GetAllComponentsInLayers<Collider>(Config.includeLayers.ToArray());
 
             var minX = Math.Min(p_startPoint.x, p_endPoint.x);
             var maxX = Math.Max(p_startPoint.x, p_endPoint.x);
@@ -167,7 +171,7 @@ namespace InstancePainter.Editor
 
             for (int i = 0; i < Config.density; i++)
             {
-                var renderers = InstancePainterEditorCore.PaintInstance(new Vector3(Random.Range(minX, maxX), p_startPoint.y, Random.Range(minZ, maxZ)), validMeshes, _paintedInstances);
+                var renderers = InstancePainterEditorCore.PlaceInstance(new Vector3(Random.Range(minX, maxX), p_startPoint.y, Random.Range(minZ, maxZ)), validMeshes, validColliders, _paintedInstances);
                 
                 foreach (var renderer in renderers)
                 {
@@ -183,7 +187,21 @@ namespace InstancePainter.Editor
         
         public override void DrawSceneGUI(SceneView p_sceneView)
         {
+            var rect = p_sceneView.camera.GetScaledPixelRect();
+            GUILayout.BeginArea(new Rect(rect.width / 2 - 500, 65, 1000, 85));
+            GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
             
+            GUILayout.Label(" Left Button(DRAG): ", Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
+            GUILayout.Label("Rectangular Fill ", Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
+            GUILayout.Space(8);
+            
+            GUILayout.Label(" Shift + Left Button(DRAG): ", Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
+            GUILayout.Label("Rectangular Erase ", Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
+
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+            GUILayout.EndArea();
         }
         
         public override void DrawInspectorGUI()

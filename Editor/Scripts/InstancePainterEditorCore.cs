@@ -75,6 +75,8 @@ namespace InstancePainter.Editor
         
         public static InstancePainterRenderer AddInstance(PaintDefinition p_definition, Mesh p_mesh, Vector3 p_position, Quaternion p_rotation, Vector3 p_scale, Vector4 p_color)
         {
+            CheckValidTarget();
+            
             var renderers = Config.target.GetComponents<InstancePainterRenderer>().ToList();
             var renderer = renderers.Find(r => r.mesh == p_mesh);
             if (renderer == null)
@@ -97,22 +99,27 @@ namespace InstancePainter.Editor
         {
             if (Config.target == null)
             {
-                Config.target = new GameObject("PaintedInstances").transform;
+                Config.target = new GameObject("InstancePainter").transform;
             }
         }
         
-        public static InstancePainterRenderer[] PaintInstance(Vector3 p_position, MeshFilter[] p_validMeshes, List<PaintedInstance> p_paintedInstances)
+        public static InstancePainterRenderer[] PlaceInstance(Vector3 p_position, MeshFilter[] p_validMeshes, Collider[] p_validColliders, List<PaintedInstance> p_paintedInstances)
         {
+            CheckValidTarget();
+            
             List<InstancePainterRenderer> paintedRenderers = new List<InstancePainterRenderer>();
             
             p_position += Vector3.up * 100;
             Ray ray = new Ray(p_position, -Vector3.up);
 
             RaycastHit hit;
-            
+
             if (p_validMeshes == null || !EditorRaycast.Raycast(ray, p_validMeshes, out hit))
-                return paintedRenderers.ToArray();
-            
+            {
+                if (p_validColliders == null || !EditorRaycast.Raycast(ray, p_validColliders, out hit))
+                    return paintedRenderers.ToArray();
+            }
+
             p_position = hit.point;
             float slope = 0;
             
@@ -121,9 +128,13 @@ namespace InstancePainter.Editor
                 var project = Vector3.ProjectOnPlane(hit.normal, Vector3.up);
                 slope = 90 - Vector3.Angle(project, hit.normal);
             }
-            
+
             if (slope > Config.maximumSlope)
                  return paintedRenderers.ToArray();
+
+            PaintDefinition paintDefinition = GetWeightedDefinition();
+            if (paintDefinition == null)
+                return paintedRenderers.ToArray();
 
             // Do proximity check
             if (Config.minimalDistance > 0)
@@ -131,6 +142,9 @@ namespace InstancePainter.Editor
                 var checkRenderers = Config.target.GetComponents<InstancePainterRenderer>();
                 foreach (var renderer in checkRenderers)
                 {
+                    if (renderer.Definitions.Count == 0 || renderer.Definitions[0].prefab != paintDefinition.prefab)
+                        continue;
+                    
                     foreach (var matrix in renderer.matrixData)
                     {
                         if (Vector3.Distance(p_position, matrix.GetColumn(3)) < Config.minimalDistance)
@@ -141,30 +155,6 @@ namespace InstancePainter.Editor
                 }
             }
 
-            if (Config.paintDefinitions.Count == 0)
-                return paintedRenderers.ToArray();
-
-            PaintDefinition paintDefinition = null;
-            
-            float sum = 0;
-            foreach (var def in Config.paintDefinitions)
-            {
-                sum += def.weight;
-            }
-            var random = Random.Range(0, sum);
-            foreach (var def in Config.paintDefinitions)
-            {
-                random -= def.weight;
-                if (random < 0)
-                {
-                    paintDefinition = def;
-                    break;
-                }
-            }
-
-            if (paintDefinition == null)
-                return paintedRenderers.ToArray();
-            
             MeshFilter[] filters = paintDefinition.prefab.GetComponentsInChildren<MeshFilter>();
             
             foreach (var filter in filters)
@@ -199,6 +189,38 @@ namespace InstancePainter.Editor
             }
 
             return paintedRenderers.ToArray();
+        }
+
+        private static PaintDefinition GetWeightedDefinition()
+        {
+            if (Config.paintDefinitions.Count == 0)
+                return null;
+            
+            PaintDefinition paintDefinition = null;
+            
+            float sum = 0;
+            foreach (var def in Config.paintDefinitions)
+            {
+                if (def == null || !def.enabled)
+                    continue;
+                
+                sum += def.weight;
+            }
+            var random = Random.Range(0, sum);
+            foreach (var def in Config.paintDefinitions)
+            {
+                if (def == null || !def.enabled)
+                    continue;
+                
+                random -= def.weight;
+                if (random < 0)
+                {
+                    paintDefinition = def;
+                    break;
+                }
+            }
+
+            return paintDefinition;
         }
     }
 }

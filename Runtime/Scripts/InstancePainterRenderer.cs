@@ -80,7 +80,7 @@ namespace InstancePainter.Runtime
                 return;
             
             _colorBuffer = new ComputeBuffer(count, sizeof(float) * 4);
-            _colorBuffer.SetData(colorData);
+            _colorBuffer.SetData(p_colorData != null ? p_colorData : colorData);
             
             _matrixBuffer = new ComputeBuffer(count, sizeof(float) * 16);
             _matrixBuffer.SetData(p_matrixData != null ? p_matrixData : matrixData);
@@ -161,7 +161,7 @@ namespace InstancePainter.Runtime
             _drawIndirectBuffers.ToList().ForEach(cb => cb?.Release());
         }
 
-        public List<MeshRenderer> modifiers = new List<MeshRenderer>();
+        public List<GameObject> modifiers = new List<GameObject>();
         
         public void Hide()
         {
@@ -173,9 +173,13 @@ namespace InstancePainter.Runtime
             {
                 if (m != null)
                 {
-                    var bounds = m.bounds;
-                    bounds.Expand(1);
-                    boundsList.Add(bounds);
+                    var renderers = m.GetComponentsInChildren<Renderer>();
+                    foreach (var renderer in renderers)
+                    {
+                        var bounds = renderer.bounds;
+                        bounds.Expand(4);
+                        boundsList.Add(bounds);
+                    }
                 }
             });
             
@@ -197,7 +201,7 @@ namespace InstancePainter.Runtime
                 }
             }
             
-            Invalidate(outsideMatrixData);
+            Invalidate(outsideMatrixData, outsideColorData);
         }
     }
 }

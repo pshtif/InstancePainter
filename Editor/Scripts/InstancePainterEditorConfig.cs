@@ -25,6 +25,7 @@ namespace InstancePainter.Editor
         public float brushSize = 1;
 
         public Color color = Color.white;
+        public float alpha = 1;
 
         #region PAINT
 
@@ -34,6 +35,12 @@ namespace InstancePainter.Editor
 
         public float maximumSlope = 0;
         public float minimalDistance = 1;
+        
+        #endregion
+        
+        #region ERASE
+        
+        public bool eraseActiveDefinition = true;
         
         #endregion
 

@@ -32,6 +32,7 @@ namespace InstancePainter.Editor
         private PaintToolState _state = PaintToolState.NONE;
 
         private static MeshFilter[] _cachedValidMeshes;
+        private static Collider[] _cachedValidColliders;
         
         protected override void HandleInternal(RaycastHit p_hit)
         {
@@ -46,10 +47,10 @@ namespace InstancePainter.Editor
                     break;
             }
 
-            InstancePainterEditorCore.CheckValidTarget();
-
             if (Event.current.button == 0 && !Event.current.alt && Event.current.type == EventType.MouseDown)
             {
+                InstancePainterEditorCore.CheckValidTarget();
+                
                 Undo.IncrementCurrentGroup();
                 Undo.SetCurrentGroupName("Paint");
                 Undo.RegisterCompleteObjectUndo(Config.target.GetComponents<InstancePainterRenderer>(), "Record Renderers");
@@ -57,7 +58,11 @@ namespace InstancePainter.Editor
                 
                 _cachedValidMeshes = Config.includeLayers.Count == 0
                     ? GameObject.FindObjectsOfType<MeshFilter>()
-                    : LayerUtils.GetAllMeshFiltersInLayers(Config.includeLayers.ToArray());
+                    : LayerUtils.GetAllComponentsInLayers<MeshFilter>(Config.includeLayers.ToArray());
+                
+                _cachedValidColliders = Config.includeLayers.Count == 0
+                    ? GameObject.FindObjectsOfType<Collider>()
+                    : LayerUtils.GetAllComponentsInLayers<Collider>(Config.includeLayers.ToArray());
             }
             
             if (Event.current.button == 0 && !Event.current.alt && (Event.current.type == EventType.MouseDrag ||
@@ -71,7 +76,7 @@ namespace InstancePainter.Editor
                         _paintStartHit = p_hit;
                         _paintStartMousePosition = Event.current.mousePosition;
                         _paintedInstances.Clear();
-                        Paint(p_hit, _cachedValidMeshes);
+                        Paint(p_hit);
                     }
                     else
                     {
@@ -84,11 +89,11 @@ namespace InstancePainter.Editor
                     
                     if (Event.current.shift)
                     {
-                        Colorize(p_hit, _cachedValidMeshes);
+                        Colorize(p_hit);
                     }
                     else
                     {
-                        Paint(p_hit, _cachedValidMeshes);
+                        Paint(p_hit);
                     }
                 }
             }
@@ -98,29 +103,6 @@ namespace InstancePainter.Editor
                 _state = PaintToolState.NONE;
                 Undo.CollapseUndoOperations(_undoId);
             }
-        }
-
-        void DrawPaintHandle(Vector3 p_position, Vector3 p_normal, float p_size)
-        {
-            Handles.color = new Color(0,1,0,.2f);
-            Handles.DrawSolidDisc(p_position, p_normal, p_size);
-            Handles.color = Color.white;
-            Handles.DrawWireDisc(p_position, p_normal, p_size);
-        }
-        
-        void DrawUpdateHandle(Vector3 p_position, Vector3 p_normal, float p_size)
-        {
-            var offset = Event.current.mousePosition - _paintStartMousePosition;
-            
-            Handles.color = new Color(1,1,1,.1f);
-            Handles.DrawSolidDisc(p_position, p_normal, p_size + p_size * offset.y/10);
-            Handles.color = new Color(1,0,0,.2f);
-            Handles.DrawSolidArc(p_position, p_normal, Vector3.Cross(p_normal, Vector3.up), offset.x, p_size + p_size * offset.y/10);
-            
-            Handles.color = new Color(0,1,0,.2f);
-            Handles.DrawSolidDisc(p_position, p_normal, p_size);
-            Handles.color = Color.white;
-            Handles.DrawWireDisc(p_position, p_normal, p_size + p_size * offset.y/10);
         }
 
         void Update()
@@ -155,7 +137,7 @@ namespace InstancePainter.Editor
             renderers.ForEach(r => r.Invalidate());
         }
         
-        void Paint(RaycastHit p_hit, MeshFilter[] p_validMeshes)
+        void Paint(RaycastHit p_hit)
         {
             if (Vector3.Distance(_lastPaintPosition, p_hit.point) <= 0.1f)
                 return;
@@ -166,7 +148,7 @@ namespace InstancePainter.Editor
             
             if (Config.density == 1)
             {
-                var renderers = InstancePainterEditorCore.PaintInstance(p_hit.point, p_validMeshes, _paintedInstances);
+                var renderers = InstancePainterEditorCore.PlaceInstance(p_hit.point, _cachedValidMeshes, _cachedValidColliders, _paintedInstances);
 
                 foreach (var renderer in renderers)
                 {
@@ -182,7 +164,7 @@ namespace InstancePainter.Editor
                     Vector3 position = direction * Random.Range(0, Config.brushSize) +
                                        p_hit.point;
 
-                    var renderers = InstancePainterEditorCore.PaintInstance(position, p_validMeshes, _paintedInstances);
+                    var renderers = InstancePainterEditorCore.PlaceInstance(position, _cachedValidMeshes, _cachedValidColliders, _paintedInstances);
                     
                     foreach (var renderer in renderers)
                     {
@@ -195,9 +177,11 @@ namespace InstancePainter.Editor
             invalidateRenderers.ForEach(r => r.Invalidate());
         }
 
-        void Colorize(RaycastHit p_hit, MeshFilter[] p_validMeshes)
+        void Colorize(RaycastHit p_hit)
         {
             List<InstancePainterRenderer> invalidateRenderers = new List<InstancePainterRenderer>();
+            
+            InstancePainterEditorCore.CheckValidTarget();
             
             var renderers = InstancePainterEditorCore.Config.target.GetComponents<InstancePainterRenderer>();
             foreach (InstancePainterRenderer renderer in renderers)
@@ -208,7 +192,7 @@ namespace InstancePainter.Editor
                     var distance = Vector3.Distance(position, p_hit.point);
                     if (distance < InstancePainterEditorCore.Config.brushSize)
                     {
-                        renderer.colorData[i] = Vector4.Lerp(renderer.colorData[i],Config.color, 1-distance/InstancePainterEditorCore.Config.brushSize);
+                        renderer.colorData[i] = Vector4.Lerp(renderer.colorData[i],Config.color, (1-distance/InstancePainterEditorCore.Config.brushSize) * Config.alpha);
 
                         if (!invalidateRenderers.Contains(renderer))
                             invalidateRenderers.Add(renderer);
@@ -219,9 +203,54 @@ namespace InstancePainter.Editor
             invalidateRenderers.ForEach(r => r.Invalidate());
         }
         
+        void DrawPaintHandle(Vector3 p_position, Vector3 p_normal, float p_size)
+        {
+            Handles.color = new Color(0,1,0,.2f);
+            Handles.DrawSolidDisc(p_position, p_normal, p_size);
+            Handles.color = Color.white;
+            Handles.DrawWireDisc(p_position, p_normal, p_size);
+        }
+        
+        void DrawUpdateHandle(Vector3 p_position, Vector3 p_normal, float p_size)
+        {
+            var offset = Event.current.mousePosition - _paintStartMousePosition;
+            
+            Handles.color = new Color(1,1,1,.1f);
+            Handles.DrawSolidDisc(p_position, p_normal, p_size + p_size * offset.y/10);
+            Handles.color = new Color(1,0,0,.2f);
+            Handles.DrawSolidArc(p_position, p_normal, Vector3.Cross(p_normal, Vector3.up), offset.x, p_size + p_size * offset.y/10);
+            
+            Handles.color = new Color(0,1,0,.2f);
+            Handles.DrawSolidDisc(p_position, p_normal, p_size);
+            Handles.color = Color.white;
+            Handles.DrawWireDisc(p_position, p_normal, p_size + p_size * offset.y/10);
+        }
+        
         public override void DrawSceneGUI(SceneView p_sceneView)
         {
+            var rect = p_sceneView.camera.GetScaledPixelRect();
+            GUILayout.BeginArea(new Rect(rect.width / 2 - 500, 65, 1000, 85));
+            GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
             
+            GUILayout.Label(" Left Button: ", Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
+            GUILayout.Label("Paint ", Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
+            GUILayout.Space(8);
+            
+            GUILayout.Label(" Shift + Left Button: ", Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
+            GUILayout.Label("Colorize ", Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
+            GUILayout.Space(8);
+            
+            GUILayout.Label(" Ctrl + Left Button(HOLD): ", Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
+            GUILayout.Label("Place and Modify ", Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
+            GUILayout.Space(8);
+            
+            GUILayout.Label(" Ctrl + Mouse Wheel: ", Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
+            GUILayout.Label("Brush Size ", Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
+            
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+            GUILayout.EndArea();
         }
 
         public override void DrawInspectorGUI()
@@ -231,6 +260,8 @@ namespace InstancePainter.Editor
             Config.brushSize = EditorGUILayout.Slider("Brush Size", Config.brushSize, 0.1f, 100);
         
             Config.color = EditorGUILayout.ColorField("Color", Config.color);
+            
+            Config.alpha = EditorGUILayout.Slider("Alpha", Config.alpha, 0, 1);
 
             Config.density = EditorGUILayout.IntField("Density", Config.density);
             

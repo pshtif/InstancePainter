@@ -11,9 +11,9 @@ namespace InstancePainter.Editor
     {
         
         
-        public static GameObject[] GetAllMeshObjectsInLayer(LayerMask p_layer)
+        public static GameObject[] GetAllGameObjectsInLayer(LayerMask p_layer)
         {
-            var filters = GameObject.FindObjectsOfType<MeshFilter>();
+            var filters = GameObject.FindObjectsOfType<GameObject>();
             var result = new List<GameObject>();
             
             foreach (var filter in filters)
@@ -27,9 +27,9 @@ namespace InstancePainter.Editor
             return result.ToArray();
         }
         
-        public static GameObject[] GetAllMeshObjectsInLayers(LayerMask[] p_layers)
+        public static GameObject[] GetAllGameObjectsInLayers(LayerMask[] p_layers)
         {
-            var filters = GameObject.FindObjectsOfType<MeshFilter>();
+            var filters = GameObject.FindObjectsOfType<GameObject>();
             var result = new List<GameObject>();
             
             foreach (var filter in filters)
@@ -47,10 +47,10 @@ namespace InstancePainter.Editor
             return result.ToArray();
         }
         
-        public static MeshFilter[] GetAllMeshFiltersInLayers(LayerMask[] p_layers)
+        public static T[] GetAllComponentsInLayers<T>(LayerMask[] p_layers) where T : Component
         {
-            var filters = GameObject.FindObjectsOfType<MeshFilter>();
-            var result = new List<MeshFilter>();
+            var filters = GameObject.FindObjectsOfType<T>();
+            var result = new List<T>();
             
             foreach (var filter in filters)
             {

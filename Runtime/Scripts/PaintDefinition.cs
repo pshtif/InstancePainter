@@ -8,9 +8,12 @@ using UnityEngine;
 
 namespace InstancePainter.Runtime
 {
+    [CreateAssetMenuAttribute(fileName = "PaintDefinition", menuName = "Instance Painter/Create Paint Definition", order = 0)]
     [Serializable]
-    public class PaintDefinition
+    public class PaintDefinition : ScriptableObject
     {
+        public bool enabled = true;
+        
         public GameObject prefab;
         public Material material;
 
@@ -27,5 +30,7 @@ namespace InstancePainter.Runtime
         public Vector3 positionOffset = Vector3.zero;
         public Vector3 rotationOffset = Vector3.zero;
         public Vector3 scaleOffset = Vector3.one;
+
+        public bool minimized = false;
     }
 }

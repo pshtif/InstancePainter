@@ -225,7 +225,25 @@ namespace InstancePainter.Editor
         
         public override void DrawSceneGUI(SceneView p_sceneView)
         {
+            var rect = p_sceneView.camera.GetScaledPixelRect();
+            GUILayout.BeginArea(new Rect(rect.width / 2 - 500, 65, 1000, 85));
+            GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
             
+            GUILayout.Label(" Left Button: ", Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
+            GUILayout.Label("Modify by Painting ", Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
+            GUILayout.Space(8);
+
+            GUILayout.Label(" Ctrl + Left Button(HOLD): ", Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
+            GUILayout.Label("Modify in Place ", Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
+            GUILayout.Space(8);
+            
+            GUILayout.Label(" Ctrl + Mouse Wheel: ", Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
+            GUILayout.Label("Brush Size ", Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
+            
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+            GUILayout.EndArea();
         }
 
         public override void DrawInspectorGUI()

@@ -55,6 +55,31 @@ namespace InstancePainter.Editor
             return true;
         }
 
+        public static bool Raycast(Ray p_ray, Collider[] p_colliders, out RaycastHit p_hit)
+        {
+            p_hit = new RaycastHit();
+            float minT = Mathf.Infinity;
+
+            foreach (Collider collider in p_colliders)
+            {
+                RaycastHit localHit;
+                
+                if (collider.Raycast(p_ray, out localHit, Mathf.Infinity))
+                {
+                    if (localHit.distance < minT)
+                    {
+                        p_hit = localHit;
+                        minT = p_hit.distance;
+                    }
+                }
+            }
+
+            if (minT == Mathf.Infinity)
+                return false;
+
+            return true;
+        }
+
         private static bool Raycast(Ray p_ray, Mesh p_mesh, Matrix4x4 p_matrix, out RaycastHit p_hit)
         {
             if (_internalRaycast == null) CacheUnityInternalCall();
@@ -65,82 +90,82 @@ namespace InstancePainter.Editor
             return result;
         }
         
-        public static bool RaycastWorld(Vector2 p_position, out RaycastHit p_hit, out Transform p_transform,
-            out Mesh p_mesh)
-        {
-            p_hit = new RaycastHit();
-            p_transform = null;
-            p_mesh = null;
-
-            GameObject picked = HandleUtility.PickGameObject(p_position, false);
-            if (!picked)
-                return false;
-
-            Ray mouseRay = HandleUtility.GUIPointToWorldRay(p_position);
-
-            MeshFilter[] meshFil = picked.GetComponentsInChildren<MeshFilter>();
-            float minT = Mathf.Infinity;
-            foreach (MeshFilter mf in meshFil)
-            {
-                Mesh mesh = mf.sharedMesh;
-                if (!mesh)
-                    continue;
-                RaycastHit localHit;
-
-                if (Raycast(mouseRay, mesh, mf.transform.localToWorldMatrix, out localHit))
-                {
-                    if (localHit.distance < minT)
-                    {
-                        p_hit = localHit;
-                        p_transform = mf.transform;
-                        p_mesh = mesh;
-                        minT = p_hit.distance;
-                    }
-                }
-            }
-
-            if (minT == Mathf.Infinity)
-            {
-                return false;
-            }
-
-            return true;
-        }
+        // public static bool RaycastWorld(Vector2 p_position, out RaycastHit p_hit, out Transform p_transform,
+        //     out Mesh p_mesh)
+        // {
+        //     p_hit = new RaycastHit();
+        //     p_transform = null;
+        //     p_mesh = null;
+        //
+        //     GameObject picked = HandleUtility.PickGameObject(p_position, false);
+        //     if (!picked)
+        //         return false;
+        //
+        //     Ray mouseRay = HandleUtility.GUIPointToWorldRay(p_position);
+        //
+        //     MeshFilter[] meshFil = picked.GetComponentsInChildren<MeshFilter>();
+        //     float minT = Mathf.Infinity;
+        //     foreach (MeshFilter mf in meshFil)
+        //     {
+        //         Mesh mesh = mf.sharedMesh;
+        //         if (!mesh)
+        //             continue;
+        //         RaycastHit localHit;
+        //
+        //         if (Raycast(mouseRay, mesh, mf.transform.localToWorldMatrix, out localHit))
+        //         {
+        //             if (localHit.distance < minT)
+        //             {
+        //                 p_hit = localHit;
+        //                 p_transform = mf.transform;
+        //                 p_mesh = mesh;
+        //                 minT = p_hit.distance;
+        //             }
+        //         }
+        //     }
+        //
+        //     if (minT == Mathf.Infinity)
+        //     {
+        //         return false;
+        //     }
+        //
+        //     return true;
+        // }
         
-        public static bool RaycastWorld(Vector2 p_position, out RaycastHit p_hit)
-        {
-            p_hit = new RaycastHit();
-
-            GameObject picked = HandleUtility.PickGameObject(p_position, false);
-            if (!picked)
-                return false;
-
-            Ray mouseRay = HandleUtility.GUIPointToWorldRay(p_position);
-
-            MeshFilter[] meshFil = picked.GetComponentsInChildren<MeshFilter>();
-            float minT = Mathf.Infinity;
-            foreach (MeshFilter mf in meshFil)
-            {
-                Mesh mesh = mf.sharedMesh;
-                if (!mesh)
-                    continue;
-                RaycastHit localHit;
-
-                if (Raycast(mouseRay, mesh, mf.transform.localToWorldMatrix, out localHit))
-                {
-                    if (localHit.distance < minT)
-                    {
-                        p_hit = localHit;
-                        minT = p_hit.distance;
-                    }
-                }
-            }
-
-            if (minT == Mathf.Infinity)
-                return false;
-
-            return true;
-        }
+        // public static bool RaycastWorld(Vector2 p_position, out RaycastHit p_hit)
+        // {
+        //     p_hit = new RaycastHit();
+        //
+        //     GameObject picked = HandleUtility.PickGameObject(p_position, false);
+        //     if (!picked)
+        //         return false;
+        //
+        //     Ray mouseRay = HandleUtility.GUIPointToWorldRay(p_position);
+        //
+        //     MeshFilter[] meshFil = picked.GetComponentsInChildren<MeshFilter>();
+        //     float minT = Mathf.Infinity;
+        //     foreach (MeshFilter mf in meshFil)
+        //     {
+        //         Mesh mesh = mf.sharedMesh;
+        //         if (!mesh)
+        //             continue;
+        //         RaycastHit localHit;
+        //
+        //         if (Raycast(mouseRay, mesh, mf.transform.localToWorldMatrix, out localHit))
+        //         {
+        //             if (localHit.distance < minT)
+        //             {
+        //                 p_hit = localHit;
+        //                 minT = p_hit.distance;
+        //             }
+        //         }
+        //     }
+        //
+        //     if (minT == Mathf.Infinity)
+        //         return false;
+        //
+        //     return true;
+        // }
 
         // Taken from Unity codebase for object raycasting in sceneview - sHTiF
         public static bool RaycastWorld(Vector2 p_position, out RaycastHit p_hit, out Transform p_transform,
@@ -151,6 +176,7 @@ namespace InstancePainter.Editor
             p_mesh = null;
 
             GameObject picked = HandleUtility.PickGameObject(p_position, false, p_ignore, p_filter);
+
             if (!picked)
                 return false;
 
@@ -176,25 +202,24 @@ namespace InstancePainter.Editor
                     }
                 }
             }
-
-            // Not needing colliders - sHTiF
-            // if (minT == Mathf.Infinity)
-            // {
-            //     Collider[] colliders = picked.GetComponentsInChildren<Collider>();
-            //     foreach (Collider col in colliders)
-            //     {
-            //         RaycastHit localHit;
-            //         if (col.Raycast(mouseRay, out localHit, Mathf.Infinity))
-            //         {
-            //             if (localHit.distance < minT)
-            //             {
-            //                 p_hit = localHit;
-            //                 p_transform = col.transform;
-            //                 minT = p_hit.distance;
-            //             }
-            //         }
-            //     }
-            // }
+            
+            if (minT == Mathf.Infinity)
+            {
+                Collider[] colliders = picked.GetComponentsInChildren<Collider>();
+                foreach (Collider col in colliders)
+                {
+                    RaycastHit localHit;
+                    if (col.Raycast(mouseRay, out localHit, Mathf.Infinity))
+                    {
+                        if (localHit.distance < minT)
+                        {
+                            p_hit = localHit;
+                            p_transform = col.transform;
+                            minT = p_hit.distance;
+                        }
+                    }
+                }
+            }
 
             if (minT == Mathf.Infinity)
             {
