@@ -2,7 +2,7 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
-Shader "PrefabPainter/InstancedIndirect"
+Shader "PrefabPainter/InstancedIndirectShadows"
 {
     Properties
     {
@@ -97,8 +97,6 @@ Shader "PrefabPainter/InstancedIndirect"
                 #endif
                 
                 float4 positionWS = mul(instanceMatrix, position);
-                positionWS = mul(UNITY_MATRIX_V, positionWS);
-                OUT.positionCS = mul(UNITY_MATRIX_P, positionWS);
 
                 Light mainLight = GetMainLight(TransformWorldToShadowCoord(positionWS));
                 
@@ -106,6 +104,9 @@ Shader "PrefabPainter/InstancedIndirect"
                 half directDiffuse = dot(normalWS, mainLight.direction);
                 half3 lighting = mainLight.color * (mainLight.shadowAttenuation * mainLight.distanceAttenuation);
                 half3 result = albedo/2 + (albedo * directDiffuse) * lighting;
+
+                positionWS = mul(UNITY_MATRIX_V, positionWS);
+                OUT.positionCS = mul(UNITY_MATRIX_P, positionWS);
                 
                 OUT.color = result * _colorBuffer[instanceID] * IN.color.xyz;
 

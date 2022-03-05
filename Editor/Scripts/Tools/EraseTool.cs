@@ -10,11 +10,11 @@ using UnityEngine;
 
 namespace InstancePainter.Editor
 {
-    public class EraseTool
+    public class EraseTool : ToolBase
     {
-        private static int _undoId;
+        private int _undoId;
 
-        public static void Handle(RaycastHit p_hit)
+        protected override void HandleInternal(RaycastHit p_hit)
         {
             DrawHandle(p_hit.point, p_hit.normal, InstancePainterEditorCore.Config.brushSize);
             
@@ -47,7 +47,7 @@ namespace InstancePainter.Editor
             Handles.DrawWireDisc(p_position, p_normal, p_size);
         }
 
-        public static void Erase(RaycastHit p_hit)
+        public void Erase(RaycastHit p_hit)
         {
             List<InstancePainterRenderer> invalidateRenderers = new List<InstancePainterRenderer>();
             
@@ -74,5 +74,16 @@ namespace InstancePainter.Editor
             invalidateRenderers.ForEach(r => r.Invalidate());
         }
 
+        public override void DrawSceneGUI(SceneView p_sceneView)
+        {
+            
+        }
+
+        public override void DrawInspectorGUI()
+        {
+            EditorGUILayout.LabelField("Erase Tool", Config.Skin.GetStyle("tooltitle"), GUILayout.Height(24));
+            
+            Config.brushSize = EditorGUILayout.Slider("Erase Size", Config.brushSize, 0.1f, 100);
+        }
     }
 }

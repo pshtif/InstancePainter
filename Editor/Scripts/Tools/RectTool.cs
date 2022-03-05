@@ -18,23 +18,21 @@ namespace InstancePainter.Editor
         NONE
     }
 
-    public class RectTool
+    public class RectTool : ToolBase
     {
-        static public InstancePainterEditorConfig Config => InstancePainterEditorCore.Config;
-        
-        private static int _undoId;
-        private static int _selectedSubmesh;
+        private int _undoId;
+        private int _selectedSubmesh;
 
-        private static Vector3 _lastPaintPosition;
-        private static Vector2 _paintStartMousePosition;
-        private static RaycastHit _paintStartHit;
+        private Vector3 _lastPaintPosition;
+        private Vector2 _paintStartMousePosition;
+        private RaycastHit _paintStartHit;
 
-        private static float _currentScale = 1;
-        private static float _currentRotation = 0;
-        private static List<PaintInstance> _paintedInstances = new List<PaintInstance>();
-        private static RectToolState _state = RectToolState.NONE;
+        private float _currentScale = 1;
+        private float _currentRotation = 0;
+        private List<PaintedInstance> _paintedInstances = new List<PaintedInstance>();
+        private RectToolState _state = RectToolState.NONE;
         
-        public static void Handle(RaycastHit p_hit)
+        protected override void HandleInternal(RaycastHit p_hit)
         {
             switch (_state)
             {
@@ -87,7 +85,7 @@ namespace InstancePainter.Editor
             }
         }
 
-        static void DrawRectHandle(Vector3 p_position, Vector3 p_normal)
+        void DrawRectHandle(Vector3 p_position, Vector3 p_normal)
         {
             Vector3[] verts = new Vector3[]
             {
@@ -104,7 +102,7 @@ namespace InstancePainter.Editor
             //Handles.DrawWireDisc(p_position, p_normal, p_size);
         }
         
-        static void DrawStartHandle(Vector3 p_position, Vector3 p_normal)
+        void DrawStartHandle(Vector3 p_position, Vector3 p_normal)
         {
             var offset = Event.current.mousePosition - _paintStartMousePosition;
             
@@ -115,7 +113,7 @@ namespace InstancePainter.Editor
             Handles.ConeHandleCap(0, p_position + Vector3.up * gizmoSize/2, Quaternion.LookRotation(Vector3.down), gizmoSize, EventType.Repaint);
         }
 
-        static void Erase(Vector3 p_startPoint, Vector3 p_endPoint)
+        void Erase(Vector3 p_startPoint, Vector3 p_endPoint)
         {
             var minX = Math.Min(p_startPoint.x, p_endPoint.x);
             var maxX = Math.Max(p_startPoint.x, p_endPoint.x);
@@ -151,7 +149,7 @@ namespace InstancePainter.Editor
             invalidateRenderers.ForEach(r => r.Invalidate());
         }
 
-        static void Fill(Vector3 p_startPoint, Vector3 p_endPoint)
+        void Fill(Vector3 p_startPoint, Vector3 p_endPoint)
         {
             var validMeshes = Config.includeLayers.Count == 0
                 ? GameObject.FindObjectsOfType<MeshFilter>()
@@ -169,14 +167,34 @@ namespace InstancePainter.Editor
 
             for (int i = 0; i < Config.density; i++)
             {
-                var renderer = InstancePainterEditorCore.PaintInstance(new Vector3(Random.Range(minX, maxX), p_startPoint.y, Random.Range(minZ, maxZ)), validMeshes, _paintedInstances);
-                if (renderer != null && !invalidateRenderers.Contains(renderer))
-                    invalidateRenderers.Add(renderer);
+                var renderers = InstancePainterEditorCore.PaintInstance(new Vector3(Random.Range(minX, maxX), p_startPoint.y, Random.Range(minZ, maxZ)), validMeshes, _paintedInstances);
+                
+                foreach (var renderer in renderers)
+                {
+                    if (!invalidateRenderers.Contains(renderer))
+                        invalidateRenderers.Add(renderer);
+                }
             }
             
             invalidateRenderers.ForEach(r => r.Invalidate());
             
             EditorUtility.ClearProgressBar();
+        }
+        
+        public override void DrawSceneGUI(SceneView p_sceneView)
+        {
+            
+        }
+        
+        public override void DrawInspectorGUI()
+        {
+            EditorGUILayout.LabelField("Rect Tool", Config.Skin.GetStyle("tooltitle"), GUILayout.Height(24));
+            
+            Config.density = EditorGUILayout.IntField("Density", Config.density);
+            
+            Config.minimalDistance = EditorGUILayout.FloatField("Minimal Distance", Config.minimalDistance);
+
+            Config.maximumSlope = EditorGUILayout.Slider("Maximum Slope", Config.maximumSlope, 0, 90);
         }
     }
 }

@@ -17,25 +17,23 @@ namespace InstancePainter.Editor
         NONE
     }
 
-    public class PaintTool
+    public class PaintTool : ToolBase
     {
-        static public InstancePainterEditorConfig Config => InstancePainterEditorCore.Config;
-        
-        private static int _undoId;
-        private static int _selectedSubmesh;
+        private int _undoId;
+        private int _selectedSubmesh;
 
-        private static Vector3 _lastPaintPosition;
-        private static Vector2 _paintStartMousePosition;
-        private static RaycastHit _paintStartHit;
+        private Vector3 _lastPaintPosition;
+        private Vector2 _paintStartMousePosition;
+        private RaycastHit _paintStartHit;
 
-        private static float _currentScale = 1;
-        private static float _currentRotation = 0;
-        private static List<PaintInstance> _paintedInstances = new List<PaintInstance>();
-        private static PaintToolState _state = PaintToolState.NONE;
+        private float _currentScale = 1;
+        private float _currentRotation = 0;
+        private List<PaintedInstance> _paintedInstances = new List<PaintedInstance>();
+        private PaintToolState _state = PaintToolState.NONE;
 
         private static MeshFilter[] _cachedValidMeshes;
         
-        public static void Handle(RaycastHit p_hit)
+        protected override void HandleInternal(RaycastHit p_hit)
         {
             switch (_state)
             {
@@ -102,7 +100,7 @@ namespace InstancePainter.Editor
             }
         }
 
-        static void DrawPaintHandle(Vector3 p_position, Vector3 p_normal, float p_size)
+        void DrawPaintHandle(Vector3 p_position, Vector3 p_normal, float p_size)
         {
             Handles.color = new Color(0,1,0,.2f);
             Handles.DrawSolidDisc(p_position, p_normal, p_size);
@@ -110,7 +108,7 @@ namespace InstancePainter.Editor
             Handles.DrawWireDisc(p_position, p_normal, p_size);
         }
         
-        static void DrawUpdateHandle(Vector3 p_position, Vector3 p_normal, float p_size)
+        void DrawUpdateHandle(Vector3 p_position, Vector3 p_normal, float p_size)
         {
             var offset = Event.current.mousePosition - _paintStartMousePosition;
             
@@ -125,7 +123,7 @@ namespace InstancePainter.Editor
             Handles.DrawWireDisc(p_position, p_normal, p_size + p_size * offset.y/10);
         }
 
-        static void Update()
+        void Update()
         {
             var offset = Event.current.mousePosition - _paintStartMousePosition;
 
@@ -157,7 +155,7 @@ namespace InstancePainter.Editor
             renderers.ForEach(r => r.Invalidate());
         }
         
-        static void Paint(RaycastHit p_hit, MeshFilter[] p_validMeshes)
+        void Paint(RaycastHit p_hit, MeshFilter[] p_validMeshes)
         {
             if (Vector3.Distance(_lastPaintPosition, p_hit.point) <= 0.1f)
                 return;
@@ -168,10 +166,13 @@ namespace InstancePainter.Editor
             
             if (Config.density == 1)
             {
-                var renderer = InstancePainterEditorCore.PaintInstance(p_hit.point, p_validMeshes, _paintedInstances);
-                
-                if (renderer != null && !invalidateRenderers.Contains(renderer))
-                    invalidateRenderers.Add(renderer);
+                var renderers = InstancePainterEditorCore.PaintInstance(p_hit.point, p_validMeshes, _paintedInstances);
+
+                foreach (var renderer in renderers)
+                {
+                    if (!invalidateRenderers.Contains(renderer))
+                        invalidateRenderers.Add(renderer);
+                }
             }
             else
             {
@@ -181,17 +182,20 @@ namespace InstancePainter.Editor
                     Vector3 position = direction * Random.Range(0, Config.brushSize) +
                                        p_hit.point;
 
-                    var renderer = InstancePainterEditorCore.PaintInstance(position, p_validMeshes, _paintedInstances);
+                    var renderers = InstancePainterEditorCore.PaintInstance(position, p_validMeshes, _paintedInstances);
                     
-                    if (renderer != null && !invalidateRenderers.Contains(renderer))
-                        invalidateRenderers.Add(renderer);
+                    foreach (var renderer in renderers)
+                    {
+                        if (!invalidateRenderers.Contains(renderer))
+                            invalidateRenderers.Add(renderer);
+                    }
                 }
             }
             
             invalidateRenderers.ForEach(r => r.Invalidate());
         }
 
-        static void Colorize(RaycastHit p_hit, MeshFilter[] p_validMeshes)
+        void Colorize(RaycastHit p_hit, MeshFilter[] p_validMeshes)
         {
             List<InstancePainterRenderer> invalidateRenderers = new List<InstancePainterRenderer>();
             
@@ -213,6 +217,28 @@ namespace InstancePainter.Editor
             }
             
             invalidateRenderers.ForEach(r => r.Invalidate());
+        }
+        
+        public override void DrawSceneGUI(SceneView p_sceneView)
+        {
+            
+        }
+
+        public override void DrawInspectorGUI()
+        {
+            EditorGUILayout.LabelField("Paint Tool", Config.Skin.GetStyle("tooltitle"), GUILayout.Height(24));
+        
+            Config.brushSize = EditorGUILayout.Slider("Brush Size", Config.brushSize, 0.1f, 100);
+        
+            Config.color = EditorGUILayout.ColorField("Color", Config.color);
+
+            Config.density = EditorGUILayout.IntField("Density", Config.density);
+            
+            Config.minimalDistance = EditorGUILayout.FloatField("Minimal Distance", Config.minimalDistance);
+
+            Config.maximumSlope = EditorGUILayout.Slider("Maximum Slope", Config.maximumSlope, 0, 90);
+            
+            InstancePainterEditor.Instance.Repaint();
         }
     }
 }

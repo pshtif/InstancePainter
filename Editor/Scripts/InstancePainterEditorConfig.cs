@@ -15,11 +15,11 @@ namespace InstancePainter.Editor
     [Serializable]
     public class InstancePainterEditorConfig : ScriptableObject
     {
+        public GUISkin Skin => (GUISkin)Resources.Load("Skins/InstancePainterSkin");
+        
         public Transform target;
         
         public bool enabled = false;
-
-        public ToolType toolType;
         
         [Range(1,100)]
         public float brushSize = 1;

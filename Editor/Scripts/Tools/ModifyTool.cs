@@ -18,21 +18,19 @@ namespace InstancePainter.Editor
         NONE
     }
     
-    public class ModifyTool
+    public class ModifyTool : ToolBase
     {
-        static public InstancePainterEditorConfig Config => InstancePainterEditorCore.Config;
+        private int _undoId;
         
-        private static int _undoId;
-        
-        public static List<PaintInstance> AlreadyModified { get; } = new List<PaintInstance>(); 
-        private static List<PaintInstance> _modifyInstances = new List<PaintInstance>();
+        public List<PaintedInstance> AlreadyModified { get; } = new List<PaintedInstance>(); 
+        private List<PaintedInstance> _modifyInstances = new List<PaintedInstance>();
 
-        private static Vector2 _modifyStartMousePosition;
-        private static RaycastHit _modifyStartHit;
+        private Vector2 _modifyStartMousePosition;
+        private RaycastHit _modifyStartHit;
         
-        private static ModifyToolState _state;
+        private ModifyToolState _state;
         
-        public static void Handle(RaycastHit p_hit)
+        protected override void HandleInternal(RaycastHit p_hit)
         {
             if (Event.current.type == EventType.MouseDown)
                 AlreadyModified.Clear();
@@ -101,7 +99,7 @@ namespace InstancePainter.Editor
             }
         }
 
-        public static void Modify(RaycastHit p_hit)
+        public void Modify(RaycastHit p_hit)
         {
             GetHitInstances(p_hit);
             
@@ -124,7 +122,7 @@ namespace InstancePainter.Editor
             renderers.ForEach(r => r.Invalidate());
         }
 
-        public static void GetHitInstances(RaycastHit p_hit)
+        public void GetHitInstances(RaycastHit p_hit)
         {
             _modifyInstances.Clear();
 
@@ -134,14 +132,14 @@ namespace InstancePainter.Editor
                 {
                     if (Vector3.Distance(p_hit.point, m.GetColumn(3)) < Config.brushSize)
                     {
-                        var instance = new PaintInstance(r, m, r.matrixData.IndexOf(m), null);
+                        var instance = new PaintedInstance(r, m, r.matrixData.IndexOf(m), null);
                         _modifyInstances.Add(instance);
                     }
                 });
             });
         } 
         
-        static void ModifyInPlace()
+        void ModifyInPlace()
         {
             var offset = Event.current.mousePosition - _modifyStartMousePosition;
 
@@ -174,7 +172,7 @@ namespace InstancePainter.Editor
             renderers.ForEach(r => r.Invalidate());
         }
         
-        static void ModifyPosition(RaycastHit p_hit)
+        void ModifyPosition(RaycastHit p_hit)
         {
             var offset = p_hit.point - _modifyStartHit.point;
 
@@ -202,7 +200,7 @@ namespace InstancePainter.Editor
             renderers.ForEach(r => r.Invalidate());
         }
         
-        static void DrawModifyHandle(Vector3 p_position, Vector3 p_normal, float p_size)
+        void DrawModifyHandle(Vector3 p_position, Vector3 p_normal, float p_size)
         {
             Handles.color = new Color(0,0,1,.2f);
             Handles.DrawSolidDisc(p_position, p_normal, p_size);
@@ -210,7 +208,7 @@ namespace InstancePainter.Editor
             Handles.DrawWireDisc(p_position, p_normal, p_size);
         }
         
-        static void DrawModifyInPlaceHandle(Vector3 p_position, Vector3 p_normal, float p_size)
+        void DrawModifyInPlaceHandle(Vector3 p_position, Vector3 p_normal, float p_size)
         {
             var offset = Event.current.mousePosition - _modifyStartMousePosition;
             
@@ -223,6 +221,28 @@ namespace InstancePainter.Editor
             Handles.DrawSolidDisc(p_position, p_normal, p_size);
             Handles.color = Color.white;
             Handles.DrawWireDisc(p_position, p_normal, p_size + p_size * offset.y/10);
+        }
+        
+        public override void DrawSceneGUI(SceneView p_sceneView)
+        {
+            
+        }
+
+        public override void DrawInspectorGUI()
+        {
+            EditorGUILayout.LabelField("Modify Tool", Config.Skin.GetStyle("tooltitle"), GUILayout.Height(24));
+        
+            var style = new GUIStyle();
+            style.normal.background = TextureUtils.GetColorTexture(new Color(.1f, .1f, .1f));
+            style.normal.textColor = new Color(1, 0.5f, 0);
+            style.fontStyle = FontStyle.Bold;
+            style.alignment = TextAnchor.MiddleCenter;
+            style.fontSize = 14;
+        
+            Config.brushSize = EditorGUILayout.Slider("Brush Size", Config.brushSize, 0.1f, 100);
+
+            Config.modifyPosition = EditorGUILayout.Vector3Field("Modify Position", Config.modifyPosition);
+            Config.modifyScale = EditorGUILayout.Vector3Field("Modify Scale", Config.modifyScale);
         }
     }
 }

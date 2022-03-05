@@ -16,11 +16,11 @@ namespace InstancePainter.Runtime
         {
             get
             {
-                return new Material(Shader.Find("PrefabPainter/InstancedIndirectNoShadows"));
+                return new Material(Shader.Find("InstancePainter/InstancedIndirectShadows"));
             }
         }
         
-        public Material instanceMaterial;
+        public Material _material;
         public Mesh mesh;
         
         [HideInInspector]
@@ -29,6 +29,8 @@ namespace InstancePainter.Runtime
         [HideInInspector]
         public List<Vector4> colorData;
 
+        private MaterialPropertyBlock _propertyBlock;
+        
         private ComputeBuffer _colorBuffer;
         private ComputeBuffer _matrixBuffer;
         private ComputeBuffer[] _drawIndirectBuffers;
@@ -51,13 +53,13 @@ namespace InstancePainter.Runtime
 
         public void Invalidate(List<Matrix4x4> p_matrixData = null, List<Vector4> p_colorData = null)
         {
-            if (instanceMaterial == null)
+            if (_material == null)
             {
-                instanceMaterial = DefaultInstanceMaterial;
+                _material = DefaultInstanceMaterial;
             }
 
-            instanceMaterial.SetVector("_PivotPosWS", transform.position);
-            instanceMaterial.SetVector("_BoundSize", new Vector2(transform.localScale.x, transform.localScale.z));
+            _material.SetVector("_PivotPosWS", transform.position);
+            _material.SetVector("_BoundSize", new Vector2(transform.localScale.x, transform.localScale.z));
 
             int count = matrixData.Count;
 
@@ -83,8 +85,12 @@ namespace InstancePainter.Runtime
             _matrixBuffer = new ComputeBuffer(count, sizeof(float) * 16);
             _matrixBuffer.SetData(p_matrixData != null ? p_matrixData : matrixData);
 
-            instanceMaterial.SetBuffer("_colorBuffer", _colorBuffer);
-            instanceMaterial.SetBuffer("_matrixBuffer", _matrixBuffer);
+            _propertyBlock = new MaterialPropertyBlock();
+            _propertyBlock.SetBuffer("_colorBuffer", _colorBuffer);
+            _propertyBlock.SetBuffer("_matrixBuffer", _matrixBuffer);
+            //_material.SetBuffer("_colorBuffer", _colorBuffer);
+            //_material.SetBuffer("_matrixBuffer", _matrixBuffer);
+            
             
             _indirectArgs = new uint[5] { 0, 0, 0, 0, 0 };
 
@@ -105,9 +111,11 @@ namespace InstancePainter.Runtime
 
             Bounds renderBound = new Bounds();
             renderBound.SetMinMax(new Vector3(-1000, -1000, -1000), new Vector3(1000, 1000, 1000));
+            
             for (int i = 0; i < mesh.subMeshCount; i++)
             {
-                Graphics.DrawMeshInstancedIndirect(mesh, i, instanceMaterial, renderBound, _drawIndirectBuffers[i]);
+                Graphics.DrawMeshInstancedIndirect(mesh, i, _material, renderBound, _drawIndirectBuffers[i], 0,
+                    _propertyBlock);
             }
         }
 
@@ -131,7 +139,8 @@ namespace InstancePainter.Runtime
             
             for (int i = 0; i < mesh.subMeshCount; i++)
             {
-                Graphics.DrawMeshInstancedIndirect(mesh, i, instanceMaterial, renderBound, _drawIndirectBuffers[i]);
+                Graphics.DrawMeshInstancedIndirect(mesh, i, _material, renderBound, _drawIndirectBuffers[i], 0,
+                    _propertyBlock);
             }
         }
 

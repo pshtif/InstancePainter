@@ -18,6 +18,8 @@ namespace InstancePainter.Editor
         
         public GUISkin Skin => (GUISkin)Resources.Load("Skins/InstancePainterSkin");
 
+        private Vector2 _scrollPosition;
+
         public static InstancePainterEditor Instance { get; private set; } 
         
         public static InstancePainterEditor InitEditorWindow()
@@ -42,6 +44,8 @@ namespace InstancePainter.Editor
             style.alignment = TextAnchor.MiddleCenter;
             style.fontSize = 14;
 
+            _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
+
             EditorGUILayout.LabelField("Instance Painter Editor", style, GUILayout.Height(28));
             GUILayout.Space(4);
 
@@ -52,81 +56,14 @@ namespace InstancePainter.Editor
             }
             GUILayout.Space(4);
             GUI.color = Color.white;
-
-            //Config.toolType = (ToolType)EditorGUILayout.EnumPopup("Brush Type", Config.toolType);
-
-            switch (Config.toolType)
-            {
-                case ToolType.PAINT:
-                    DrawPaintGUI();
-                    break;
-                case ToolType.ERASE:
-                    DrawEraseGUI();
-                    break;
-                case ToolType.MODIFY:
-                    DrawModifyGUI();
-                    break;
-                case ToolType.RECT:
-                    DrawRectGUI();
-                    break;
-            }
-
-        }
+            
+            DrawPaintDefinitionsGUI();
         
-        void DrawModifyGUI() 
-        {
-            EditorGUILayout.LabelField("Modify Tool", Skin.GetStyle("tooltitle"), GUILayout.Height(24));
-            
-            var style = new GUIStyle();
-            style.normal.background = TextureUtils.GetColorTexture(new Color(.1f, .1f, .1f));
-            style.normal.textColor = new Color(1, 0.5f, 0);
-            style.fontStyle = FontStyle.Bold;
-            style.alignment = TextAnchor.MiddleCenter;
-            style.fontSize = 14;
-            
-            Config.brushSize = EditorGUILayout.Slider("Brush Size", Config.brushSize, 0.1f, 100);
-
-            Config.modifyPosition = EditorGUILayout.Vector3Field("Modify Position", Config.modifyPosition);
-            Config.modifyScale = EditorGUILayout.Vector3Field("Modify Scale", Config.modifyScale);
-        }
-
-        public void DrawPaintGUI()
-        {
-            EditorGUILayout.LabelField("Paint Tool", Skin.GetStyle("tooltitle"), GUILayout.Height(24));
-            
-            Config.brushSize = EditorGUILayout.Slider("Brush Size", Config.brushSize, 0.1f, 100);
-            
-            Config.color = EditorGUILayout.ColorField("Color", Config.color);
-
-            Config.density = EditorGUILayout.IntField("Density", Config.density);
-                
-            Config.minimalDistance = EditorGUILayout.FloatField("Minimal Distance", Config.minimalDistance);
-
-            Config.maximumSlope = EditorGUILayout.Slider("Maximum Slope", Config.maximumSlope, 0, 90);
-
-            DrawPaintDefinitionsGUI();
-            
             DrawLayersGUI();
-        }
 
-        public void DrawEraseGUI()
-        {
-            EditorGUILayout.LabelField("Erase Tool", Skin.GetStyle("tooltitle"), GUILayout.Height(24));
-            
-            Config.brushSize = EditorGUILayout.Slider("Erase Size", Config.brushSize, 0.1f, 100);
-        }
+            InstancePainterEditorCore.CurrentTool?.DrawInspectorGUI();
 
-        public void DrawRectGUI()
-        {
-            EditorGUILayout.LabelField("Rect Tool", Skin.GetStyle("tooltitle"), GUILayout.Height(24));
-            
-            Config.density = EditorGUILayout.IntField("Density", Config.density);
-            
-            Config.minimalDistance = EditorGUILayout.FloatField("Minimal Distance", Config.minimalDistance);
-
-            Config.maximumSlope = EditorGUILayout.Slider("Maximum Slope", Config.maximumSlope, 0, 90);
-
-            DrawPaintDefinitionsGUI();
+            EditorGUILayout.EndScrollView();
         }
 
         void DrawPaintDefinitionsGUI()
@@ -169,7 +106,7 @@ namespace InstancePainter.Editor
             var rect = GUILayoutUtility.GetLastRect();
             if (GUI.Button(new Rect(rect.x+rect.width-18, rect.y+2, 16, 16), IconManager.GetIcon("remove_icon"), Skin.GetStyle("removebutton")))
             {
-                Config.paintDefinitions.Remove(p_paintDefinition);
+                //Config.paintDefinitions.Remove(p_paintDefinition);
                 return true;
             }
             GUILayout.EndHorizontal();
