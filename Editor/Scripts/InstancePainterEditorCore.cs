@@ -122,7 +122,9 @@ namespace InstancePainter.Editor
 
             p_position = hit.point;
             float slope = 0;
-            
+
+            // Bug in Unity code normal is not always normalized
+            hit.normal = hit.normal.normalized;
             if (hit.normal != Vector3.up)
             {
                 var project = Vector3.ProjectOnPlane(hit.normal, Vector3.up);
@@ -135,7 +137,7 @@ namespace InstancePainter.Editor
             PaintDefinition paintDefinition = GetWeightedDefinition();
             if (paintDefinition == null)
                 return paintedRenderers.ToArray();
-
+            
             // Do proximity check
             if (Config.minimalDistance > 0)
             {

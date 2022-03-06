@@ -16,6 +16,8 @@ namespace InstancePainter.Editor
 
         protected override void HandleInternal(RaycastHit p_hit)
         {
+            InstancePainterEditorCore.CheckValidTarget();
+            
             DrawHandle(p_hit.point, p_hit.normal, InstancePainterEditorCore.Config.brushSize);
             
             if (Event.current.button == 0 && !Event.current.alt && Event.current.type == EventType.MouseDown)
@@ -54,7 +56,7 @@ namespace InstancePainter.Editor
             var renderers = InstancePainterEditorCore.Config.target.GetComponents<InstancePainterRenderer>();
             foreach (InstancePainterRenderer renderer in renderers)
             {
-                if (renderer.Definitions.Count == 0 || !IsActiveDefinition(renderer.Definitions[0]))
+                if (renderer.Definitions.Count == 0 || (!IsActiveDefinition(renderer.Definitions[0]) && Config.eraseActiveDefinition))
                     continue;
                 
                 for (int i = 0; i<renderer.matrixData.Count; i++)
