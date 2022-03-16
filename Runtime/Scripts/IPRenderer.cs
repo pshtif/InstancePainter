@@ -10,13 +10,14 @@ using UnityEngine;
 namespace InstancePainter.Runtime
 {
     [ExecuteAlways]
-    public class InstancePainterRenderer : MonoBehaviour
+    public class IPRenderer : MonoBehaviour
     {
+        public int a = 5;
         public Material DefaultInstanceMaterial
         {
             get
             {
-                return new Material(Shader.Find("InstancePainter/InstancedIndirectShadows"));
+                return new Material(Shader.Find("Instance Painter/InstancedIndirectShadows"));
             }
         }
         
@@ -43,7 +44,7 @@ namespace InstancePainter.Runtime
         public bool enableEditorPreview = true;
 
         [HideInInspector]
-        public List<PaintDefinition> Definitions = new List<PaintDefinition>();
+        public List<InstanceDefinition> Definitions = new List<InstanceDefinition>();
         #endif
 
         public void Start()

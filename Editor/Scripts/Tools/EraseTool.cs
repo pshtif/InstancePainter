@@ -14,17 +14,15 @@ namespace InstancePainter.Editor
     {
         private int _undoId;
 
-        protected override void HandleInternal(RaycastHit p_hit)
+        protected override void HandleMouseHitInternal(RaycastHit p_hit)
         {
-            InstancePainterEditorCore.CheckValidTarget();
-            
-            DrawHandle(p_hit.point, p_hit.normal, InstancePainterEditorCore.Config.brushSize);
+            DrawHandle(p_hit.point, p_hit.normal, Core.Config.brushSize);
             
             if (Event.current.button == 0 && !Event.current.alt && Event.current.type == EventType.MouseDown)
             {
                 Undo.IncrementCurrentGroup();
                 Undo.SetCurrentGroupName("Erase Instances");
-                Undo.RegisterCompleteObjectUndo(InstancePainterEditorCore.Config.target.GetComponents<InstancePainterRenderer>(), "Record Renderers");
+                Undo.RegisterCompleteObjectUndo(Core.RendererObject.GetComponents<IPRenderer>(), "Record Renderers");
                 _undoId = Undo.GetCurrentGroup();
             }
             
@@ -51,18 +49,18 @@ namespace InstancePainter.Editor
 
         public void Erase(RaycastHit p_hit)
         {
-            List<InstancePainterRenderer> invalidateRenderers = new List<InstancePainterRenderer>();
+            List<IPRenderer> invalidateRenderers = new List<IPRenderer>();
             
-            var renderers = InstancePainterEditorCore.Config.target.GetComponents<InstancePainterRenderer>();
-            foreach (InstancePainterRenderer renderer in renderers)
+            var renderers = Core.RendererObject.GetComponents<IPRenderer>();
+            foreach (IPRenderer renderer in renderers)
             {
-                if (renderer.Definitions.Count == 0 || (!IsActiveDefinition(renderer.Definitions[0]) && Config.eraseActiveDefinition))
+                if (renderer.Definitions.Count == 0 || (!IsActiveDefinition(renderer.Definitions[0]) && Core.Config.eraseActiveDefinition))
                     continue;
                 
                 for (int i = 0; i<renderer.matrixData.Count; i++)
                 {
                     var position = renderer.matrixData[i].GetColumn(3);
-                    if (Vector3.Distance(position, p_hit.point) < InstancePainterEditorCore.Config.brushSize)
+                    if (Vector3.Distance(position, p_hit.point) < Core.Config.brushSize)
                     {
                         renderer.matrixData.RemoveAt(i);
                         renderer.colorData.RemoveAt(i);
@@ -79,9 +77,9 @@ namespace InstancePainter.Editor
             invalidateRenderers.ForEach(r => r.Invalidate());
         }
 
-        private bool IsActiveDefinition(PaintDefinition p_definition)
+        private bool IsActiveDefinition(InstanceDefinition p_definition)
         {
-            foreach (var definition in Config.paintDefinitions)
+            foreach (var definition in Core.Config.paintDefinitions)
             {
                 if (definition == null || !definition.enabled)
                     continue;
@@ -100,8 +98,8 @@ namespace InstancePainter.Editor
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
 
-            GUILayout.Label(" Ctrl + Mouse Wheel: ", Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
-            GUILayout.Label("Brush Size ", Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
+            GUILayout.Label(" Ctrl + Mouse Wheel: ", Core.Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
+            GUILayout.Label("Brush Size ", Core.Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
             
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
@@ -110,11 +108,11 @@ namespace InstancePainter.Editor
 
         public override void DrawInspectorGUI()
         {
-            EditorGUILayout.LabelField("Erase Tool", Config.Skin.GetStyle("tooltitle"), GUILayout.Height(24));
+            EditorGUILayout.LabelField("Erase Tool", Core.Config.Skin.GetStyle("tooltitle"), GUILayout.Height(24));
             
-            Config.brushSize = EditorGUILayout.Slider("Erase Size", Config.brushSize, 0.1f, 100);
+            Core.Config.brushSize = EditorGUILayout.Slider("Erase Size", Core.Config.brushSize, 0.1f, 100);
             
-            Config.eraseActiveDefinition = EditorGUILayout.Toggle("Erase Only Active Definition", Config.eraseActiveDefinition);
+            Core.Config.eraseActiveDefinition = EditorGUILayout.Toggle("Erase Only Active Definition", Core.Config.eraseActiveDefinition);
         }
     }
 }

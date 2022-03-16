@@ -12,8 +12,8 @@ namespace InstancePainter.Editor
         private static Mesh _mouseHitMesh;
         private static RaycastHit _mouseRaycastHit;
         private static Transform _mouseHitTransform;
-        
-        public InstancePainterEditorConfig Config => InstancePainterEditorCore.Config;
+
+        public IPEditorCore Core => IPEditorCore.Instance;
         
         public abstract void DrawSceneGUI(SceneView p_sceneView);
 
@@ -31,7 +31,7 @@ namespace InstancePainter.Editor
             if (_mouseHitTransform?.GetComponent<MeshFilter>() == null && _mouseHitTransform?.GetComponent<Collider>() == null)
                 return;
             
-            HandleInternal(_mouseRaycastHit);
+            HandleMouseHitInternal(_mouseRaycastHit);
             
             // if (Event.current.type != EventType.Layout && Event.current.type != EventType.Repaint) 
             //     Event.current.Use();
@@ -41,8 +41,8 @@ namespace InstancePainter.Editor
         {
             RaycastHit hit;
 
-            var include = LayerUtils.GetAllGameObjectsInLayers(Config.includeLayers.ToArray());
-            var exclude = LayerUtils.GetAllGameObjectsInLayers(Config.excludeLayers.ToArray());
+            var include = LayerUtils.GetAllGameObjectsInLayers(Core.Config.includeLayers.ToArray());
+            var exclude = LayerUtils.GetAllGameObjectsInLayers(Core.Config.excludeLayers.ToArray());
             
             if (EditorRaycast.RaycastWorld(Event.current.mousePosition, out hit, out _mouseHitTransform,
                 out _mouseHitMesh, exclude.Length == 0 ? null : exclude, include.Length == 0 ? null : include))
@@ -51,7 +51,7 @@ namespace InstancePainter.Editor
             }
         }
         
-        protected abstract void HandleInternal(RaycastHit p_hit);
+        protected abstract void HandleMouseHitInternal(RaycastHit p_hit);
 
         public abstract void DrawInspectorGUI();
     }

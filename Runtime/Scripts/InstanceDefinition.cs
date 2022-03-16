@@ -10,7 +10,7 @@ namespace InstancePainter.Runtime
 {
     [CreateAssetMenuAttribute(fileName = "PaintDefinition", menuName = "Instance Painter/Create Paint Definition", order = 0)]
     [Serializable]
-    public class PaintDefinition : ScriptableObject
+    public class InstanceDefinition : ScriptableObject
     {
         public bool enabled = true;
         

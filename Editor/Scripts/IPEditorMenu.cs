@@ -6,18 +6,18 @@ using UnityEditor;
 
 namespace InstancePainter.Editor
 {
-    public class InstancePainterEditorMenu
+    public class IPEditorMenu
     {
         [MenuItem("Tools/Instance Painter/Enabled")]
         private static void ToggleEnabled()
         {
-            InstancePainterEditorCore.Config.enabled = !InstancePainterEditorCore.Config.enabled;
+            IPEditorCore.Instance.Config.enabled = !IPEditorCore.Instance.Config.enabled;
         }
 
         [MenuItem("Tools/Instance Painter/Enabled", true)]
         private static bool ToggleActionValidate()
         {
-            Menu.SetChecked("Tools/Instance Painter/Enabled", InstancePainterEditorCore.Config.enabled);
+            Menu.SetChecked("Tools/Instance Painter/Enabled", IPEditorCore.Instance.Config.enabled);
             return true;
         }
     }

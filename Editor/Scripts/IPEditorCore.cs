@@ -13,18 +13,42 @@ using Random = UnityEngine.Random;
 namespace InstancePainter.Editor
 {
     [InitializeOnLoad]
-    public class InstancePainterEditorCore
+    public class IPEditorCore
     {
-        public static ToolBase CurrentTool => _currentTool;
-        private static ToolBase _currentTool;
-
         const string VERSION = "0.1.0";
-
-        static public InstancePainterEditorConfig Config { get; private set; }
-
-        static InstancePainterEditorCore()
+        
+        public static IPEditorCore Instance { get; private set; }
+        
+        private GameObject _rendererObject;
+        public GameObject RendererObject
         {
-            Config = InstancePainterEditorConfig.Create();
+            get
+            {
+                if (_rendererObject == null)
+                {
+                    _rendererObject = GameObject.FindObjectOfType<IPRenderer>()?.gameObject;
+                    if (_rendererObject == null)
+                    {
+                        _rendererObject = new GameObject("InstanceRenderer");
+                    }
+                }
+                return _rendererObject;
+            }
+        }
+        
+        public ToolBase CurrentTool => _currentTool;
+        private ToolBase _currentTool;
+
+        public IPEditorConfig Config { get; private set; }
+
+        static IPEditorCore()
+        {
+            Instance = new IPEditorCore();
+        }
+        
+        public IPEditorCore() 
+        {
+            Config = IPEditorConfig.Create();
             
             SceneView.duringSceneGui -= OnSceneGUI;
             SceneView.duringSceneGui += OnSceneGUI;
@@ -33,15 +57,15 @@ namespace InstancePainter.Editor
             Undo.undoRedoPerformed += UndoRedoCallback;
         }
 
-        static void UndoRedoCallback()
+        void UndoRedoCallback()
         {
-            GameObject.FindObjectsOfType<InstancePainterRenderer>().ToList().ForEach(r => r.Invalidate());
+            GameObject.FindObjectsOfType<IPRenderer>().ToList().ForEach(r => r.Invalidate());
             
             SceneView.RepaintAll();
         }
         
 
-        private static void OnSceneGUI(SceneView p_sceneView)
+        private void OnSceneGUI(SceneView p_sceneView)
         {
             if (!Config.enabled)
                 return;
@@ -59,29 +83,27 @@ namespace InstancePainter.Editor
                 _currentTool?.Handle();
             }
 
-            InstancePainterSceneGUI.DrawGUI(p_sceneView);
+            IPSceneGUI.DrawGUI(p_sceneView);
         }
 
-        public static void ChangeTool<T>(bool p_enable = false) where T : ToolBase
+        public void ChangeTool<T>(bool p_enable = false) where T : ToolBase
         {
             _currentTool = (_currentTool == null || _currentTool.GetType() != typeof(T)) ? Activator.CreateInstance<T>() : null;
             InstancePainterEditor.Instance?.Repaint();
         }
 
-        public static GameObject[] GetMeshGameObjects(GameObject p_object)
+        public GameObject[] GetMeshGameObjects(GameObject p_object)
         {
             return p_object.transform.GetComponentsInChildren<MeshFilter>().Select(mf => mf.gameObject).ToArray();
         }
         
-        public static InstancePainterRenderer AddInstance(PaintDefinition p_definition, Mesh p_mesh, Vector3 p_position, Quaternion p_rotation, Vector3 p_scale, Vector4 p_color)
+        public IPRenderer AddInstance(InstanceDefinition p_definition, Mesh p_mesh, Vector3 p_position, Quaternion p_rotation, Vector3 p_scale, Vector4 p_color)
         {
-            CheckValidTarget();
-            
-            var renderers = Config.target.GetComponents<InstancePainterRenderer>().ToList();
+            var renderers = RendererObject.GetComponents<IPRenderer>().ToList();
             var renderer = renderers.Find(r => r.mesh == p_mesh);
             if (renderer == null)
             {
-                renderer = Config.target.gameObject.AddComponent<InstancePainterRenderer>();
+                renderer = RendererObject.gameObject.AddComponent<IPRenderer>();
                 renderer.mesh = p_mesh;
                 renderer._material = p_definition.material;
                 renderer.matrixData = new List<Matrix4x4>();
@@ -94,20 +116,10 @@ namespace InstancePainter.Editor
 
             return renderer;
         }
-
-        public static void CheckValidTarget()
-        {
-            if (Config.target == null)
-            {
-                Config.target = new GameObject("InstancePainter").transform;
-            }
-        }
         
-        public static InstancePainterRenderer[] PlaceInstance(Vector3 p_position, MeshFilter[] p_validMeshes, Collider[] p_validColliders, List<PaintedInstance> p_paintedInstances)
+        public IPRenderer[] PlaceInstance(Vector3 p_position, MeshFilter[] p_validMeshes, Collider[] p_validColliders, List<PaintedInstance> p_paintedInstances)
         {
-            CheckValidTarget();
-            
-            List<InstancePainterRenderer> paintedRenderers = new List<InstancePainterRenderer>();
+            List<IPRenderer> paintedRenderers = new List<IPRenderer>();
             
             p_position += Vector3.up * 100;
             Ray ray = new Ray(p_position, -Vector3.up);
@@ -134,17 +146,17 @@ namespace InstancePainter.Editor
             if (slope > Config.maximumSlope)
                  return paintedRenderers.ToArray();
 
-            PaintDefinition paintDefinition = GetWeightedDefinition();
-            if (paintDefinition == null)
+            InstanceDefinition instanceDefinition = GetWeightedDefinition();
+            if (instanceDefinition == null)
                 return paintedRenderers.ToArray();
             
             // Do proximity check
             if (Config.minimalDistance > 0)
             {
-                var checkRenderers = Config.target.GetComponents<InstancePainterRenderer>();
+                var checkRenderers = RendererObject.GetComponents<IPRenderer>();
                 foreach (var renderer in checkRenderers)
                 {
-                    if (renderer.Definitions.Count == 0 || renderer.Definitions[0].prefab != paintDefinition.prefab)
+                    if (renderer.Definitions.Count == 0 || renderer.Definitions[0].prefab != instanceDefinition.prefab)
                         continue;
                     
                     foreach (var matrix in renderer.matrixData)
@@ -157,33 +169,39 @@ namespace InstancePainter.Editor
                 }
             }
 
-            MeshFilter[] filters = paintDefinition.prefab.GetComponentsInChildren<MeshFilter>();
+            if (instanceDefinition.prefab == null)
+            {
+                Debug.LogWarning("Painting instance without defined prefab.");
+                return paintedRenderers.ToArray();
+            }
+            
+            MeshFilter[] filters = instanceDefinition.prefab.GetComponentsInChildren<MeshFilter>();
             
             foreach (var filter in filters)
             {
-                var position = p_position + paintDefinition.positionOffset + filter.transform.position;
+                var position = p_position + instanceDefinition.positionOffset + filter.transform.position;
 
                 var rotation = filter.transform.rotation *
-                    (paintDefinition.rotateToNormal
+                    (instanceDefinition.rotateToNormal
                         ? Quaternion.FromToRotation(Vector3.up, hit.normal)
                         : Quaternion.identity) *
-                    Quaternion.Euler(paintDefinition.rotationOffset);
+                    Quaternion.Euler(instanceDefinition.rotationOffset);
 
                 rotation = rotation * Quaternion.Euler(
-                    Random.Range(paintDefinition.minRotation.x, paintDefinition.maxRotation.x),
-                    Random.Range(paintDefinition.minRotation.y, paintDefinition.maxRotation.y),
-                    Random.Range(paintDefinition.minRotation.z, paintDefinition.maxRotation.z));
+                    Random.Range(instanceDefinition.minRotation.x, instanceDefinition.maxRotation.x),
+                    Random.Range(instanceDefinition.minRotation.y, instanceDefinition.maxRotation.y),
+                    Random.Range(instanceDefinition.minRotation.z, instanceDefinition.maxRotation.z));
 
-                var scale = Vector3.Scale(filter.transform.localScale, paintDefinition.scaleOffset) *
-                            Random.Range(paintDefinition.minScale, paintDefinition.maxScale);
+                var scale = Vector3.Scale(filter.transform.localScale, instanceDefinition.scaleOffset) *
+                            Random.Range(instanceDefinition.minScale, instanceDefinition.maxScale);
 
                 if (filter.sharedMesh != null)
                 {
-                    var renderer = AddInstance(paintDefinition, filter.sharedMesh, position, rotation,
+                    var renderer = AddInstance(instanceDefinition, filter.sharedMesh, position, rotation,
                         scale, Config.color);
 
                     var instance = new PaintedInstance(renderer, renderer.matrixData[renderer.matrixData.Count - 1],
-                        renderer.matrixData.Count - 1, paintDefinition);
+                        renderer.matrixData.Count - 1, instanceDefinition);
                     p_paintedInstances?.Add(instance);
 
                     paintedRenderers.Add(renderer);
@@ -193,12 +211,12 @@ namespace InstancePainter.Editor
             return paintedRenderers.ToArray();
         }
 
-        private static PaintDefinition GetWeightedDefinition()
+        private InstanceDefinition GetWeightedDefinition()
         {
             if (Config.paintDefinitions.Count == 0)
                 return null;
             
-            PaintDefinition paintDefinition = null;
+            InstanceDefinition instanceDefinition = null;
             
             float sum = 0;
             foreach (var def in Config.paintDefinitions)
@@ -217,12 +235,12 @@ namespace InstancePainter.Editor
                 random -= def.weight;
                 if (random < 0)
                 {
-                    paintDefinition = def;
+                    instanceDefinition = def;
                     break;
                 }
             }
 
-            return paintDefinition;
+            return instanceDefinition;
         }
     }
 }

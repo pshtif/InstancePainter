@@ -34,35 +34,34 @@ namespace InstancePainter.Editor
         private static MeshFilter[] _cachedValidMeshes;
         private static Collider[] _cachedValidColliders;
         
-        protected override void HandleInternal(RaycastHit p_hit)
+        protected override void HandleMouseHitInternal(RaycastHit p_hit)
         {
             switch (_state)
             {
                 case PaintToolState.NONE:
                 case PaintToolState.PAINT:
-                    DrawPaintHandle(p_hit.point, p_hit.normal, Config.brushSize);
+                    DrawPaintHandle(p_hit.point, p_hit.normal, Core.Config.brushSize);
                     break;
                 case PaintToolState.UPDATE:
-                    DrawUpdateHandle(_paintStartHit.point, _paintStartHit.normal, Config.brushSize);
+                    DrawUpdateHandle(_paintStartHit.point, _paintStartHit.normal, Core.Config.brushSize);
                     break;
             }
 
             if (Event.current.button == 0 && !Event.current.alt && Event.current.type == EventType.MouseDown)
             {
-                InstancePainterEditorCore.CheckValidTarget();
-                
                 Undo.IncrementCurrentGroup();
-                Undo.SetCurrentGroupName("Paint");
-                Undo.RegisterCompleteObjectUndo(Config.target.GetComponents<InstancePainterRenderer>(), "Record Renderers");
+                Undo.SetCurrentGroupName("Paint Instances");
+                Undo.RegisterCompleteObjectUndo(Core.RendererObject, "Record Renderer Object");
+                Undo.RegisterCompleteObjectUndo(Core.RendererObject.GetComponents<IPRenderer>(), "Record Renderers");
                 _undoId = Undo.GetCurrentGroup();
                 
-                _cachedValidMeshes = Config.includeLayers.Count == 0
+                _cachedValidMeshes = Core.Config.includeLayers.Count == 0
                     ? GameObject.FindObjectsOfType<MeshFilter>()
-                    : LayerUtils.GetAllComponentsInLayers<MeshFilter>(Config.includeLayers.ToArray());
+                    : LayerUtils.GetAllComponentsInLayers<MeshFilter>(Core.Config.includeLayers.ToArray());
                 
-                _cachedValidColliders = Config.includeLayers.Count == 0
+                _cachedValidColliders = Core.Config.includeLayers.Count == 0
                     ? GameObject.FindObjectsOfType<Collider>()
-                    : LayerUtils.GetAllComponentsInLayers<Collider>(Config.includeLayers.ToArray());
+                    : LayerUtils.GetAllComponentsInLayers<Collider>(Core.Config.includeLayers.ToArray());
             }
             
             if (Event.current.button == 0 && !Event.current.alt && (Event.current.type == EventType.MouseDrag ||
@@ -109,7 +108,7 @@ namespace InstancePainter.Editor
         {
             var offset = Event.current.mousePosition - _paintStartMousePosition;
 
-            List<InstancePainterRenderer> renderers = new List<InstancePainterRenderer>();
+            List<IPRenderer> renderers = new List<IPRenderer>();
             foreach (var instance in _paintedInstances)
             {
                 Quaternion originalRotation = Quaternion.LookRotation(
@@ -144,11 +143,11 @@ namespace InstancePainter.Editor
 
             _lastPaintPosition = p_hit.point;
 
-            List<InstancePainterRenderer> invalidateRenderers = new List<InstancePainterRenderer>();
+            List<IPRenderer> invalidateRenderers = new List<IPRenderer>();
             
-            if (Config.density == 1)
+            if (Core.Config.density == 1)
             {
-                var renderers = InstancePainterEditorCore.PlaceInstance(p_hit.point, _cachedValidMeshes, _cachedValidColliders, _paintedInstances);
+                var renderers = Core.PlaceInstance(p_hit.point, _cachedValidMeshes, _cachedValidColliders, _paintedInstances);
 
                 foreach (var renderer in renderers)
                 {
@@ -158,13 +157,13 @@ namespace InstancePainter.Editor
             }
             else
             {
-                for (int i = 0; i < Config.density; i++)
+                for (int i = 0; i < Core.Config.density; i++)
                 {
                     Vector3 direction = Quaternion.AngleAxis(Random.Range(0, 360), Vector3.up) * Vector3.right;
-                    Vector3 position = direction * Random.Range(0, Config.brushSize) +
+                    Vector3 position = direction * Random.Range(0, Core.Config.brushSize) +
                                        p_hit.point;
 
-                    var renderers = InstancePainterEditorCore.PlaceInstance(position, _cachedValidMeshes, _cachedValidColliders, _paintedInstances);
+                    var renderers = Core.PlaceInstance(position, _cachedValidMeshes, _cachedValidColliders, _paintedInstances);
                     
                     foreach (var renderer in renderers)
                     {
@@ -179,20 +178,18 @@ namespace InstancePainter.Editor
 
         void Colorize(RaycastHit p_hit)
         {
-            List<InstancePainterRenderer> invalidateRenderers = new List<InstancePainterRenderer>();
-            
-            InstancePainterEditorCore.CheckValidTarget();
-            
-            var renderers = InstancePainterEditorCore.Config.target.GetComponents<InstancePainterRenderer>();
-            foreach (InstancePainterRenderer renderer in renderers)
+            List<IPRenderer> invalidateRenderers = new List<IPRenderer>();
+
+            var renderers = Core.RendererObject.GetComponents<IPRenderer>();
+            foreach (IPRenderer renderer in renderers)
             {
                 for (int i = 0; i<renderer.matrixData.Count; i++)
                 {
                     var position = renderer.matrixData[i].GetColumn(3);
                     var distance = Vector3.Distance(position, p_hit.point);
-                    if (distance < InstancePainterEditorCore.Config.brushSize)
+                    if (distance < Core.Config.brushSize)
                     {
-                        renderer.colorData[i] = Vector4.Lerp(renderer.colorData[i],Config.color, (1-distance/InstancePainterEditorCore.Config.brushSize) * Config.alpha);
+                        renderer.colorData[i] = Vector4.Lerp(renderer.colorData[i],Core.Config.color, (1-distance/Core.Config.brushSize) * Core.Config.alpha);
 
                         if (!invalidateRenderers.Contains(renderer))
                             invalidateRenderers.Add(renderer);
@@ -233,20 +230,20 @@ namespace InstancePainter.Editor
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
             
-            GUILayout.Label(" Left Button: ", Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
-            GUILayout.Label("Paint ", Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
+            GUILayout.Label(" Left Button: ", Core.Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
+            GUILayout.Label("Paint ", Core.Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
             GUILayout.Space(8);
             
-            GUILayout.Label(" Shift + Left Button: ", Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
-            GUILayout.Label("Colorize ", Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
+            GUILayout.Label(" Shift + Left Button: ", Core.Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
+            GUILayout.Label("Colorize ", Core.Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
             GUILayout.Space(8);
             
-            GUILayout.Label(" Ctrl + Left Button(HOLD): ", Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
-            GUILayout.Label("Place and Modify ", Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
+            GUILayout.Label(" Ctrl + Left Button(HOLD): ", Core.Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
+            GUILayout.Label("Place and Modify ", Core.Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
             GUILayout.Space(8);
             
-            GUILayout.Label(" Ctrl + Mouse Wheel: ", Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
-            GUILayout.Label("Brush Size ", Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
+            GUILayout.Label(" Ctrl + Mouse Wheel: ", Core.Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
+            GUILayout.Label("Brush Size ", Core.Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
             
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
@@ -255,19 +252,19 @@ namespace InstancePainter.Editor
 
         public override void DrawInspectorGUI()
         {
-            EditorGUILayout.LabelField("Paint Tool", Config.Skin.GetStyle("tooltitle"), GUILayout.Height(24));
+            EditorGUILayout.LabelField("Paint Tool", Core.Config.Skin.GetStyle("tooltitle"), GUILayout.Height(24));
         
-            Config.brushSize = EditorGUILayout.Slider("Brush Size", Config.brushSize, 0.1f, 100);
+            Core.Config.brushSize = EditorGUILayout.Slider("Brush Size", Core.Config.brushSize, 0.1f, 100);
         
-            Config.color = EditorGUILayout.ColorField("Color", Config.color);
+            Core.Config.color = EditorGUILayout.ColorField("Color", Core.Config.color);
             
-            Config.alpha = EditorGUILayout.Slider("Alpha", Config.alpha, 0, 1);
+            Core.Config.alpha = EditorGUILayout.Slider("Alpha", Core.Config.alpha, 0, 1);
 
-            Config.density = EditorGUILayout.IntField("Density", Config.density);
+            Core.Config.density = EditorGUILayout.IntField("Density", Core.Config.density);
             
-            Config.minimalDistance = EditorGUILayout.FloatField("Minimal Distance", Config.minimalDistance);
+            Core.Config.minimalDistance = EditorGUILayout.FloatField("Minimal Distance", Core.Config.minimalDistance);
 
-            Config.maximumSlope = EditorGUILayout.Slider("Maximum Slope", Config.maximumSlope, 0, 90);
+            Core.Config.maximumSlope = EditorGUILayout.Slider("Maximum Slope", Core.Config.maximumSlope, 0, 90);
             
             InstancePainterEditor.Instance.Repaint();
         }

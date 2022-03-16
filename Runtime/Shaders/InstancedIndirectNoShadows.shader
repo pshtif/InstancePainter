@@ -2,17 +2,21 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
-Shader "PrefabPainter/InstancedIndirectNoShadows"
+Shader "Instance Painter/InstancedIndirectNoShadows"
 {
     Properties
     {
+        _AmbientLight ("Ambient Light", Color) = (0,0,0)
+        
         [HideInInspector]_BoundSize("_BoundSize", Vector) = (1,1,1)
         
-         [Toggle(ENABLE_WIND)] _EnableWind ("Enable Wind", Float) = 0
+        _WindIntensity ("Wind Intensity", Float) = .5
+        _WindTiling ("Wind Tiling", Float) = 0
+        _WindTimeScale ("Wind Time Scale", Float) = 1
         
-         _WindIntensity ("_WindIntensity", Float) = .5
-        
+        [Toggle(ENABLE_WIND)] _EnableWind ("Enable Wind", Float) = 0
         [Toggle(ENABLE_BILLBOARD)] _EnableBillboard ("Enable Billboard", Float) = 0
+        [Toggle(ENABLE_RECEIVE_SHADOWS)] _EnableReceiveShadows ("Enable Receive Shadows", Float) = 0
     }
 
     SubShader
@@ -39,6 +43,7 @@ Shader "PrefabPainter/InstancedIndirectNoShadows"
 
             #pragma multi_compile _ ENABLE_WIND
             #pragma multi_compile _ ENABLE_BILLBOARD
+            #pragma multi_compile _ ENABLE_RECEIVE_SHADOWS
 
             #pragma multi_compile_fog
 
@@ -61,6 +66,9 @@ Shader "PrefabPainter/InstancedIndirectNoShadows"
             CBUFFER_START(UnityPerMaterial)
                 float2 _BoundSize;
                 float _WindIntensity;
+                float _WindTiling;
+                float _WindTimeScale;
+                float3 _AmbientLight;
 
                 StructuredBuffer<float4> _colorBuffer;
                 StructuredBuffer<float4x4> _matrixBuffer;
@@ -81,11 +89,12 @@ Shader "PrefabPainter/InstancedIndirectNoShadows"
 
                 float4 position = IN.positionOS;
                 #if ENABLE_WIND
-                position.x += _WindIntensity * sin(_Time.y) * position.y*position.y;
+                float4 positionForWind = mul(instanceMatrix, position);
+                position.x += _WindIntensity * sin(_Time.y * _WindTimeScale + positionForWind.x * _WindTiling + positionForWind.z * _WindTiling) * position.y;
                 #endif
 
                 #if ENABLE_BILLBOARD
-                float4x4 v = UNITY_MATRIX_V;
+                float4x4 v = unity_WorldToCamera;
                 float3 right = normalize(v._m00_m01_m02);
                 float3 up = normalize(v._m10_m11_m12);
                 float3 forward = normalize(v._m20_m21_m22);
@@ -104,20 +113,26 @@ Shader "PrefabPainter/InstancedIndirectNoShadows"
                 
                 positionWS = mul(UNITY_MATRIX_V, positionWS);
                 OUT.positionCS = mul(UNITY_MATRIX_P, positionWS);
+
                 
-                //half4 albedo = _colorBuffer[instanceID];
-                //half directDiffuse = dot(normalWS, mainLight.direction);
-                half3 lighting = mainLight.color * (mainLight.shadowAttenuation * mainLight.distanceAttenuation);
-                //half3 result = albedo/2 + (albedo * directDiffuse) * lighting;
+                half3 lighting = mainLight.color * mainLight.distanceAttenuation;
+                // No direct light for billboarding would change on camera rotation
+                #if !ENABLE_BILLBOARDING
+                half directDiffuse = dot(normalWS, mainLight.direction);
+                lighting *= directDiffuse;
+                #endif
+                #if ENABLE_RECEIVE_SHADOWS
+                lighting *= mainLight.shadowAttenuation;
+                #endif
                 
-                OUT.color = lighting * _colorBuffer[instanceID] * IN.color.xyz;
+                OUT.color = (lighting + _AmbientLight)* _colorBuffer[instanceID] * IN.color.xyz;
 
                 return OUT;
             }
 
             half4 frag(Varyings IN) : SV_Target
             {
-                return half4(IN.color,1);
+                return half4(IN.color, 1);
             }
             ENDHLSL
         }

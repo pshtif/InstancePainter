@@ -9,10 +9,10 @@ using UnityEngine;
 
 namespace InstancePainter.Editor
 {
-    [CustomEditor(typeof(InstancePainterRenderer))]
-    public class InstancePainterRendererEditor : UnityEditor.Editor
+    [CustomEditor(typeof(IPRenderer))]
+    public class IPRendererEditor : UnityEditor.Editor
     {
-        public InstancePainterRenderer Renderer => target as InstancePainterRenderer;
+        public IPRenderer Renderer => target as IPRenderer;
         
         private void OnEnable()
         {

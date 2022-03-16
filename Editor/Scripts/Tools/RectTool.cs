@@ -32,7 +32,7 @@ namespace InstancePainter.Editor
         private List<PaintedInstance> _paintedInstances = new List<PaintedInstance>();
         private RectToolState _state = RectToolState.NONE;
         
-        protected override void HandleInternal(RaycastHit p_hit)
+        protected override void HandleMouseHitInternal(RaycastHit p_hit)
         {
             switch (_state)
             {
@@ -44,13 +44,11 @@ namespace InstancePainter.Editor
                     break;
             }
 
-            InstancePainterEditorCore.CheckValidTarget();
-
             if (Event.current.button == 0 && !Event.current.alt && Event.current.type == EventType.MouseDown)
             {
                 Undo.IncrementCurrentGroup();
                 Undo.SetCurrentGroupName("Paint");
-                Undo.RegisterCompleteObjectUndo(Config.target.GetComponents<InstancePainterRenderer>(), "Record Renderers");
+                Undo.RegisterCompleteObjectUndo(Core.RendererObject.GetComponents<IPRenderer>(), "Record Renderers");
                 _undoId = Undo.GetCurrentGroup();
             }
             
@@ -123,10 +121,10 @@ namespace InstancePainter.Editor
 
             var rect = new Rect(minX, minZ, maxX - minX, maxZ - minZ);
             
-            List<InstancePainterRenderer> invalidateRenderers = new List<InstancePainterRenderer>();
+            List<IPRenderer> invalidateRenderers = new List<IPRenderer>();
             
-            var renderers = InstancePainterEditorCore.Config.target.GetComponents<InstancePainterRenderer>();
-            foreach (InstancePainterRenderer renderer in renderers)
+            var renderers = Core.RendererObject.GetComponents<IPRenderer>();
+            foreach (IPRenderer renderer in renderers)
             {
                 for (int i = 0; i<renderer.matrixData.Count; i++)
                 {
@@ -151,13 +149,13 @@ namespace InstancePainter.Editor
 
         void Fill(Vector3 p_startPoint, Vector3 p_endPoint)
         {
-            var validMeshes = Config.includeLayers.Count == 0
+            var validMeshes = Core.Config.includeLayers.Count == 0
                 ? GameObject.FindObjectsOfType<MeshFilter>()
-                : LayerUtils.GetAllComponentsInLayers<MeshFilter>(Config.includeLayers.ToArray());
+                : LayerUtils.GetAllComponentsInLayers<MeshFilter>(Core.Config.includeLayers.ToArray());
             
-            var validColliders = Config.includeLayers.Count == 0
+            var validColliders = Core.Config.includeLayers.Count == 0
                 ? GameObject.FindObjectsOfType<Collider>()
-                : LayerUtils.GetAllComponentsInLayers<Collider>(Config.includeLayers.ToArray());
+                : LayerUtils.GetAllComponentsInLayers<Collider>(Core.Config.includeLayers.ToArray());
 
             var minX = Math.Min(p_startPoint.x, p_endPoint.x);
             var maxX = Math.Max(p_startPoint.x, p_endPoint.x);
@@ -165,13 +163,13 @@ namespace InstancePainter.Editor
             var minZ = Math.Min(p_startPoint.z, p_endPoint.z);
             var maxZ = Math.Max(p_startPoint.z, p_endPoint.z);
 
-            List<InstancePainterRenderer> invalidateRenderers = new List<InstancePainterRenderer>();
+            List<IPRenderer> invalidateRenderers = new List<IPRenderer>();
             
             EditorUtility.DisplayProgressBar("InstancePainter", "Filling painted instances...", .5f);
 
-            for (int i = 0; i < Config.density; i++)
+            for (int i = 0; i < Core.Config.density; i++)
             {
-                var renderers = InstancePainterEditorCore.PlaceInstance(new Vector3(Random.Range(minX, maxX), p_startPoint.y, Random.Range(minZ, maxZ)), validMeshes, validColliders, _paintedInstances);
+                var renderers = Core.PlaceInstance(new Vector3(Random.Range(minX, maxX), p_startPoint.y, Random.Range(minZ, maxZ)), validMeshes, validColliders, _paintedInstances);
                 
                 foreach (var renderer in renderers)
                 {
@@ -192,12 +190,12 @@ namespace InstancePainter.Editor
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
             
-            GUILayout.Label(" Left Button(DRAG): ", Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
-            GUILayout.Label("Rectangular Fill ", Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
+            GUILayout.Label(" Left Button(DRAG): ", Core.Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
+            GUILayout.Label("Rectangular Fill ", Core.Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
             GUILayout.Space(8);
             
-            GUILayout.Label(" Shift + Left Button(DRAG): ", Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
-            GUILayout.Label("Rectangular Erase ", Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
+            GUILayout.Label(" Shift + Left Button(DRAG): ", Core.Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
+            GUILayout.Label("Rectangular Erase ", Core.Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
 
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
@@ -206,13 +204,13 @@ namespace InstancePainter.Editor
         
         public override void DrawInspectorGUI()
         {
-            EditorGUILayout.LabelField("Rect Tool", Config.Skin.GetStyle("tooltitle"), GUILayout.Height(24));
+            EditorGUILayout.LabelField("Rect Tool", Core.Config.Skin.GetStyle("tooltitle"), GUILayout.Height(24));
             
-            Config.density = EditorGUILayout.IntField("Density", Config.density);
+            Core.Config.density = EditorGUILayout.IntField("Density", Core.Config.density);
             
-            Config.minimalDistance = EditorGUILayout.FloatField("Minimal Distance", Config.minimalDistance);
+            Core.Config.minimalDistance = EditorGUILayout.FloatField("Minimal Distance", Core.Config.minimalDistance);
 
-            Config.maximumSlope = EditorGUILayout.Slider("Maximum Slope", Config.maximumSlope, 0, 90);
+            Core.Config.maximumSlope = EditorGUILayout.Slider("Maximum Slope", Core.Config.maximumSlope, 0, 90);
         }
     }
 }

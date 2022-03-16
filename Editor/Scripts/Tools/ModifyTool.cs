@@ -30,7 +30,7 @@ namespace InstancePainter.Editor
         
         private ModifyToolState _state;
         
-        protected override void HandleInternal(RaycastHit p_hit)
+        protected override void HandleMouseHitInternal(RaycastHit p_hit)
         {
             if (Event.current.type == EventType.MouseDown)
                 AlreadyModified.Clear();
@@ -40,10 +40,10 @@ namespace InstancePainter.Editor
                 case ModifyToolState.NONE:
                 case ModifyToolState.MODIFY_PAINT:
                 case ModifyToolState.MODIFY_POSITION:                    
-                    DrawModifyHandle(p_hit.point, p_hit.normal, Config.brushSize);
+                    DrawModifyHandle(p_hit.point, p_hit.normal, Core.Config.brushSize);
                     break;
                 case ModifyToolState.MODIFY_INPLACE:
-                    DrawModifyInPlaceHandle(_modifyStartHit.point, _modifyStartHit.normal, Config.brushSize);
+                    DrawModifyInPlaceHandle(_modifyStartHit.point, _modifyStartHit.normal, Core.Config.brushSize);
                     break;
             }
             
@@ -51,7 +51,7 @@ namespace InstancePainter.Editor
             {
                 Undo.IncrementCurrentGroup();
                 Undo.SetCurrentGroupName("Modify");
-                Undo.RegisterCompleteObjectUndo(Config.target.GetComponents<InstancePainterRenderer>(), "Record Renderers");
+                Undo.RegisterCompleteObjectUndo(Core.RendererObject.GetComponents<IPRenderer>(), "Record Renderers");
                 _undoId = Undo.GetCurrentGroup();
             }
             
@@ -103,14 +103,14 @@ namespace InstancePainter.Editor
         {
             GetHitInstances(p_hit);
             
-            List<InstancePainterRenderer> renderers = new List<InstancePainterRenderer>();
+            List<IPRenderer> renderers = new List<IPRenderer>();
             foreach (var instance in _modifyInstances)
             {
                 if (AlreadyModified.Exists(a => a == instance))
                     continue;
 
-                instance.matrix *= Matrix4x4.Scale(Config.modifyScale);
-                instance.matrix *= Matrix4x4.Translate(Config.modifyPosition);
+                instance.matrix *= Matrix4x4.Scale(Core.Config.modifyScale);
+                instance.matrix *= Matrix4x4.Translate(Core.Config.modifyPosition);
                 instance.renderer.matrixData[instance.index] = instance.matrix;
                 
                 if (!renderers.Contains(instance.renderer))
@@ -126,11 +126,11 @@ namespace InstancePainter.Editor
         {
             _modifyInstances.Clear();
 
-            Config.target.GetComponents<InstancePainterRenderer>().ToList().ForEach(r =>
+            Core.RendererObject.GetComponents<IPRenderer>().ToList().ForEach(r =>
             {
                 r.matrixData.ForEach(m =>
                 {
-                    if (Vector3.Distance(p_hit.point, m.GetColumn(3)) < Config.brushSize)
+                    if (Vector3.Distance(p_hit.point, m.GetColumn(3)) < Core.Config.brushSize)
                     {
                         var instance = new PaintedInstance(r, m, r.matrixData.IndexOf(m), null);
                         _modifyInstances.Add(instance);
@@ -143,7 +143,7 @@ namespace InstancePainter.Editor
         {
             var offset = Event.current.mousePosition - _modifyStartMousePosition;
 
-            List<InstancePainterRenderer> renderers = new List<InstancePainterRenderer>();
+            List<IPRenderer> renderers = new List<IPRenderer>();
             
             foreach (var instance in _modifyInstances)
             {
@@ -176,7 +176,7 @@ namespace InstancePainter.Editor
         {
             var offset = p_hit.point - _modifyStartHit.point;
 
-            List<InstancePainterRenderer> renderers = new List<InstancePainterRenderer>();
+            List<IPRenderer> renderers = new List<IPRenderer>();
             foreach (var instance in _modifyInstances)
             {
                 Quaternion originalRotation = Quaternion.LookRotation(
@@ -230,16 +230,16 @@ namespace InstancePainter.Editor
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
             
-            GUILayout.Label(" Left Button: ", Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
-            GUILayout.Label("Modify by Painting ", Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
+            GUILayout.Label(" Left Button: ", Core.Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
+            GUILayout.Label("Modify by Painting ", Core.Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
             GUILayout.Space(8);
 
-            GUILayout.Label(" Ctrl + Left Button(HOLD): ", Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
-            GUILayout.Label("Modify in Place ", Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
+            GUILayout.Label(" Ctrl + Left Button(HOLD): ", Core.Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
+            GUILayout.Label("Modify in Place ", Core.Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
             GUILayout.Space(8);
             
-            GUILayout.Label(" Ctrl + Mouse Wheel: ", Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
-            GUILayout.Label("Brush Size ", Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
+            GUILayout.Label(" Ctrl + Mouse Wheel: ", Core.Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
+            GUILayout.Label("Brush Size ", Core.Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
             
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
@@ -248,7 +248,7 @@ namespace InstancePainter.Editor
 
         public override void DrawInspectorGUI()
         {
-            EditorGUILayout.LabelField("Modify Tool", Config.Skin.GetStyle("tooltitle"), GUILayout.Height(24));
+            EditorGUILayout.LabelField("Modify Tool", Core.Config.Skin.GetStyle("tooltitle"), GUILayout.Height(24));
         
             var style = new GUIStyle();
             style.normal.background = TextureUtils.GetColorTexture(new Color(.1f, .1f, .1f));
@@ -257,10 +257,10 @@ namespace InstancePainter.Editor
             style.alignment = TextAnchor.MiddleCenter;
             style.fontSize = 14;
         
-            Config.brushSize = EditorGUILayout.Slider("Brush Size", Config.brushSize, 0.1f, 100);
+            Core.Config.brushSize = EditorGUILayout.Slider("Brush Size", Core.Config.brushSize, 0.1f, 100);
 
-            Config.modifyPosition = EditorGUILayout.Vector3Field("Modify Position", Config.modifyPosition);
-            Config.modifyScale = EditorGUILayout.Vector3Field("Modify Scale", Config.modifyScale);
+            Core.Config.modifyPosition = EditorGUILayout.Vector3Field("Modify Position", Core.Config.modifyPosition);
+            Core.Config.modifyScale = EditorGUILayout.Vector3Field("Modify Scale", Core.Config.modifyScale);
         }
     }
 }

@@ -9,12 +9,12 @@ namespace InstancePainter.Editor
 {
     public class PaintedInstance
     {
-        public InstancePainterRenderer renderer;
+        public IPRenderer renderer;
         public Matrix4x4 matrix;
         public int index;
-        public PaintDefinition definition;
+        public InstanceDefinition definition;
 
-        public PaintedInstance(InstancePainterRenderer p_renderer, Matrix4x4 p_matrix, int p_index, PaintDefinition p_definition)
+        public PaintedInstance(IPRenderer p_renderer, Matrix4x4 p_matrix, int p_index, InstanceDefinition p_definition)
         {
             renderer = p_renderer;
             matrix = p_matrix;

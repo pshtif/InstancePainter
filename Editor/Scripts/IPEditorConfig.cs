@@ -13,11 +13,9 @@ namespace InstancePainter.Editor
     using UnityEngine;
 
     [Serializable]
-    public class InstancePainterEditorConfig : ScriptableObject
+    public class IPEditorConfig : ScriptableObject
     {
         public GUISkin Skin => (GUISkin)Resources.Load("Skins/InstancePainterSkin");
-        
-        public Transform target;
         
         public bool enabled = false;
         
@@ -31,7 +29,7 @@ namespace InstancePainter.Editor
 
         public int density = 1;
         public bool minimizePaintDefinitions = false;
-        public List<PaintDefinition> paintDefinitions = new List<PaintDefinition>();
+        public List<InstanceDefinition> paintDefinitions = new List<InstanceDefinition>();
 
         public float maximumSlope = 0;
         public float minimalDistance = 1;
@@ -54,15 +52,15 @@ namespace InstancePainter.Editor
         public List<LayerMask> includeLayers;
         public List<LayerMask> excludeLayers;
         
-        static public InstancePainterEditorConfig Create()
+        static public IPEditorConfig Create()
         {
-            var config = (InstancePainterEditorConfig)AssetDatabase.LoadAssetAtPath(
+            var config = (IPEditorConfig)AssetDatabase.LoadAssetAtPath(
                 "Assets/Resources/Editor/InstancePainterEditorConfig.asset",
-                typeof(InstancePainterEditorConfig));
+                typeof(IPEditorConfig));
 
             if (config == null)
             {
-                config = ScriptableObject.CreateInstance<InstancePainterEditorConfig>();
+                config = ScriptableObject.CreateInstance<IPEditorConfig>();
                 if (config != null)
                 {
                     if (!AssetDatabase.IsValidFolder("Assets/Resources"))

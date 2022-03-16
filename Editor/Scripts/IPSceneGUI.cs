@@ -9,9 +9,9 @@ using UnityEngine;
 
 namespace InstancePainter.Editor
 {
-    public class InstancePainterSceneGUI
+    public class IPSceneGUI
     {
-        public static InstancePainterEditorConfig Config => InstancePainterEditorCore.Config;
+        public static IPEditorCore Core => IPEditorCore.Instance;
 
         public static void DrawGUI(SceneView p_sceneView)
         {
@@ -22,42 +22,42 @@ namespace InstancePainter.Editor
             GUILayout.BeginArea(new Rect(rect.width / 2 - 210, 5, 420, 55));
 
             GUILayout.BeginHorizontal();
-            GUI.color = InstancePainterEditorCore.CurrentTool?.GetType() == typeof(PaintTool) ? new Color(1, .5f, .25f) : Color.white;
+            GUI.color = Core.CurrentTool?.GetType() == typeof(PaintTool) ? new Color(1, .5f, .25f) : Color.white;
             GUILayout.BeginVertical();
             if (GUILayout.Button(IconManager.GetIcon("paint_icon"), GUILayout.Height(40), GUILayout.MinWidth(80)))
             {
-                InstancePainterEditorCore.ChangeTool<PaintTool>();
+                Core.ChangeTool<PaintTool>();
             }
 
-            GUILayout.Label("Paint", Config.Skin.GetStyle("toollabel"), GUILayout.ExpandWidth(true));
+            GUILayout.Label("Paint", Core.Config.Skin.GetStyle("toollabel"), GUILayout.ExpandWidth(true));
             GUILayout.EndVertical();
-            GUI.color = InstancePainterEditorCore.CurrentTool?.GetType() == typeof(EraseTool) ? new Color(1, .5f, .25f) : Color.white;
+            GUI.color = Core.CurrentTool?.GetType() == typeof(EraseTool) ? new Color(1, .5f, .25f) : Color.white;
             GUILayout.BeginVertical();
             if (GUILayout.Button(IconManager.GetIcon("erase_icon"), GUILayout.Height(40), GUILayout.MinWidth(80)))
             {
-                InstancePainterEditorCore.ChangeTool<EraseTool>();
+                Core.ChangeTool<EraseTool>();
             }
 
-            GUILayout.Label("Erase", Config.Skin.GetStyle("toollabel"), GUILayout.ExpandWidth(true));
+            GUILayout.Label("Erase", Core.Config.Skin.GetStyle("toollabel"), GUILayout.ExpandWidth(true));
             GUILayout.EndVertical();
-            GUI.color = InstancePainterEditorCore.CurrentTool?.GetType() == typeof(ModifyTool) ? new Color(1, .5f, .25f) : Color.white;
+            GUI.color = Core.CurrentTool?.GetType() == typeof(ModifyTool) ? new Color(1, .5f, .25f) : Color.white;
             GUILayout.BeginVertical();
             if (GUILayout.Button(IconManager.GetIcon("modify_icon"), GUILayout.Height(40), GUILayout.MinWidth(80)))
             {
-                InstancePainterEditorCore.ChangeTool<ModifyTool>();
+                Core.ChangeTool<ModifyTool>();
             }
 
-            GUILayout.Label("Modify", Config.Skin.GetStyle("toollabel"), GUILayout.ExpandWidth(true));
+            GUILayout.Label("Modify", Core.Config.Skin.GetStyle("toollabel"), GUILayout.ExpandWidth(true));
             GUILayout.EndVertical();
 
-            GUI.color = InstancePainterEditorCore.CurrentTool?.GetType() == typeof(RectTool) ? new Color(1, .5f, .25f) : Color.white;
+            GUI.color = Core.CurrentTool?.GetType() == typeof(RectTool) ? new Color(1, .5f, .25f) : Color.white;
             GUILayout.BeginVertical();
             if (GUILayout.Button(IconManager.GetIcon("rect_icon"), GUILayout.Height(40), GUILayout.MinWidth(80)))
             {
-                InstancePainterEditorCore.ChangeTool<RectTool>();
+                Core.ChangeTool<RectTool>();
             }
 
-            GUILayout.Label("Rect", Config.Skin.GetStyle("toollabel"), GUILayout.ExpandWidth(true));
+            GUILayout.Label("Rect", Core.Config.Skin.GetStyle("toollabel"), GUILayout.ExpandWidth(true));
             GUILayout.EndVertical();
 
             GUILayout.Space(8);
@@ -69,13 +69,13 @@ namespace InstancePainter.Editor
             }
             GUI.color = Color.white;
             
-            GUILayout.Label("Settings", Config.Skin.GetStyle("toollabel"), GUILayout.ExpandWidth(true));
+            GUILayout.Label("Settings", Core.Config.Skin.GetStyle("toollabel"), GUILayout.ExpandWidth(true));
             GUILayout.EndVertical();
             GUILayout.EndHorizontal();
 
             GUILayout.EndArea();
             
-            InstancePainterEditorCore.CurrentTool?.DrawSceneGUI(p_sceneView);
+            Core.CurrentTool?.DrawSceneGUI(p_sceneView);
 
             Handles.EndGUI();
         }

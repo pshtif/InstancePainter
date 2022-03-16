@@ -1,9 +1,9 @@
 {
-  "name": "com.shtif.prefabpainter",
-  "displayName": "Prefab Painter",
-  "version": "0.1.0",
+  "name": "com.shtif.instancepainter",
+  "displayName": "Instance Painter",
+  "version": "0.1.1",
   "unity": "2019.4",
-  "description": "Tool for paiting prefabs onto meshes.",
+  "description": "Tool for paiting instances based on prefabs onto meshes and render them using instancing.",
   "author": {
     "name": "Peter @sHTiF Stefcek",
     "email": "psthif@gmail.com"
@@ -11,7 +11,8 @@
   "keywords": [
     "package",
     "unity",
-    "tool"
+    "tool",
+    "rendering"
   ],
   "dependencies": {
   }
