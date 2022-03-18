@@ -23,7 +23,7 @@ namespace InstancePainter.Editor
         {
             DrawDefaultInspector();
 
-            GUILayout.Label("Instance Count: " + Renderer.matrixData.Count);
+            GUILayout.Label("Instance Count: " + Renderer.InstanceCount);
 
             if (GUILayout.Button("Generate Game Objects"))
             {
@@ -32,7 +32,7 @@ namespace InstancePainter.Editor
 
             if (GUILayout.Button("Hide"))
             {
-                Renderer.Hide();
+                Renderer.ApplyModifiers();
             }
         }
 
@@ -41,16 +41,19 @@ namespace InstancePainter.Editor
             Transform container = new GameObject().transform;
             container.name = Renderer.mesh.name;
             container.SetParent(Renderer.transform);
-
-            for (int i = 0; i<Renderer.matrixData.Count; i++)
+            
+            for (int i = 0; i<Renderer.InstanceCount; i++)
             {
-                var matrix = Renderer.matrixData[i];
-                var instance = GameObject.Instantiate(Renderer.Definitions[i].prefab);
-                instance.name = Renderer.Definitions[i].prefab.name + i;
-                instance.transform.localPosition = matrix.GetColumn(3);
-                instance.transform.rotation = ExtractRotation(matrix);
-                instance.transform.localScale = ExtractScaleFromMatrix(matrix);
-                instance.transform.SetParent(container);
+                var matrix = Renderer.GetInstanceMatrix(i);
+                var filter = new GameObject().AddComponent<MeshFilter>();
+                var mr = filter.gameObject.AddComponent<MeshRenderer>();
+                mr.materials = new Material[Renderer.mesh.subMeshCount];
+                filter.sharedMesh = Renderer.mesh;
+                filter.name = Renderer.mesh.name + i;
+                filter.transform.localPosition = matrix.GetColumn(3);
+                filter.transform.rotation = ExtractRotation(matrix);
+                filter.transform.localScale = ExtractScaleFromMatrix(matrix);
+                filter.transform.SetParent(container);
             }
         }
         

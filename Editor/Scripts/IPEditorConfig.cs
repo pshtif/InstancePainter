@@ -49,6 +49,8 @@ namespace InstancePainter.Editor
         
         #endregion
 
+        public bool useMeshRaycasting = false;
+        
         public List<LayerMask> includeLayers;
         public List<LayerMask> excludeLayers;
         

@@ -111,7 +111,7 @@ namespace InstancePainter.Editor
 
                 instance.matrix *= Matrix4x4.Scale(Core.Config.modifyScale);
                 instance.matrix *= Matrix4x4.Translate(Core.Config.modifyPosition);
-                instance.renderer.matrixData[instance.index] = instance.matrix;
+                instance.renderer.SetInstanceMatrix(instance.index, instance.matrix);
                 
                 if (!renderers.Contains(instance.renderer))
                     renderers.Add(instance.renderer);
@@ -119,7 +119,11 @@ namespace InstancePainter.Editor
                 AlreadyModified.Add(instance);
             }
             
-            renderers.ForEach(r => r.Invalidate());
+            renderers.ForEach(r =>
+            {
+                r.Invalidate();
+                r.UpdateSerializedData();
+            });
         }
 
         public void GetHitInstances(RaycastHit p_hit)
@@ -128,14 +132,15 @@ namespace InstancePainter.Editor
 
             Core.RendererObject.GetComponents<IPRenderer>().ToList().ForEach(r =>
             {
-                r.matrixData.ForEach(m =>
+                for (int i = 0; i<r.InstanceCount; i++)
                 {
-                    if (Vector3.Distance(p_hit.point, m.GetColumn(3)) < Core.Config.brushSize)
+                    var matrix = r.GetInstanceMatrix(i);
+                    if (Vector3.Distance(p_hit.point, matrix.GetColumn(3)) < Core.Config.brushSize)
                     {
-                        var instance = new PaintedInstance(r, m, r.matrixData.IndexOf(m), null);
+                        var instance = new PaintedInstance(r, matrix, i, null);
                         _modifyInstances.Add(instance);
                     }
-                });
+                };
             });
         } 
         
@@ -164,12 +169,16 @@ namespace InstancePainter.Editor
                 );
                 var scale = Vector3.one * offset.y / 10;
 
-                instance.renderer.matrixData[instance.index] = Matrix4x4.TRS(_modifyStartHit.point + position, rotation * originalRotation, originalScale + scale);
+                instance.renderer.SetInstanceMatrix(instance.index, Matrix4x4.TRS(_modifyStartHit.point + position, rotation * originalRotation, originalScale + scale));
                 if (!renderers.Contains(instance.renderer))
                     renderers.Add(instance.renderer);
             }
             
-            renderers.ForEach(r => r.Invalidate());
+            renderers.ForEach(r =>
+            {
+                r.Invalidate();
+                r.UpdateSerializedData();
+            });
         }
         
         void ModifyPosition(RaycastHit p_hit)
@@ -192,12 +201,16 @@ namespace InstancePainter.Editor
                     instance.matrix.GetColumn(2).magnitude
                 );
 
-                instance.renderer.matrixData[instance.index] = Matrix4x4.TRS(position, originalRotation, originalScale);
+                instance.renderer.SetInstanceMatrix(instance.index, Matrix4x4.TRS(position, originalRotation, originalScale));
                 if (!renderers.Contains(instance.renderer))
                     renderers.Add(instance.renderer);
             }
             
-            renderers.ForEach(r => r.Invalidate());
+            renderers.ForEach(r =>
+            {
+                r.Invalidate();
+                r.UpdateSerializedData();
+            });
         }
         
         void DrawModifyHandle(Vector3 p_position, Vector3 p_normal, float p_size)
@@ -234,8 +247,12 @@ namespace InstancePainter.Editor
             GUILayout.Label("Modify by Painting ", Core.Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
             GUILayout.Space(8);
 
-            GUILayout.Label(" Ctrl + Left Button(HOLD): ", Core.Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
+            GUILayout.Label(" Ctrl + Left Button(DRAG): ", Core.Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
             GUILayout.Label("Modify in Place ", Core.Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
+            GUILayout.Space(8);
+            
+            GUILayout.Label(" Shift + Left Button(DRAG): ", Core.Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
+            GUILayout.Label("Move", Core.Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
             GUILayout.Space(8);
             
             GUILayout.Label(" Ctrl + Mouse Wheel: ", Core.Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));

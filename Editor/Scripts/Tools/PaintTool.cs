@@ -54,11 +54,18 @@ namespace InstancePainter.Editor
                 Undo.RegisterCompleteObjectUndo(Core.RendererObject, "Record Renderer Object");
                 Undo.RegisterCompleteObjectUndo(Core.RendererObject.GetComponents<IPRenderer>(), "Record Renderers");
                 _undoId = Undo.GetCurrentGroup();
-                
-                _cachedValidMeshes = Core.Config.includeLayers.Count == 0
-                    ? GameObject.FindObjectsOfType<MeshFilter>()
-                    : LayerUtils.GetAllComponentsInLayers<MeshFilter>(Core.Config.includeLayers.ToArray());
-                
+
+                if (Core.Config.useMeshRaycasting)
+                {
+                    _cachedValidMeshes = Core.Config.includeLayers.Count == 0
+                        ? GameObject.FindObjectsOfType<MeshFilter>()
+                        : LayerUtils.GetAllComponentsInLayers<MeshFilter>(Core.Config.includeLayers.ToArray());
+                }
+                else
+                {
+                    _cachedValidMeshes = null;
+                }
+
                 _cachedValidColliders = Core.Config.includeLayers.Count == 0
                     ? GameObject.FindObjectsOfType<Collider>()
                     : LayerUtils.GetAllComponentsInLayers<Collider>(Core.Config.includeLayers.ToArray());
@@ -128,12 +135,16 @@ namespace InstancePainter.Editor
                 );
                 var scale = Vector3.one * offset.y / 10;
 
-                instance.renderer.matrixData[instance.index] = Matrix4x4.TRS(_paintStartHit.point + position + instance.definition.positionOffset, rotation * originalRotation, originalScale + scale);
+                instance.renderer.SetInstanceMatrix(instance.index, Matrix4x4.TRS(_paintStartHit.point + position + instance.definition.positionOffset, rotation * originalRotation, originalScale + scale));
                 if (!renderers.Contains(instance.renderer))
                     renderers.Add(instance.renderer);
             }
             
-            renderers.ForEach(r => r.Invalidate());
+            renderers.ForEach(r =>
+            {
+                r.Invalidate();
+                r.UpdateSerializedData();
+            });
         }
         
         void Paint(RaycastHit p_hit)
@@ -173,7 +184,11 @@ namespace InstancePainter.Editor
                 }
             }
             
-            invalidateRenderers.ForEach(r => r.Invalidate());
+            invalidateRenderers.ForEach(r =>
+            {
+                r.Invalidate();
+                r.UpdateSerializedData();
+            });
         }
 
         void Colorize(RaycastHit p_hit)
@@ -183,13 +198,13 @@ namespace InstancePainter.Editor
             var renderers = Core.RendererObject.GetComponents<IPRenderer>();
             foreach (IPRenderer renderer in renderers)
             {
-                for (int i = 0; i<renderer.matrixData.Count; i++)
+                for (int i = 0; i<renderer.InstanceCount; i++)
                 {
-                    var position = renderer.matrixData[i].GetColumn(3);
+                    var position = renderer.GetInstanceMatrix(i).GetColumn(3);
                     var distance = Vector3.Distance(position, p_hit.point);
                     if (distance < Core.Config.brushSize)
                     {
-                        renderer.colorData[i] = Vector4.Lerp(renderer.colorData[i],Core.Config.color, (1-distance/Core.Config.brushSize) * Core.Config.alpha);
+                        renderer.SetInstanceColor(i, Vector4.Lerp(renderer.GetInstanceColor(i),Core.Config.color, (1-distance/Core.Config.brushSize) * Core.Config.alpha));
 
                         if (!invalidateRenderers.Contains(renderer))
                             invalidateRenderers.Add(renderer);
@@ -197,7 +212,10 @@ namespace InstancePainter.Editor
                 }
             }
             
-            invalidateRenderers.ForEach(r => r.Invalidate());
+            invalidateRenderers.ForEach(r =>
+            {
+                r.Invalidate();
+            });
         }
         
         void DrawPaintHandle(Vector3 p_position, Vector3 p_normal, float p_size)

@@ -13,6 +13,7 @@ namespace InstancePainter.Editor
     public class EraseTool : ToolBase
     {
         private int _undoId;
+        private Mesh[] _validEraseMeshes;
 
         protected override void HandleMouseHitInternal(RaycastHit p_hit)
         {
@@ -24,6 +25,8 @@ namespace InstancePainter.Editor
                 Undo.SetCurrentGroupName("Erase Instances");
                 Undo.RegisterCompleteObjectUndo(Core.RendererObject.GetComponents<IPRenderer>(), "Record Renderers");
                 _undoId = Undo.GetCurrentGroup();
+
+                CacheValidEraseMeshes();
             }
             
             if (Event.current.button == 0 && !Event.current.alt && (Event.current.type == EventType.MouseDrag ||
@@ -50,45 +53,36 @@ namespace InstancePainter.Editor
         public void Erase(RaycastHit p_hit)
         {
             List<IPRenderer> invalidateRenderers = new List<IPRenderer>();
-            
+
+            var sizeSq = Core.Config.brushSize * Core.Config.brushSize;
             var renderers = Core.RendererObject.GetComponents<IPRenderer>();
             foreach (IPRenderer renderer in renderers)
             {
-                if (renderer.Definitions.Count == 0 || (!IsActiveDefinition(renderer.Definitions[0]) && Core.Config.eraseActiveDefinition))
+                if (renderer.InstanceCount == 0 || (!_validEraseMeshes.Contains(renderer.mesh) && Core.Config.eraseActiveDefinition))
                     continue;
-                
-                for (int i = 0; i<renderer.matrixData.Count; i++)
+
+                var modified = false;
+                for (int i = renderer.InstanceCount - 1; i>=0; i--)
                 {
-                    var position = renderer.matrixData[i].GetColumn(3);
-                    if (Vector3.Distance(position, p_hit.point) < Core.Config.brushSize)
+                    var position = renderer.GetInstanceMatrix(i).GetColumn(3);
+                    if (Vector3Utils.DistanceSq(position, p_hit.point) < sizeSq)
                     {
-                        renderer.matrixData.RemoveAt(i);
-                        renderer.colorData.RemoveAt(i);
-                        renderer.Definitions.RemoveAt(i);
-                        
-                        if (!invalidateRenderers.Contains(renderer))
-                            invalidateRenderers.Add(renderer);
-                        
-                        i--;
+                        renderer.RemoveInstance(i);
+                        modified = true;
                     }
+                }
+
+                if (modified && !invalidateRenderers.Contains(renderer))
+                {
+                    invalidateRenderers.Add(renderer);
                 }
             }
             
-            invalidateRenderers.ForEach(r => r.Invalidate());
-        }
-
-        private bool IsActiveDefinition(InstanceDefinition p_definition)
-        {
-            foreach (var definition in Core.Config.paintDefinitions)
+            invalidateRenderers.ForEach(r =>
             {
-                if (definition == null || !definition.enabled)
-                    continue;
-
-                if (definition == p_definition)
-                    return true;
-            }
-
-            return false;
+                r.Invalidate();
+                r.UpdateSerializedData();
+            });
         }
 
         public override void DrawSceneGUI(SceneView p_sceneView)
@@ -113,6 +107,27 @@ namespace InstancePainter.Editor
             Core.Config.brushSize = EditorGUILayout.Slider("Erase Size", Core.Config.brushSize, 0.1f, 100);
             
             Core.Config.eraseActiveDefinition = EditorGUILayout.Toggle("Erase Only Active Definition", Core.Config.eraseActiveDefinition);
+        }
+
+        void CacheValidEraseMeshes()
+        {
+            List<Mesh> meshes = new List<Mesh>();
+            foreach (var definition in Core.Config.paintDefinitions)
+            {
+                if (!definition.enabled)
+                    continue;
+                
+                MeshFilter[] filters = definition.prefab.GetComponentsInChildren<MeshFilter>();
+                foreach (var filter in filters)
+                {
+                    if (!meshes.Contains(filter.sharedMesh))
+                    {
+                        meshes.Add(filter.sharedMesh);
+                    }
+                }
+            }
+
+            _validEraseMeshes = meshes.ToArray();
         }
     }
 }

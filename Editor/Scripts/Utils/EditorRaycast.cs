@@ -2,6 +2,8 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
+using UnityEngine.Profiling;
+
 namespace InstancePainter.Editor
 {
     using System.Linq;

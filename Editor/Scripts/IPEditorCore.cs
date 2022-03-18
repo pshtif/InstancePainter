@@ -8,6 +8,7 @@ using System.Linq;
 using InstancePainter.Runtime;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Profiling;
 using Random = UnityEngine.Random;
 
 namespace InstancePainter.Editor
@@ -15,7 +16,7 @@ namespace InstancePainter.Editor
     [InitializeOnLoad]
     public class IPEditorCore
     {
-        const string VERSION = "0.1.0";
+        const string VERSION = "0.2.0";
         
         public static IPEditorCore Instance { get; private set; }
         
@@ -106,13 +107,9 @@ namespace InstancePainter.Editor
                 renderer = RendererObject.gameObject.AddComponent<IPRenderer>();
                 renderer.mesh = p_mesh;
                 renderer._material = p_definition.material;
-                renderer.matrixData = new List<Matrix4x4>();
-                renderer.colorData = new List<Vector4>();
             }
 
-            renderer.matrixData.Add(Matrix4x4.TRS(p_position, p_rotation, p_scale));
-            renderer.colorData.Add(p_color);
-            renderer.Definitions.Add(p_definition);
+            renderer.AddInstance(Matrix4x4.TRS(p_position, p_rotation, p_scale), p_color);
 
             return renderer;
         }
@@ -125,7 +122,7 @@ namespace InstancePainter.Editor
             Ray ray = new Ray(p_position, -Vector3.up);
 
             RaycastHit hit;
-
+            
             if (p_validMeshes == null || !EditorRaycast.Raycast(ray, p_validMeshes, out hit))
             {
                 if (p_validColliders == null || !EditorRaycast.Raycast(ray, p_validColliders, out hit))
@@ -147,8 +144,11 @@ namespace InstancePainter.Editor
                  return paintedRenderers.ToArray();
 
             InstanceDefinition instanceDefinition = GetWeightedDefinition();
-            if (instanceDefinition == null)
+            if (instanceDefinition == null || instanceDefinition.prefab == null)
                 return paintedRenderers.ToArray();
+
+            MeshFilter[] filters = instanceDefinition.prefab.GetComponentsInChildren<MeshFilter>();
+            Mesh[] meshes = filters.Select(f => f.sharedMesh).ToArray();
             
             // Do proximity check
             if (Config.minimalDistance > 0)
@@ -156,11 +156,12 @@ namespace InstancePainter.Editor
                 var checkRenderers = RendererObject.GetComponents<IPRenderer>();
                 foreach (var renderer in checkRenderers)
                 {
-                    if (renderer.Definitions.Count == 0 || renderer.Definitions[0].prefab != instanceDefinition.prefab)
+                    if (!meshes.Contains(renderer.mesh))
                         continue;
                     
-                    foreach (var matrix in renderer.matrixData)
+                    for (int i = 0; i < renderer.InstanceCount; i++)
                     {
+                        var matrix = renderer.GetInstanceMatrix(i);
                         if (Vector3.Distance(p_position, matrix.GetColumn(3)) < Config.minimalDistance)
                         {
                             return paintedRenderers.ToArray();
@@ -169,14 +170,6 @@ namespace InstancePainter.Editor
                 }
             }
 
-            if (instanceDefinition.prefab == null)
-            {
-                Debug.LogWarning("Painting instance without defined prefab.");
-                return paintedRenderers.ToArray();
-            }
-            
-            MeshFilter[] filters = instanceDefinition.prefab.GetComponentsInChildren<MeshFilter>();
-            
             foreach (var filter in filters)
             {
                 var position = p_position + instanceDefinition.positionOffset + filter.transform.position;
@@ -200,8 +193,8 @@ namespace InstancePainter.Editor
                     var renderer = AddInstance(instanceDefinition, filter.sharedMesh, position, rotation,
                         scale, Config.color);
 
-                    var instance = new PaintedInstance(renderer, renderer.matrixData[renderer.matrixData.Count - 1],
-                        renderer.matrixData.Count - 1, instanceDefinition);
+                    var instance = new PaintedInstance(renderer, renderer.GetInstanceMatrix(renderer.InstanceCount - 1),
+                        renderer.InstanceCount - 1, instanceDefinition);
                     p_paintedInstances?.Add(instance);
 
                     paintedRenderers.Add(renderer);

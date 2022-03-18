@@ -126,16 +126,14 @@ namespace InstancePainter.Editor
             var renderers = Core.RendererObject.GetComponents<IPRenderer>();
             foreach (IPRenderer renderer in renderers)
             {
-                for (int i = 0; i<renderer.matrixData.Count; i++)
+                for (int i = 0; i<renderer.InstanceCount; i++)
                 {
-                    var position = renderer.matrixData[i].GetColumn(3);
+                    var position = renderer.GetInstanceMatrix(i).GetColumn(3);
                     Vector2 position2d = new Vector2(position.x, position.z); 
                     if (rect.Contains(position2d))
                     {
-                        renderer.matrixData.RemoveAt(i);
-                        renderer.colorData.RemoveAt(i);
-                        renderer.Definitions.RemoveAt(i);
-                        
+                        renderer.RemoveInstance(i);
+
                         if (renderer != null && !invalidateRenderers.Contains(renderer))
                             invalidateRenderers.Add(renderer);
                         
@@ -149,10 +147,14 @@ namespace InstancePainter.Editor
 
         void Fill(Vector3 p_startPoint, Vector3 p_endPoint)
         {
-            var validMeshes = Core.Config.includeLayers.Count == 0
-                ? GameObject.FindObjectsOfType<MeshFilter>()
-                : LayerUtils.GetAllComponentsInLayers<MeshFilter>(Core.Config.includeLayers.ToArray());
-            
+            MeshFilter[] validMeshes = null;
+            if (Core.Config.useMeshRaycasting)
+            {
+                validMeshes = Core.Config.includeLayers.Count == 0
+                    ? GameObject.FindObjectsOfType<MeshFilter>()
+                    : LayerUtils.GetAllComponentsInLayers<MeshFilter>(Core.Config.includeLayers.ToArray());
+            }
+
             var validColliders = Core.Config.includeLayers.Count == 0
                 ? GameObject.FindObjectsOfType<Collider>()
                 : LayerUtils.GetAllComponentsInLayers<Collider>(Core.Config.includeLayers.ToArray());

@@ -59,9 +59,19 @@ namespace InstancePainter.Editor
             
             IPEditorCore.Instance.CurrentTool?.DrawInspectorGUI();
             
+            EditorGUI.BeginChangeCheck();
+
             DrawPaintDefinitionsGUI();
         
             DrawLayersGUI();
+
+            Core.Config.useMeshRaycasting =
+                GUILayout.Toggle(Core.Config.useMeshRaycasting, "Use Mesh Raycasting");
+
+            if (EditorGUI.EndChangeCheck())
+            {
+                EditorUtility.SetDirty(Core.Config);
+            }
 
             EditorGUILayout.EndScrollView();
         }
@@ -179,7 +189,6 @@ namespace InstancePainter.Editor
             {
                 serializedObject.ApplyModifiedProperties();
             }
-
         }
     }
 }

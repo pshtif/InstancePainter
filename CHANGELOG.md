@@ -4,6 +4,37 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release
+
+### Release 0.2.0 - 17.3.2022
+
+#### Added
+
+- added gizmos for colliders
+
+#### Changed
+
+- huge refactor to native collections accross the whole codebase
+- optimizations accross the whole codebase
+
+#### Fixed
+
+## RELEASES
+
+### Release 0.1.2 - 16.3.2022
+
+#### Added
+
+- added instance colliders
+- added instance modifiers to modify instances within a collider
+- added Color, Scale, Visibility modifiers
+- added Bounds, Sphere colliders
+
+#### Fixed
+
+- fixed glitches in rendering on same frame as invalidation
+- fixed compute buffer offset on modifier invalidation
+
 ### Release 0.1.1 - 16.3.2022
 
 #### Added
