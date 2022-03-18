@@ -116,11 +116,13 @@ Shader "Instance Painter/InstancedIndirectNoShadows"
 
                 
                 half3 lighting = mainLight.color * mainLight.distanceAttenuation;
+                
                 // No direct light for billboarding would change on camera rotation
                 #if !ENABLE_BILLBOARDING
                 half directDiffuse = dot(normalWS, mainLight.direction);
                 lighting *= directDiffuse;
                 #endif
+                
                 #if ENABLE_RECEIVE_SHADOWS
                 lighting *= mainLight.shadowAttenuation;
                 #endif

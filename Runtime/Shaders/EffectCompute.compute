@@ -1,0 +1,20 @@
+﻿#pragma kernel CSMain
+
+vector _Time;
+uint _startOffset;
+half4 _color;
+vector _origin;
+RWStructuredBuffer<float4x4> _matrixBuffer;
+RWStructuredBuffer<float4> _colorBuffer;
+
+[numthreads(64,1,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    float4x4 matrixWS = _matrixBuffer[id.x + _startOffset];
+	float dist = distance(matrixWS._m03_m13_m23, _origin)/20;
+
+    _colorBuffer[id.x + _startOffset] = lerp(_color, float4(1,1,1,0), clamp(sin(_Time.z)+dist,0,1));
+    
+    // if (absPosCS.z <= absPosCS.w && absPosCS.y <= absPosCS.w && absPosCS.x <= absPosCS.w && absPosCS.w <= _drawDistance)
+	   //  _visibleIdBuffer.Append(id.x + _startOffset);
+}

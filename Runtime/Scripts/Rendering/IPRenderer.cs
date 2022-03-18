@@ -52,6 +52,8 @@ namespace InstancePainter.Runtime
 
         public bool fallback = false;
         public Material fallbackMaterial;
+
+        public ComputeShader effectShader;
         
         #if UNITY_EDITOR
         public bool enableEditorPreview = true;
@@ -89,6 +91,9 @@ namespace InstancePainter.Runtime
 
         public void Invalidate(NativeList<Matrix4x4> p_matrixData, NativeList<Vector4> p_colorData)
         {
+            if (SystemInfo.maxComputeBufferInputsVertex < 2)
+                return;
+            
             //Debug.Log("Invalidate");
             if (_material == null)
             {
@@ -140,8 +145,13 @@ namespace InstancePainter.Runtime
                 drawIndirectBuffer.SetData(_indirectArgs);
                 _drawIndirectBuffers[i] = drawIndirectBuffer;
             }
+            
+            effectShader.SetBuffer(0, "_matrixBuffer", _matrixBuffer);
+            effectShader.SetBuffer(0, "_colorBuffer", _colorBuffer);
 
+            #if UNITY_EDITOR
             Render();
+            #endif
         }
 
         void Update()
@@ -172,19 +182,22 @@ namespace InstancePainter.Runtime
 
         private void Render()
         {
-            Bounds renderBound = new Bounds();
-            renderBound.SetMinMax(new Vector3(-1000, -1000, -1000), new Vector3(1000, 1000, 1000));
-
-            if (_matrixBuffer == null || !_matrixBuffer.IsValid() || _matrixBuffer.count == 0)
-                return;
-            
-            for (int i = 0; i < mesh.subMeshCount; i++)
+            if (SystemInfo.maxComputeBufferInputsVertex >= 2)
             {
-                Graphics.DrawMeshInstancedIndirect(mesh, i, _material, renderBound, _drawIndirectBuffers[i], 0,
-                    _propertyBlock);
-            }
+                TestCompute();
+                
+                Bounds renderBound = new Bounds();
+                renderBound.SetMinMax(new Vector3(-1000, -1000, -1000), new Vector3(1000, 1000, 1000));
 
-            if (fallback)
+                if (_matrixBuffer == null || !_matrixBuffer.IsValid() || _matrixBuffer.count == 0)
+                    return;
+
+                for (int i = 0; i < mesh.subMeshCount; i++)
+                {
+                    Graphics.DrawMeshInstancedIndirect(mesh, i, _material, renderBound, _drawIndirectBuffers[i], 0,
+                        _propertyBlock);
+                }
+            } else if (fallback)
             {
                 //var block = new MaterialPropertyBlock();
                 //block.SetColor("_Color", Color.red);
@@ -319,6 +332,29 @@ namespace InstancePainter.Runtime
         public void ToggleModifiersAutoApply()
         {
             autoApplyModifiers = !autoApplyModifiers;
+        }
+
+        public void TestCompute()
+        {
+            effectShader.SetBuffer(0, "_matrixBuffer", _matrixBuffer);
+            effectShader.SetBuffer(0, "_colorBuffer", _colorBuffer);
+            
+            effectShader.SetVector("_color", new Vector4(1,0,0,1));
+            effectShader.SetVector("_origin", Vector3.zero);
+            effectShader.SetVector ("_Time", Shader.GetGlobalVector("_Time"));
+            
+            float threadCount = 64;
+            float batchLimit = 65535 * threadCount;
+            
+            int subBatchCount = Mathf.CeilToInt(InstanceCount / batchLimit);
+            for (int i = 0; i < subBatchCount; i++)
+            {
+                effectShader.SetInt("_startOffset", i * (int)batchLimit);
+                float current = (InstanceCount < (i + 1) * (int)batchLimit)
+                    ? InstanceCount - i * (int)batchLimit
+                    : batchLimit;
+                effectShader.Dispatch(0, Mathf.CeilToInt(current / threadCount), 1, 1);
+            }
         }
         
 #if UNITY_EDITOR
