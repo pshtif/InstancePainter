@@ -29,7 +29,7 @@ Shader "Instance Painter/PixelShadowsFallback"
             Tags { "LightMode" = "UniversalForward" }
 
             HLSLPROGRAM
-            #pragma target 3.0
+            #pragma target 2.0
             #pragma vertex vert
             #pragma fragment frag
             #pragma shader_feature CULLING

@@ -61,7 +61,6 @@ namespace InstancePainter.Runtime
 
         public void OnEnable()
         {
-            Debug.Log("OnEnable: "+_matrixData?.Length);
             if (!_nativeMatrixData.IsCreated)
             {
                 _nativeMatrixData = new NativeList<Matrix4x4>(Allocator.Persistent);

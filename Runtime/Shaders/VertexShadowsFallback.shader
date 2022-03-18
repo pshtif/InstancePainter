@@ -6,9 +6,8 @@ Shader "Instance Painter/InstancedIndirectVertexShadows"
 {
     Properties
     {
+        [PerRendererData] _Color ("Color", Color) = (1,1,1)
         _AmbientLight ("Ambient Light", Color) = (0,0,0)
-        
-        [HideInInspector]_BoundSize("_BoundSize", Vector) = (1,1,1)
         
         _WindIntensity ("_WindIntensity", Float) = .5
         _WindTiling ("Wind Tiling", Float) = 0
@@ -30,7 +29,7 @@ Shader "Instance Painter/InstancedIndirectVertexShadows"
             Tags { "LightMode" = "UniversalForward" }
 
             HLSLPROGRAM
-            #pragma target 3.0
+            #pragma target 2.0
             #pragma vertex vert
             #pragma fragment frag
             #pragma shader_feature CULLING
@@ -64,27 +63,18 @@ Shader "Instance Painter/InstancedIndirectVertexShadows"
             };
 
             CBUFFER_START(UnityPerMaterial)
-                float2 _BoundSize;
+                half3 _Color;
                 float _WindIntensity;
                 float _WindTiling;
                 float _WindTimeScale;
                 float3 _AmbientLight;
-
-                StructuredBuffer<float4> _colorBuffer;
-                StructuredBuffer<float4x4> _matrixBuffer;
-                StructuredBuffer<uint> _visibleIdBuffer;
             CBUFFER_END
 
-            Varyings vert(Attributes IN, uint instanceID : SV_InstanceID)
+            Varyings vert(Attributes IN)
             {
                 Varyings OUT;
                 
-                float4x4 instanceMatrix = _matrixBuffer[instanceID];                
-                //half3 normalWS = normalize(mul(IN.normalOS, (float3x3)Inverse(instanceMatrix)));
-                half3 normalWS = normalize(mul(instanceMatrix, IN.normalOS));
-
-                // Without billboarding
-                //OUT.positionCS = TransformWorldToHClip(positionWS);
+                half3 normalWS = normalize(mul(UNITY_MATRIX_M, IN.normalOS));
                 
                 float4 position = IN.positionOS;
                 #if ENABLE_WIND
@@ -107,7 +97,7 @@ Shader "Instance Painter/InstancedIndirectVertexShadows"
                 position = mul(rotationMatrixInverse, position);
                 #endif
                 
-                float4 positionWS = mul(instanceMatrix, position);
+                float3 positionWS = TransformObjectToWorld(position);
 
                 Light mainLight = GetMainLight(TransformWorldToShadowCoord(positionWS));
                 
@@ -121,7 +111,7 @@ Shader "Instance Painter/InstancedIndirectVertexShadows"
                 positionWS = mul(UNITY_MATRIX_V, positionWS);
                 OUT.positionCS = mul(UNITY_MATRIX_P, positionWS);
                 
-                OUT.color = (result + _AmbientLight) * _colorBuffer[instanceID] * IN.color.xyz;
+                OUT.color = (result + _AmbientLight) * _Color * IN.color.xyz;
 
                 return OUT;
             }
@@ -186,8 +176,6 @@ Shader "Instance Painter/InstancedIndirectVertexShadows"
             Varyings vert(Attributes IN, uint instanceID : SV_InstanceID)
             {
                 Varyings OUT;
-                
-                float4x4 instanceMatrix = _matrixBuffer[instanceID];
 
                 float4 position = IN.positionOS;
                 #if ENABLE_WIND
@@ -209,9 +197,7 @@ Shader "Instance Painter/InstancedIndirectVertexShadows"
                 position = mul(rotationMatrixInverse, position);
                 #endif
                 
-                float3 positionWS = mul(instanceMatrix, position);
-                
-                OUT.positionCS = TransformWorldToHClip(positionWS);
+                OUT.positionCS = TransformObjectToHClip(position);
 
                 return OUT;
             }

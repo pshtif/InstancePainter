@@ -6,9 +6,8 @@ Shader "Instance Painter/InstancedIndirectNoShadows"
 {
     Properties
     {
+        [PerRendererData] _Color ("Color", Color) = (1,1,1)
         _AmbientLight ("Ambient Light", Color) = (0,0,0)
-        
-        [HideInInspector]_BoundSize("_BoundSize", Vector) = (1,1,1)
         
         _WindIntensity ("Wind Intensity", Float) = .5
         _WindTiling ("Wind Tiling", Float) = 0
@@ -30,7 +29,7 @@ Shader "Instance Painter/InstancedIndirectNoShadows"
             Tags { "LightMode" = "UniversalForward" }
 
             HLSLPROGRAM
-            #pragma target 3.0
+            #pragma target 2.0
             #pragma vertex vert
             #pragma fragment frag
             #pragma shader_feature CULLING
@@ -64,7 +63,7 @@ Shader "Instance Painter/InstancedIndirectNoShadows"
             };
 
             CBUFFER_START(UnityPerMaterial)
-                float2 _BoundSize;
+                half3 _Color;
                 float _WindIntensity;
                 float _WindTiling;
                 float _WindTimeScale;
@@ -75,19 +74,13 @@ Shader "Instance Painter/InstancedIndirectNoShadows"
                 //StructuredBuffer<uint> _visibleIdBuffer;
             CBUFFER_END
 
-            Varyings vert(Attributes IN, uint instanceID : SV_InstanceID)
+            Varyings vert(Attributes IN)
             {
                 Varyings OUT;
 
-                //GetCameraPositionWS()
-                
-                float4x4 instanceMatrix = _matrixBuffer[instanceID];                
-                half3 normalWS = normalize(mul(instanceMatrix, IN.normalOS));
-
-                // Without billboarding
-                //OUT.positionCS = TransformWorldToHClip(positionWS);
-
                 float4 position = IN.positionOS;
+                half3 normalWS = normalize(mul(UNITY_MATRIX_M, IN.normalOS));
+                
                 #if ENABLE_WIND
                 float4 positionForWind = mul(instanceMatrix, position);
                 position.x += _WindIntensity * sin(_Time.y * _WindTimeScale + positionForWind.x * _WindTiling + positionForWind.z * _WindTiling) * position.y;
@@ -107,7 +100,7 @@ Shader "Instance Painter/InstancedIndirectNoShadows"
                 position = mul(rotationMatrixInverse, position);
                 #endif
                 
-                float4 positionWS = mul(instanceMatrix, position);
+                float3 positionWS = TransformObjectToWorld(position);
 
                 Light mainLight = GetMainLight(TransformWorldToShadowCoord(positionWS));
                 
@@ -125,7 +118,7 @@ Shader "Instance Painter/InstancedIndirectNoShadows"
                 lighting *= mainLight.shadowAttenuation;
                 #endif
                 
-                OUT.color = (lighting + _AmbientLight)* _colorBuffer[instanceID] * IN.color.xyz;
+                OUT.color = (lighting + _AmbientLight) * _Color * IN.color.xyz;
 
                 return OUT;
             }
