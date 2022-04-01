@@ -65,10 +65,9 @@ namespace InstancePainter.Editor
             SceneView.RepaintAll();
         }
         
-
         private void OnSceneGUI(SceneView p_sceneView)
         {
-            if (!Config.enabled)
+            if (EditorApplication.isCompiling || BuildPipeline.isBuildingPlayer || !Config.enabled)
                 return;
 
             if (Event.current.control && Event.current.isScrollWheel)

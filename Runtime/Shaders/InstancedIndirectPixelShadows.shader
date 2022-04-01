@@ -75,14 +75,15 @@ Shader "Instance Painter/InstancedIndirectPixelShadows"
 
                 StructuredBuffer<float4> _colorBuffer;
                 StructuredBuffer<float4x4> _matrixBuffer;
-                StructuredBuffer<uint> _visibleIdBuffer;
+//                StructuredBuffer<uint> _visibleIdBuffer;
             CBUFFER_END
 
             Varyings vert(Attributes IN, uint instanceID : SV_InstanceID)
             {
                 Varyings OUT;
                 
-                float4x4 instanceMatrix = _matrixBuffer[instanceID];                
+                float4x4 instanceMatrix = _matrixBuffer[instanceID];
+                float4 instanceColor = _colorBuffer[instanceID];
                 //half3 normalWS = normalize(mul((float3x3)Inverse(instanceMatrix), IN.normalOS));
                 half3 normalWS = normalize(mul(instanceMatrix, IN.normalOS));
 
@@ -125,7 +126,7 @@ Shader "Instance Painter/InstancedIndirectPixelShadows"
 
                 OUT.normalWS = normalWS;
                 
-                OUT.color = _colorBuffer[instanceID] * IN.color.xyz;
+                OUT.color = instanceColor * IN.color.xyz;
 
                 return OUT;
             }

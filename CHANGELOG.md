@@ -6,6 +6,17 @@ All notable changes to this project will be documented in this file.
 
 ### Release
 
+### Release 0.2.1 - 1.4.2022
+
+#### Added
+
+- more HW compatibility checks on SSBO access
+- experimental compute buffers/shaders, still disabled by default
+
+#### Changed
+
+- changed raycasting implementation to avoid using some internal Unity calls that are buggy on MacOS
+
 ### Release 0.2.0 - 17.3.2022
 
 #### Added

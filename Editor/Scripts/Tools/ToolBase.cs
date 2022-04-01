@@ -25,7 +25,10 @@ namespace InstancePainter.Editor
 
             if (Event.current.isMouse)
             {
-                HandleMouseHit();
+                if (HandleMouseHit())
+                {
+                    SceneView.RepaintAll();
+                }
             }
             
             if (_mouseHitTransform?.GetComponent<MeshFilter>() == null && _mouseHitTransform?.GetComponent<Collider>() == null)
@@ -34,10 +37,10 @@ namespace InstancePainter.Editor
             HandleMouseHitInternal(_mouseRaycastHit);
             
             // if (Event.current.type != EventType.Layout && Event.current.type != EventType.Repaint) 
-            //     Event.current.Use();
+            //      Event.current.Use();
         }
 
-        void HandleMouseHit()
+        bool HandleMouseHit()
         {
             RaycastHit hit;
 
@@ -48,7 +51,10 @@ namespace InstancePainter.Editor
                 out _mouseHitMesh, exclude.Length == 0 ? null : exclude, include.Length == 0 ? null : include))
             {
                 _mouseRaycastHit = hit;
+                return true;
             }
+
+            return false;
         }
         
         protected abstract void HandleMouseHitInternal(RaycastHit p_hit);

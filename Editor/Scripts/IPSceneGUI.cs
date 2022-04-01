@@ -2,7 +2,6 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
-using ICSharpCode.NRefactory.Ast;
 using InstancePainter.Runtime;
 using UnityEditor;
 using UnityEngine;
@@ -15,9 +14,6 @@ namespace InstancePainter.Editor
 
         public static void DrawGUI(SceneView p_sceneView)
         {
-            if (EditorApplication.isCompiling || BuildPipeline.isBuildingPlayer)
-                return;
-            
             Handles.BeginGUI();
 
             var rect = p_sceneView.camera.GetScaledPixelRect();

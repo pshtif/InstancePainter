@@ -1,20 +1,91 @@
 ﻿#pragma kernel CSMain
 
+#include "Assets/Plugins/InstancePainter/Runtime/Shaders/Noise.hlsl"
+
 vector _Time;
 uint _startOffset;
+uint _count;
 half4 _color;
 vector _origin;
-RWStructuredBuffer<float4x4> _matrixBuffer;
-RWStructuredBuffer<float4> _colorBuffer;
+
+StructuredBuffer<float4> _colorBuffer;
+StructuredBuffer<float4x4> _matrixBuffer;
+
+RWStructuredBuffer<float4> _effectedColorBuffer;
+RWStructuredBuffer<float4x4> _effectedMatrixBuffer;
+
+float BackIn(float p_time, float p_duration, float p_amplitude)
+{
+	return (p_time /= p_duration) * p_time * ((p_amplitude + 1.0f) * p_time - p_amplitude);
+}
+
+float BackOut(float p_time, float p_duration, float p_amplitude)
+{
+	return (p_time = p_time / p_duration - 1.0f) * p_time * ((p_amplitude + 1.0f) * p_time + p_amplitude) + 1.0f;
+}
+
+float BounceOut(float p_time, float p_duration)
+{
+	if ((p_time /= p_duration) < 0.363636374473572)
+		return 121.0f / 16.0f * p_time * p_time;
+	if (p_time < 0.727272748947144f)
+		return (121.0f / 16.0f * (p_time -= 0.5454546f) * p_time + 0.75f);
+	return p_time < 0.909090936183929f 
+		? (121.0f / 16.0f * (p_time -= 0.8181818f) * p_time + 15.0f / 16.0f) 
+		: (121.0f / 16.0f * (p_time -= 0.9545454f) * p_time + 63.0f / 64.0f);
+}
+
+float BounceIn(float p_time, float p_duration)
+{
+	return 1.0f - BounceOut(p_duration - p_time, p_duration);
+}
+
+float CubicOut(float p_time, float p_duration)
+{
+	return (p_time = p_time / p_duration - 1.0f) * p_time * p_time + 1.0f;
+}
+
+float ExpoIn(float p_time, float p_duration)
+{
+	return p_time != 0.0f ? pow(2.0f, 10.0f * (p_time / p_duration - 1.0f)) : 0.0f;
+}
+
+float ExpoOut(float p_time, float p_duration)
+{
+	return p_time == p_duration ? 1.0f : -pow(2.0f, -10.0f *  p_time / p_duration) + 1.0f;
+}
 
 [numthreads(64,1,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
-    float4x4 matrixWS = _matrixBuffer[id.x + _startOffset];
-	float dist = distance(matrixWS._m03_m13_m23, _origin)/20;
+	float defaultAmplitude = 1.70158f;
 
-    _colorBuffer[id.x + _startOffset] = lerp(_color, float4(1,1,1,0), clamp(sin(_Time.z)+dist,0,1));
-    
-    // if (absPosCS.z <= absPosCS.w && absPosCS.y <= absPosCS.w && absPosCS.x <= absPosCS.w && absPosCS.w <= _drawDistance)
-	   //  _visibleIdBuffer.Append(id.x + _startOffset);
+	if (id.x + _startOffset < _count)
+	{
+		uint index = id.x + _startOffset;
+		float4x4 matrixWS = _matrixBuffer[index];
+		float4 color = _colorBuffer[index];
+	
+		float d = distance(matrixWS._m03_m13_m23, _origin)/100;
+		d = clamp(sin(_Time.z)+d,0,1);
+		d = 0 + (1 - 0) * ExpoIn(d, 1);
+		d = clamp(d, 0, 1);
+
+		if (d>0.6 && d<1)
+		{
+			d -= ClassicNoise(float2(matrixWS._m03_m13_m23.x, matrixWS._m03_m13_m23.z)/10)*(1-d);
+			d = clamp(d, 0.6, 1);
+		}
+
+		float4x4 scaleMatrix = float4x4(1-d,0,0,0,
+										0,1-d,0,d*20,//(min(d,1-d))*5,
+										0,0,1-d,0,
+										0,0,0,1);
+	
+		//_colorBuffer[id.x + _startOffset] = lerp(_color, float4(1,1,1,0), d);
+		_effectedColorBuffer[id.x + _startOffset] = lerp(color, _color, d);
+		//_effectedColorBuffer.Append(color);
+		_effectedMatrixBuffer[id.x + _startOffset] = mul(matrixWS, scaleMatrix);
+		//_effectedMatrixBuffer.Append(matrixWS);
+	}
 }
