@@ -113,7 +113,6 @@ Shader "Instance Painter/InstancedIndirectNoShadows"
                 
                 positionWS = mul(UNITY_MATRIX_V, positionWS);
                 OUT.positionCS = mul(UNITY_MATRIX_P, positionWS);
-
                 
                 half3 lighting = mainLight.color * mainLight.distanceAttenuation;
                 

@@ -2,7 +2,7 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
-Shader "Instance Painter/InstancedIndirectNoShadows"
+Shader "Instance Painter/NoShadowsFallback"
 {
     Properties
     {
@@ -82,7 +82,7 @@ Shader "Instance Painter/InstancedIndirectNoShadows"
                 half3 normalWS = normalize(mul(UNITY_MATRIX_M, IN.normalOS));
                 
                 #if ENABLE_WIND
-                float4 positionForWind = mul(instanceMatrix, position);
+                float3 positionForWind = TransformObjectToWorld(position);
                 position.x += _WindIntensity * sin(_Time.y * _WindTimeScale + positionForWind.x * _WindTiling + positionForWind.z * _WindTiling) * position.y;
                 #endif
 
@@ -104,13 +104,11 @@ Shader "Instance Painter/InstancedIndirectNoShadows"
 
                 Light mainLight = GetMainLight(TransformWorldToShadowCoord(positionWS));
                 
-                positionWS = mul(UNITY_MATRIX_V, positionWS);
-                OUT.positionCS = mul(UNITY_MATRIX_P, positionWS);
-
+                OUT.positionCS = TransformWorldToHClip(positionWS);
                 
                 half3 lighting = mainLight.color * mainLight.distanceAttenuation;
                 // No direct light for billboarding would change on camera rotation
-                #if !ENABLE_BILLBOARDING
+                #if !ENABLE_BILLBOARD
                 half directDiffuse = dot(normalWS, mainLight.direction);
                 lighting *= directDiffuse;
                 #endif

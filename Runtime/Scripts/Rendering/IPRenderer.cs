@@ -29,8 +29,10 @@ namespace InstancePainter.Runtime
         public NativeList<Matrix4x4> _nativeMatrixData;
         public NativeList<Vector4> _nativeColorData;
 
+        [HideInInspector]
         [SerializeField]
         private Matrix4x4[] _matrixData;
+        [HideInInspector]
         [SerializeField]
         private Vector4[] _colorData;
 
@@ -52,7 +54,7 @@ namespace InstancePainter.Runtime
         public List<InstanceModifierBase> modifiers = new List<InstanceModifierBase>();
         public bool autoApplyModifiers = false;
 
-        public bool fallback = false;
+        public bool forceFallback = false;
         public Material fallbackMaterial;
 
         //public ComputeShader effectShader;
@@ -190,16 +192,16 @@ namespace InstancePainter.Runtime
             {
                 ApplyModifiers();
             }
-
+            
             Render();
         }
 
-        private void Render()
+        public void Render(Camera p_camera = null)
         {
             if (InstanceCount == 0)
                 return;
             
-            if (SystemInfo.maxComputeBufferInputsVertex >= 4)
+            if (SystemInfo.maxComputeBufferInputsVertex >= 4 && !forceFallback)
             {
                 // if (Application.isPlaying)
                 //     TestCompute();
@@ -216,13 +218,15 @@ namespace InstancePainter.Runtime
                     Graphics.DrawMeshInstancedIndirect(mesh, i, _material, renderBound, _drawIndirectBuffers[i], 0,
                         _propertyBlock);
                 }
-            } else if (fallback)
+            } else if (fallbackMaterial != null)
             {
                 for (int i = 0; i < _nativeMatrixData.Length; i++)
                 {
                     for (int j = 0; j < mesh.subMeshCount; j++)
                     {
-                        Graphics.DrawMesh(mesh, _nativeMatrixData[i], fallbackMaterial, 0, Camera.current, j);
+                        Graphics.DrawMesh(mesh, _nativeMatrixData[i], fallbackMaterial, 0, null, j);
+                        // TODO possible to rewrite for old instancing but SRP batcher catches most optimizations anyway and shaders are more friendly for single usage
+                        //Graphics.DrawMeshInstanced(mesh, j,  fallbackMaterial, _nativeMatrixData.ToArray());
                     }
                 }
             }
@@ -260,7 +264,7 @@ namespace InstancePainter.Runtime
                 _drawIndirectBuffers.ToList().ForEach(cb => cb?.Release());
             }
         }
-
+        
         public void ApplyModifiers()
         {
             if (enableModifiers && modifiers != null && modifiers.Count > 0)

@@ -83,7 +83,7 @@ Shader "Instance Painter/PixelShadowsFallback"
                 
                 float4 position = IN.positionOS;
                 #if ENABLE_WIND
-                float4 positionForWind = mul(instanceMatrix, position);
+                float3 positionForWind = TransformObjectToWorld(position);
                 position.x += _WindIntensity * sin(_Time.y * _WindTimeScale + positionForWind.x * _WindTiling + positionForWind.z * _WindTiling) * position.y;
                 #endif
 
@@ -126,16 +126,19 @@ Shader "Instance Painter/PixelShadowsFallback"
                 half strength = GetMainLightShadowStrength();
                 half4 shadowCoord = TransformWorldToShadowCoord(IN.positionWS);
                 Light mainLight  = GetMainLight();
-                half ndotl = saturate(dot(IN.normalWS.xyz, mainLight.direction));
+                half3 lighting = mainLight.color * mainLight.distanceAttenuation;
 
-                half3 directDiffuse   = ndotl * mainLight.color;
+                #if !ENABLE_BILLBOARD
+                half directDiffuse = saturate(dot(IN.normalWS.xyz, mainLight.direction));
+                lighting *= directDiffuse;
+                #endif
                 
                 #if ENABLE_RECEIVE_SHADOWS
                 half attenuation = SampleShadowmap(shadowCoord, TEXTURE2D_ARGS(_MainLightShadowmapTexture, sampler_MainLightShadowmapTexture), samplingData, strength, false);
-                directDiffuse *= attenuation;
+                lighting *= attenuation;
                 #endif
 
-                half3 color = (directDiffuse + _AmbientLight) * IN.color;
+                half3 color = (lighting + _AmbientLight) * IN.color;
                 
                 return half4(color, 1);
             }
@@ -196,7 +199,7 @@ Shader "Instance Painter/PixelShadowsFallback"
                 float4 position = IN.positionOS;
                 
                 #if ENABLE_WIND
-                float4 positionForWind = mul(instanceMatrix, position);
+                float3 positionForWind = TransformObjectToWorld(position);
                 position.x += _WindIntensity * sin(_Time.y * _WindTimeScale + positionForWind.x * _WindTiling + positionForWind.z * _WindTiling) * position.y;
                 #endif
                 

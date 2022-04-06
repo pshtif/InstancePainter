@@ -6,6 +6,21 @@ All notable changes to this project will be documented in this file.
 
 ### Release
 
+### Release 0.3.0 - 7.4.2022
+
+#### Added
+
+- all fallback shaders now have feature parity
+- forceFallback property to explicitly use fallback rendering 
+
+#### Changed
+
+- fallback property was removed once you have fallbackMaterial it will automatically fallback to it if HW doesn't meet instancing requirements
+
+#### Fixes
+
+- fixed now avoiding normal calculation and direction in billboarding mode for all shaders
+
 ### Release 0.2.1 - 1.4.2022
 
 #### Added

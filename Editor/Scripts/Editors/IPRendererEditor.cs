@@ -30,7 +30,7 @@ namespace InstancePainter.Editor
                 GenerateGameObjects();
             }
 
-            if (GUILayout.Button("Hide"))
+            if (GUILayout.Button("ApplyModifiers"))
             {
                 Renderer.ApplyModifiers();
             }

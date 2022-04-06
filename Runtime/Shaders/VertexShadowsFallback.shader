@@ -2,7 +2,7 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
-Shader "Instance Painter/InstancedIndirectVertexShadows"
+Shader "Instance Painter/VertexShadowsFallback"
 {
     Properties
     {
@@ -78,7 +78,7 @@ Shader "Instance Painter/InstancedIndirectVertexShadows"
                 
                 float4 position = IN.positionOS;
                 #if ENABLE_WIND
-                float4 positionForWind = mul(instanceMatrix, position);
+                float3 positionForWind = TransformObjectToWorld(position);
                 position.x += _WindIntensity * sin(_Time.y * _WindTimeScale + positionForWind.x * _WindTiling + positionForWind.z * _WindTiling) * position.y;
                 #endif
 
@@ -100,18 +100,21 @@ Shader "Instance Painter/InstancedIndirectVertexShadows"
                 float3 positionWS = TransformObjectToWorld(position);
 
                 Light mainLight = GetMainLight(TransformWorldToShadowCoord(positionWS));
-                
-                half directDiffuse = dot(normalWS, mainLight.direction);
                 half3 lighting = mainLight.color * mainLight.distanceAttenuation;
+
+                #if !ENABLE_BILLBOARD
+                half directDiffuse = dot(normalWS, mainLight.direction);
+                lighting *= directDiffuse;
+                #endif
+                
                 #if ENABLE_RECEIVE_SHADOWS
                 lighting *= mainLight.shadowAttenuation;
                 #endif
-                half3 result = directDiffuse * lighting;
 
                 positionWS = mul(UNITY_MATRIX_V, positionWS);
                 OUT.positionCS = mul(UNITY_MATRIX_P, positionWS);
                 
-                OUT.color = (result + _AmbientLight) * _Color * IN.color.xyz;
+                OUT.color = (lighting + _AmbientLight) * _Color * IN.color.xyz;
 
                 return OUT;
             }
@@ -179,7 +182,7 @@ Shader "Instance Painter/InstancedIndirectVertexShadows"
 
                 float4 position = IN.positionOS;
                 #if ENABLE_WIND
-                float4 positionForWind = mul(instanceMatrix, position);
+                float3 positionForWind = TransformObjectToWorld(position);
                 position.x += _WindIntensity * sin(_Time.y * _WindTimeScale + positionForWind.x * _WindTiling + positionForWind.z * _WindTiling) * position.y;
                 #endif
 
