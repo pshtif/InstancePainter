@@ -16,7 +16,7 @@ namespace InstancePainter.Editor
     [InitializeOnLoad]
     public class IPEditorCore
     {
-        const string VERSION = "0.3.0";
+        const string VERSION = "0.3.1";
         
         public static IPEditorCore Instance { get; private set; }
         

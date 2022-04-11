@@ -6,6 +6,16 @@ All notable changes to this project will be documented in this file.
 
 ### Release
 
+### Release 0.3.1 - 11.4.2022
+
+#### Changed
+
+- changed shader categorization (fallbacks under category)
+
+#### Fixes
+
+- fixed undo/redo which wasn't invalidating correctly since NativeCollection rework
+
 ### Release 0.3.0 - 7.4.2022
 
 #### Added
