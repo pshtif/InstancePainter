@@ -98,7 +98,6 @@ namespace InstancePainter.Runtime
             if (SystemInfo.maxComputeBufferInputsVertex < 2)
                 return;
             
-            //Debug.Log("Invalidate");
             if (_material == null)
             {
                 _material = DefaultInstanceMaterial;

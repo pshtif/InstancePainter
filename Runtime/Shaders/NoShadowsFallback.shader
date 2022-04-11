@@ -2,7 +2,7 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
-Shader "Instance Painter/NoShadowsFallback"
+Shader "Instance Painter/Fallback/NoShadowsFallback"
 {
     Properties
     {

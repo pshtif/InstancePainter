@@ -2,7 +2,7 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
-Shader "Instance Painter/VertexShadowsFallback"
+Shader "Instance Painter/Fallback/VertexShadowsFallback"
 {
     Properties
     {

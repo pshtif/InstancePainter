@@ -2,7 +2,7 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
-Shader "Instance Painter/PixelShadowsFallback"
+Shader "Instance Painter/Fallback/PixelShadowsFallback"
 {
     Properties
     {

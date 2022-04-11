@@ -1,6 +1,6 @@
 ﻿#pragma kernel CSMain
 
-#include "Assets/Plugins/InstancePainter/Runtime/Shaders/Noise.hlsl"
+#include "HLSL/Noise.hlsl"
 
 vector _Time;
 uint _startOffset;
