@@ -60,7 +60,11 @@ namespace InstancePainter.Editor
 
         void UndoRedoCallback()
         {
-            GameObject.FindObjectsOfType<IPRenderer>().ToList().ForEach(r => r.Invalidate());
+            GameObject.FindObjectsOfType<IPRenderer>().ToList().ForEach(r =>
+            {
+                r.OnEnable();
+                r.Invalidate();
+            });
             
             SceneView.RepaintAll();
         }
