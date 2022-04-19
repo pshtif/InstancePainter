@@ -284,7 +284,7 @@ namespace InstancePainter.Editor
 
             Core.Config.maximumSlope = EditorGUILayout.Slider("Maximum Slope", Core.Config.maximumSlope, 0, 90);
             
-            InstancePainterEditor.Instance.Repaint();
+            IPEditorWindow.Instance.Repaint();
         }
     }
 }

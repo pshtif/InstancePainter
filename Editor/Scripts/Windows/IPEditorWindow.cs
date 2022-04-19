@@ -12,7 +12,7 @@ using UnityEngine;
 
 namespace InstancePainter.Editor
 {
-    public class InstancePainterEditor : UnityEditor.EditorWindow
+    public class IPEditorWindow : UnityEditor.EditorWindow
     {
         public IPEditorCore Core => IPEditorCore.Instance;
         
@@ -20,11 +20,11 @@ namespace InstancePainter.Editor
 
         private Vector2 _scrollPosition;
 
-        public static InstancePainterEditor Instance { get; private set; } 
+        public static IPEditorWindow Instance { get; private set; } 
         
-        public static InstancePainterEditor InitEditorWindow()
+        public static IPEditorWindow InitEditorWindow()
         {
-            Instance = GetWindow<InstancePainterEditor>();
+            Instance = GetWindow<IPEditorWindow>();
             Instance.titleContent = new GUIContent("Instance Painter");
             Instance.minSize = new Vector2(200, 400);
 

@@ -93,7 +93,7 @@ namespace InstancePainter.Editor
         public void ChangeTool<T>(bool p_enable = false) where T : ToolBase
         {
             _currentTool = (_currentTool == null || _currentTool.GetType() != typeof(T)) ? Activator.CreateInstance<T>() : null;
-            InstancePainterEditor.Instance?.Repaint();
+            IPEditorWindow.Instance?.Repaint();
         }
 
         public GameObject[] GetMeshGameObjects(GameObject p_object)

@@ -64,7 +64,7 @@ namespace InstancePainter.Editor
             GUILayout.BeginVertical();
             if (GUILayout.Button(IconManager.GetIcon("settings_icon"), GUILayout.Height(40), GUILayout.MinWidth(60)))
             {
-                InstancePainterEditor.InitEditorWindow();
+                IPEditorWindow.InitEditorWindow();
             }
             GUI.color = Color.white;
             

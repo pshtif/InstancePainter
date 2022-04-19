@@ -20,5 +20,11 @@ namespace InstancePainter.Editor
             Menu.SetChecked("Tools/Instance Painter/Enabled", IPEditorCore.Instance.Config.enabled);
             return true;
         }
+        
+        [MenuItem("Tools/Instance Painter/Settings")]
+        private static void ShowSettings()
+        {
+            IPEditorWindow.InitEditorWindow();
+        }
     }
 }
