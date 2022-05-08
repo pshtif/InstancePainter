@@ -388,19 +388,7 @@ namespace InstancePainter.Runtime
                         modifier.transform.position.z >= _binningBounds.yMin + bz*binSize - modifier.bounds.height/2 &&
                         modifier.transform.position.z <= _binningBounds.yMin + (bz+1)*binSize + modifier.bounds.height/2;
                         
-                        // int txMin = Mathf.Min(_binCountX - 1,
-                        //     Mathf.FloorToInt(Mathf.InverseLerp(_binningBounds.xMin, _binningBounds.xMax, modifier.transform.position.x - modifier.bounds.width/2) *
-                        //                      _binCountX));
-                        // int txMax = Mathf.Min(_binCountX - 1,
-                        //     Mathf.FloorToInt(Mathf.InverseLerp(_binningBounds.xMin, _binningBounds.xMax, modifier.transform.position.x + modifier.bounds.width/2) *
-                        //                      _binCountX));
-                        // int tzMin = Mathf.Min(_binCountZ - 1,
-                        //     Mathf.FloorToInt(Mathf.InverseLerp(_binningBounds.yMin, _binningBounds.yMax, modifier.transform.position.z - modifier.bounds.height/2) *
-                        //                      _binCountZ));
-                        // int tzMax = Mathf.Min(_binCountZ - 1,
-                        //     Mathf.FloorToInt(Mathf.InverseLerp(_binningBounds.yMin, _binningBounds.yMax, modifier.transform.position.z + modifier.bounds.height/2) *
-                        //                      _binCountZ));
-                        Profiler.EndSample();
+
 
                         // Hit this bin
                         //if (bx >= txMin && bx <= txMax && bz >= tzMin && bz <= tzMax)
