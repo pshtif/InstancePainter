@@ -8,7 +8,10 @@ using System.Linq;
 using Unity.Collections;
 using Unity.Collections.NotBurstCompatible;
 using UnityEditor;
+using UnityEditor.TerrainTools;
 using UnityEngine;
+using UnityEngine.Profiling;
+using UnityEngine.Rendering;
 
 namespace InstancePainter.Runtime
 {
@@ -46,6 +49,16 @@ namespace InstancePainter.Runtime
         //private ComputeBuffer _effectedMatrixBuffer;
         private ComputeBuffer[] _drawIndirectBuffers;
         private uint[] _indirectArgs;
+        
+        // Binning
+        public bool enableBinning = true;
+        public float binSize = 1;
+        [NonSerialized]
+        private List<int>[] _binList;
+        private int _binCountX;
+        private int _binCountZ;
+        private Rect _bounds;
+        private Rect _binningBounds;
 
         [NonSerialized]
         private bool _initialized = false;
@@ -57,13 +70,12 @@ namespace InstancePainter.Runtime
         public bool forceFallback = false;
         public Material fallbackMaterial;
 
+        //public ComputeShader modifierShader;
         //public ComputeShader effectShader;
         
-        #if UNITY_EDITOR
+#if UNITY_EDITOR
         public bool enableEditorPreview = true;
-        private bool _previousAutoApplyModifiers = false;
-        
-        #endif
+#endif
 
         public void OnEnable()
         {
@@ -81,11 +93,18 @@ namespace InstancePainter.Runtime
 
             _nativeMatrixData.CopyFromNBC(_matrixData);
             _nativeColorData.CopyFromNBC(_colorData);
+            
+#if UNITY_EDITOR
+            Invalidate();
+            SceneView.duringSceneGui += OnSceneGUI;
+#endif
         }
 
         public void Start()
         {
+            InvalidateBounds();
             Invalidate();
+            InvalidateBinning();
         }
 
         public void Invalidate()
@@ -110,9 +129,8 @@ namespace InstancePainter.Runtime
             
             _colorBuffer?.Release();
             _matrixBuffer?.Release();
-            //_effectedColorBuffer?.Release();
-            //_effectedMatrixBuffer?.Release();
-            
+            DisposeEffects();
+
             _drawIndirectBuffers?.ToList().ForEach(cb => cb?.Release());
             _drawIndirectBuffers = new ComputeBuffer[mesh.subMeshCount];
             
@@ -122,30 +140,17 @@ namespace InstancePainter.Runtime
                 return;
             
             _colorBuffer = new ComputeBuffer(count, sizeof(float) * 4);
-            //_colorBuffer.SetData(p_colorData != null ? p_colorData : colorData);
             _colorBuffer.SetData(p_colorData.AsArray());
             
             _matrixBuffer = new ComputeBuffer(count, sizeof(float) * 16);
-            //_matrixBuffer.SetData(p_matrixData != null ? p_matrixData : matrixData);
             _matrixBuffer.SetData(p_matrixData.AsArray());
 
             //_effectedColorBuffer = new ComputeBuffer(count, sizeof(float) * 4);
             //_effectedMatrixBuffer = new ComputeBuffer(count, sizeof(float) * 16);
 
             _propertyBlock = new MaterialPropertyBlock();
-            // if (Application.isPlaying)
-            // {
-            //     _propertyBlock.SetBuffer("_colorBuffer", _effectedColorBuffer);
-            //     _propertyBlock.SetBuffer("_matrixBuffer", _effectedMatrixBuffer);
-            // }
-            // else
-            // {
-                _propertyBlock.SetBuffer("_colorBuffer", _colorBuffer);
-                _propertyBlock.SetBuffer("_matrixBuffer", _matrixBuffer);
-            //}
-
-            //_material.SetBuffer("_colorBuffer", _colorBuffer);
-            //_material.SetBuffer("_matrixBuffer", _matrixBuffer);
+            _propertyBlock.SetBuffer("_colorBuffer", _colorBuffer);
+            _propertyBlock.SetBuffer("_matrixBuffer", _matrixBuffer);
 
             _indirectArgs = new uint[5] { 0, 0, 0, 0, 0 };
 
@@ -163,33 +168,28 @@ namespace InstancePainter.Runtime
                 drawIndirectBuffer.SetData(_indirectArgs);
                 _drawIndirectBuffers[i] = drawIndirectBuffer;
             }
-
-            #if UNITY_EDITOR
-            Render();
-            #endif
         }
 
         void Update()
         {
-            #if UNITY_EDITOR
-            if (!enableEditorPreview && !Application.isPlaying)
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
                 return;
-
-            if (_previousAutoApplyModifiers != autoApplyModifiers)
-            {
-                if (!autoApplyModifiers)
-                    Invalidate();
-
-                _previousAutoApplyModifiers = autoApplyModifiers;
-            }
-            #endif
+#endif
             
             if (!_initialized) 
                 Invalidate();
-
+            
             if (autoApplyModifiers)
             {
-                ApplyModifiers();
+                if (enableBinning && Application.isPlaying)
+                {
+                    ApplyModifiersWithBinning();
+                }
+                else
+                {
+                    ApplyModifiers();
+                }
             }
             
             Render();
@@ -211,11 +211,11 @@ namespace InstancePainter.Runtime
                 //if (_effectedMatrixBuffer == null || !_effectedMatrixBuffer.IsValid() || _effectedMatrixBuffer.count == 0)
                 if (_matrixBuffer == null || !_matrixBuffer.IsValid() || _matrixBuffer.count == 0)
                     return;
-
+                
                 for (int i = 0; i < mesh.subMeshCount; i++)
                 {
                     Graphics.DrawMeshInstancedIndirect(mesh, i, _material, renderBound, _drawIndirectBuffers[i], 0,
-                        _propertyBlock);
+                        _propertyBlock, ShadowCastingMode.On, true, 0, p_camera);
                 }
             } else if (fallbackMaterial != null)
             {
@@ -224,6 +224,7 @@ namespace InstancePainter.Runtime
                     for (int j = 0; j < mesh.subMeshCount; j++)
                     {
                         Graphics.DrawMesh(mesh, _nativeMatrixData[i], fallbackMaterial, 0, null, j);
+                        
                         // TODO possible to rewrite for old instancing but SRP batcher catches most optimizations anyway and shaders are more friendly for single usage
                         //Graphics.DrawMeshInstanced(mesh, j,  fallbackMaterial, _nativeMatrixData.ToArray());
                     }
@@ -252,16 +253,21 @@ namespace InstancePainter.Runtime
             _colorBuffer = null;
             _matrixBuffer?.Release();
             _matrixBuffer = null;
-            
-            // _effectedColorBuffer?.Release();
-            // _effectedColorBuffer = null;
-            // _effectedMatrixBuffer?.Release();
-            // _effectedMatrixBuffer = null;
-            
+
+            DisposeEffects();
+
             if (_drawIndirectBuffers != null)
             {
                 _drawIndirectBuffers.ToList().ForEach(cb => cb?.Release());
             }
+        }
+
+        void DisposeEffects()
+        {
+            // _effectedColorBuffer?.Release();
+            // _effectedColorBuffer = null;
+            // _effectedMatrixBuffer?.Release();
+            // _effectedMatrixBuffer = null;
         }
         
         public void ApplyModifiers()
@@ -305,6 +311,149 @@ namespace InstancePainter.Runtime
                 Invalidate(_nativeMatrixData, _nativeColorData);
             }
         }
+
+#region Binning
+
+        public void InvalidateBounds()
+        {
+            float minX, minZ, maxX, maxZ;
+            minX = minZ = float.MaxValue;
+            maxX = maxZ = float.MinValue;
+            for (int i = 0; i < _nativeMatrixData.Length; i++)
+            {
+                Vector3 target = _nativeMatrixData[i].GetColumn(3);
+                minX = Mathf.Min(target.x, minX);
+                minZ = Mathf.Min(target.z, minZ);
+                maxX = Mathf.Max(target.x, maxX);
+                maxZ = Mathf.Max(target.z, maxZ);
+            }
+
+            _bounds = new Rect(minX, minZ, maxX - minX, maxZ - minZ);
+        }
+
+        public void InvalidateBinning()
+        {
+            // We need atleast binsize bounds, if we have single instance it would be zero sized bounds
+            _binningBounds = new Rect(_bounds.xMin, _bounds.yMin, Mathf.Max(binSize, _bounds.width), Math.Max(binSize, _bounds.height));
+            
+            _binCountX = Mathf.RoundToInt((_binningBounds.width) / binSize);
+            _binCountZ = Mathf.RoundToInt((_binningBounds.height) / binSize);
+
+            _binList = new List<int>[_binCountX * _binCountZ];
+            for (int i = 0; i < _binList.Length; i++)
+            {
+                _binList[i] = new List<int>();
+            }
+
+            for (int i = 0; i < _nativeMatrixData.Length; i++)
+            {
+                Vector3 pos = _nativeMatrixData[i].GetColumn(3);
+
+                int tx = Mathf.Min(_binCountX - 1, Mathf.FloorToInt(Mathf.InverseLerp(_binningBounds.xMin, _binningBounds.xMax, pos.x) * _binCountX));
+                int tz = Mathf.Min(_binCountZ - 1, Mathf.FloorToInt(Mathf.InverseLerp(_binningBounds.yMin, _binningBounds.yMax, pos.z) * _binCountZ));
+                
+                _binList[tx + tz * _binCountX].Add(i);
+            }
+        }
+        
+        public void ApplyModifiersWithBinning()
+        {
+            if (_binList == null)
+            {
+                InvalidateBinning();
+            }
+            
+            if (enableModifiers && modifiers != null && modifiers.Count > 0)
+            {
+                var modifiedMatrixData = new NativeList<Matrix4x4>(Allocator.Temp);
+                var modifiedColorData = new NativeList<Vector4>(Allocator.Temp);
+                var binModifiers = new NativeList<int>(Allocator.Temp);
+
+                for (int i = 0; i < _binList.Length; i++)
+                {
+                    Profiler.BeginSample("Bin check");
+                    for (int j = 0; j<modifiers.Count; j++)
+                    {
+                        var modifier = modifiers[j];
+                        if (modifier == null || !modifier.isActiveAndEnabled)
+                            continue;
+
+                        Profiler.BeginSample("Math check");
+                        
+                        int bx = i % _binCountX;
+                        int bz = Mathf.FloorToInt(i / _binCountX);
+                        
+                        var contains = modifier.transform.position.x >= _binningBounds.xMin + bx*binSize - modifier.bounds.width/2 &&
+                        modifier.transform.position.x <= _binningBounds.xMin + (bx+1)*binSize + modifier.bounds.width/2 &&
+                        modifier.transform.position.z >= _binningBounds.yMin + bz*binSize - modifier.bounds.height/2 &&
+                        modifier.transform.position.z <= _binningBounds.yMin + (bz+1)*binSize + modifier.bounds.height/2;
+                        
+                        // int txMin = Mathf.Min(_binCountX - 1,
+                        //     Mathf.FloorToInt(Mathf.InverseLerp(_binningBounds.xMin, _binningBounds.xMax, modifier.transform.position.x - modifier.bounds.width/2) *
+                        //                      _binCountX));
+                        // int txMax = Mathf.Min(_binCountX - 1,
+                        //     Mathf.FloorToInt(Mathf.InverseLerp(_binningBounds.xMin, _binningBounds.xMax, modifier.transform.position.x + modifier.bounds.width/2) *
+                        //                      _binCountX));
+                        // int tzMin = Mathf.Min(_binCountZ - 1,
+                        //     Mathf.FloorToInt(Mathf.InverseLerp(_binningBounds.yMin, _binningBounds.yMax, modifier.transform.position.z - modifier.bounds.height/2) *
+                        //                      _binCountZ));
+                        // int tzMax = Mathf.Min(_binCountZ - 1,
+                        //     Mathf.FloorToInt(Mathf.InverseLerp(_binningBounds.yMin, _binningBounds.yMax, modifier.transform.position.z + modifier.bounds.height/2) *
+                        //                      _binCountZ));
+                        Profiler.EndSample();
+
+                        // Hit this bin
+                        //if (bx >= txMin && bx <= txMax && bz >= tzMin && bz <= tzMax)
+                        if (contains)
+                        {
+                            binModifiers.Add(j);
+                        }
+                    }
+                    Profiler.EndSample();
+
+                    Profiler.BeginSample("Instance check");
+                    if (binModifiers.Length > 0)
+                    {
+                        for (int j = 0; j < _binList[i].Count; j++)
+                        {
+                            var index = _binList[i][j];
+                            var matrix = _nativeMatrixData[index];
+                            var color = _nativeColorData[index];
+                            var contains = true;
+                            foreach (var modifierIndex in binModifiers)
+                            {
+                                if (!modifiers[modifierIndex].Apply(ref matrix, ref color))
+                                {
+                                    contains = false;
+                                    break;
+                                }
+                            }
+                            
+                            if (contains)
+                            {
+                                modifiedMatrixData.Add(matrix);
+                                modifiedColorData.Add(color);
+                            }
+                        }
+                    }
+                    Profiler.EndSample();
+                    
+                    binModifiers.Clear();
+                }
+                
+                Invalidate(modifiedMatrixData, modifiedColorData);
+
+                modifiedMatrixData.Dispose();
+                modifiedColorData.Dispose();
+                binModifiers.Dispose();
+            }
+            else
+            {
+                Invalidate(_nativeMatrixData, _nativeColorData);
+            }
+        }
+
+#endregion
 
         public void AddInstance(Matrix4x4 p_matrix, Vector4 p_color)
         {
@@ -350,6 +499,10 @@ namespace InstancePainter.Runtime
 
         private void OnDisable()
         {
+            #if UNITY_EDITOR
+            SceneView.duringSceneGui -= OnSceneGUI;
+            #endif
+
             Dispose();
             _initialized = false;
         }
@@ -386,6 +539,14 @@ namespace InstancePainter.Runtime
         // }
         
 #if UNITY_EDITOR
+        void OnSceneGUI(SceneView p_sceneView)
+        {
+            if (Application.isPlaying)
+                return;
+
+            Render(p_sceneView.camera);
+        }
+        
         public void UpdateSerializedData()
         {
             _matrixData = _nativeMatrixData.ToArray();

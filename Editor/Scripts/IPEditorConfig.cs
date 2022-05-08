@@ -16,6 +16,8 @@ namespace InstancePainter.Editor
     public class IPEditorConfig : ScriptableObject
     {
         public GUISkin Skin => (GUISkin)Resources.Load("Skins/InstancePainterSkin");
+
+        public GameObject explicitRendererObject;
         
         public bool enabled = false;
         

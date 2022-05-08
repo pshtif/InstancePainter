@@ -52,7 +52,6 @@ float ClassicNoise_impl(float2 pi0, float2 pf0, float2 pi1, float2 pf1)
     return 1.44 * n_xy;
 }
 
-// Classic Perlin noise
 float ClassicNoise(float2 p)
 {
     float2 i = floor(p);
@@ -60,7 +59,6 @@ float ClassicNoise(float2 p)
     return ClassicNoise_impl(i, f, i + 1, f - 1);
 }
 
-// Classic Perlin noise, periodic variant
 float PeriodicNoise(float2 p, float2 rep)
 {
     float2 i0 = wglnoise_mod(floor(p), rep);

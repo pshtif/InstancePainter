@@ -12,19 +12,15 @@ namespace InstancePainter.Runtime
     [Serializable]
     public abstract class InstanceModifierBase : MonoBehaviour
     {
+        public Rect bounds;
+        
         public bool modifyVisiblity = false;
-        public List<InstanceColliderBase> colliders = new List<InstanceColliderBase>();
 
         public bool Apply(ref Matrix4x4 p_matrix, ref Vector4 p_color)
         {
-            var contains = false;
-            foreach (var collider in colliders)
-            {
-                if (collider == null)
-                    continue;
-
-                contains = contains || collider.Contains(p_matrix);
-            }
+            var localPos = transform.worldToLocalMatrix.MultiplyPoint3x4(p_matrix.GetColumn(3));
+            var contains = localPos.x >= bounds.x - bounds.width/2 && localPos.x <= bounds.x + bounds.width/2 && localPos.z >= bounds.y - bounds.height/2 &&
+                           localPos.z <= bounds.y + bounds.height/2;
 
             if (contains)
             {

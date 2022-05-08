@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using InstancePainter.Runtime;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Profiling;
 using Random = UnityEngine.Random;
@@ -25,18 +26,40 @@ namespace InstancePainter.Editor
         {
             get
             {
-                if (_rendererObject == null)
+                if (Config.explicitRendererObject != null)
                 {
-                    _rendererObject = GameObject.FindObjectOfType<IPRenderer>()?.gameObject;
-                    if (_rendererObject == null)
+                    return Config.explicitRendererObject;
+                }
+                
+                PrefabStage prefabStage = PrefabStageUtility.GetCurrentPrefabStage();
+
+                if (_rendererObject == null ||
+                    (prefabStage != null && !prefabStage.IsPartOfPrefabContents(_rendererObject)) ||
+                    (PrefabUtility.IsPartOfAnyPrefab(_rendererObject) && prefabStage == null)) 
+                {
+                    if (prefabStage != null)
                     {
-                        _rendererObject = new GameObject("InstanceRenderer");
+                        _rendererObject = prefabStage.FindComponentOfType<IPRenderer>()?.gameObject;
+                        if (_rendererObject == null)
+                        {
+                            _rendererObject = new GameObject("InstanceRenderer");
+                            _rendererObject.transform.parent = prefabStage.prefabContentsRoot.transform;
+                        }
+                    }
+                    else
+                    {
+                        _rendererObject = GameObject.FindObjectOfType<IPRenderer>()?.gameObject;
+                        if (_rendererObject == null)
+                        {
+                            _rendererObject = new GameObject("InstanceRenderer");
+                        }
                     }
                 }
+
                 return _rendererObject;
             }
         }
-        
+
         public ToolBase CurrentTool => _currentTool;
         private ToolBase _currentTool;
 
@@ -68,7 +91,7 @@ namespace InstancePainter.Editor
             
             SceneView.RepaintAll();
         }
-        
+
         private void OnSceneGUI(SceneView p_sceneView)
         {
             if (EditorApplication.isCompiling || BuildPipeline.isBuildingPlayer || !Config.enabled)
@@ -100,8 +123,8 @@ namespace InstancePainter.Editor
         {
             return p_object.transform.GetComponentsInChildren<MeshFilter>().Select(mf => mf.gameObject).ToArray();
         }
-        
-        public IPRenderer AddInstance(InstanceDefinition p_definition, Mesh p_mesh, Vector3 p_position, Quaternion p_rotation, Vector3 p_scale, Vector4 p_color)
+
+        IPRenderer GetRendererForDefinition(Mesh p_mesh, InstanceDefinition p_definition)
         {
             var renderers = RendererObject.GetComponents<IPRenderer>().ToList();
             var renderer = renderers.Find(r => r.mesh == p_mesh);
@@ -111,6 +134,13 @@ namespace InstancePainter.Editor
                 renderer.mesh = p_mesh;
                 renderer._material = p_definition.material;
             }
+
+            return renderer;
+        }
+        
+        public IPRenderer AddInstance(InstanceDefinition p_definition, Mesh p_mesh, Vector3 p_position, Quaternion p_rotation, Vector3 p_scale, Vector4 p_color)
+        {
+            var renderer = GetRendererForDefinition(p_mesh, p_definition);
 
             renderer.AddInstance(Matrix4x4.TRS(p_position, p_rotation, p_scale), p_color);
 

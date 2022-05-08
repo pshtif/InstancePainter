@@ -26,9 +26,7 @@ namespace InstancePainter.Editor
         private Vector3 _lastPaintPosition;
         private Vector2 _paintStartMousePosition;
         private RaycastHit _paintStartHit;
-
-        private float _currentScale = 1;
-        private float _currentRotation = 0;
+        
         private List<PaintedInstance> _paintedInstances = new List<PaintedInstance>();
         private RectToolState _state = RectToolState.NONE;
         

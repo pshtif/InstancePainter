@@ -57,6 +57,16 @@ namespace InstancePainter.Editor
             GUILayout.Space(4);
             GUI.color = Color.white;
             
+            GameObject newRendererObject = (GameObject)EditorGUILayout.ObjectField(new GUIContent("Renderer"), Core.Config.explicitRendererObject, typeof(GameObject), true);
+
+            if (newRendererObject != Core.Config.explicitRendererObject)
+            {
+                // TODO add check if it is valid scene/prefabstage object?
+                Core.Config.explicitRendererObject = newRendererObject;
+            }
+            
+            GUILayout.Space(4);
+            
             IPEditorCore.Instance.CurrentTool?.DrawInspectorGUI();
             
             EditorGUI.BeginChangeCheck();
