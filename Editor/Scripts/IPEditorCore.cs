@@ -7,17 +7,21 @@ using System.Collections.Generic;
 using System.Linq;
 using InstancePainter.Runtime;
 using UnityEditor;
-using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEditor.SceneManagement;
 using UnityEngine.Profiling;
 using Random = UnityEngine.Random;
+
+#if UNITY_2020
+using UnityEditor.Experimental.SceneManagement;
+#endif
 
 namespace InstancePainter.Editor
 {
     [InitializeOnLoad]
     public class IPEditorCore
     {
-        const string VERSION = "0.3.1";
+        const string VERSION = "0.4.2";
         
         public static IPEditorCore Instance { get; private set; }
         

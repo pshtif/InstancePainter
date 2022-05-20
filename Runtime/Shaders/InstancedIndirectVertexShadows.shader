@@ -46,7 +46,7 @@ Shader "Instance Painter/InstancedIndirectVertexShadows"
             #pragma multi_compile _ ENABLE_RECEIVE_SHADOWS
 
             #pragma multi_compile_fog
-
+            
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 

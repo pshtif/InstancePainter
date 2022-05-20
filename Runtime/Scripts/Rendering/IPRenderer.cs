@@ -3,12 +3,12 @@
  */
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Collections;
 using Unity.Collections.NotBurstCompatible;
 using UnityEditor;
-using UnityEditor.TerrainTools;
 using UnityEngine;
 using UnityEngine.Profiling;
 using UnityEngine.Rendering;
@@ -29,8 +29,11 @@ namespace InstancePainter.Runtime
         public Material _material;
         public Mesh mesh;
         
-        public NativeList<Matrix4x4> _nativeMatrixData;
-        public NativeList<Vector4> _nativeColorData;
+        private NativeList<Matrix4x4> _nativeMatrixData;
+        private NativeList<Vector4> _nativeColorData;
+
+        private NativeList<Matrix4x4> _modifiedMatrixData;
+        private NativeList<Vector4> _modifiedColorData;
 
         [HideInInspector]
         [SerializeField]
@@ -38,6 +41,8 @@ namespace InstancePainter.Runtime
         [HideInInspector]
         [SerializeField]
         private Vector4[] _colorData;
+        
+        public bool autoInitialize = true;
 
         public int InstanceCount => _nativeMatrixData.IsCreated ? _nativeMatrixData.Length : 0;
 
@@ -51,8 +56,7 @@ namespace InstancePainter.Runtime
         private uint[] _indirectArgs;
         
         // Binning
-        public bool enableBinning = true;
-        public float binSize = 1;
+        public float binSize = 1000;
         [NonSerialized]
         private List<int>[] _binList;
         private int _binCountX;
@@ -60,15 +64,13 @@ namespace InstancePainter.Runtime
         private Rect _bounds;
         private Rect _binningBounds;
 
-        [NonSerialized]
-        private bool _initialized = false;
-
         public bool enableModifiers = true;
         public List<InstanceModifierBase> modifiers = new List<InstanceModifierBase>();
         public bool autoApplyModifiers = false;
 
         public bool forceFallback = false;
         public Material fallbackMaterial;
+        private MaterialPropertyBlock _fallbackMaterialBlock;
 
         //public ComputeShader modifierShader;
         //public ComputeShader effectShader;
@@ -79,40 +81,46 @@ namespace InstancePainter.Runtime
 
         public void OnEnable()
         {
+            if (_matrixData == null || _matrixData.Length == 0)
+                return;
+            
             if (!_nativeMatrixData.IsCreated)
             {
                 _nativeMatrixData = new NativeList<Matrix4x4>(Allocator.Persistent);
-            }
-            if (!_nativeColorData.IsCreated)
-            {
                 _nativeColorData = new NativeList<Vector4>(Allocator.Persistent);
+                
+                _modifiedMatrixData = new NativeList<Matrix4x4>(Allocator.Persistent);
+                _modifiedColorData = new NativeList<Vector4>(Allocator.Persistent);
+                
+                _nativeMatrixData.CopyFromNBC(_matrixData);
+                _nativeColorData.CopyFromNBC(_colorData);
             }
-            
-            if (_matrixData == null || _matrixData.Length == 0)
-                return;
 
-            _nativeMatrixData.CopyFromNBC(_matrixData);
-            _nativeColorData.CopyFromNBC(_colorData);
-            
 #if UNITY_EDITOR
             Invalidate();
             SceneView.duringSceneGui += OnSceneGUI;
 #endif
         }
 
+        public void SetInstanceData(NativeList<Matrix4x4> p_matrixData, NativeList<Vector4> p_colorData)
+        {
+            _nativeMatrixData = p_matrixData;
+            _nativeColorData = p_colorData;
+            
+            Invalidate();
+        }
+
         public void Start()
         {
+            if (!autoInitialize)
+                return;
+            
             InvalidateBounds();
             Invalidate();
             InvalidateBinning();
         }
-
+        
         public void Invalidate()
-        {
-            Invalidate(_nativeMatrixData, _nativeColorData);
-        }
-
-        public void Invalidate(NativeList<Matrix4x4> p_matrixData, NativeList<Vector4> p_colorData)
         {
             if (SystemInfo.maxComputeBufferInputsVertex < 2)
                 return;
@@ -125,7 +133,7 @@ namespace InstancePainter.Runtime
             _material.SetVector("_PivotPosWS", transform.position);
             _material.SetVector("_BoundSize", new Vector2(transform.localScale.x, transform.localScale.z));
 
-            int count = p_matrixData.IsCreated ? p_matrixData.Length : 0;
+            int count = _nativeMatrixData.IsCreated ? _nativeMatrixData.Length : 0;
             
             _colorBuffer?.Release();
             _matrixBuffer?.Release();
@@ -133,17 +141,19 @@ namespace InstancePainter.Runtime
 
             _drawIndirectBuffers?.ToList().ForEach(cb => cb?.Release());
             _drawIndirectBuffers = new ComputeBuffer[mesh.subMeshCount];
-            
-            _initialized = true;
-            
+
             if (count == 0)
                 return;
             
+            // Duplicate to modified data so we always have original and modified
+            _modifiedMatrixData.CopyFrom(_nativeMatrixData);
+            _modifiedColorData.CopyFrom(_nativeColorData);
+
             _colorBuffer = new ComputeBuffer(count, sizeof(float) * 4);
-            _colorBuffer.SetData(p_colorData.AsArray());
+            _colorBuffer.SetData(_nativeColorData.AsArray());
             
             _matrixBuffer = new ComputeBuffer(count, sizeof(float) * 16);
-            _matrixBuffer.SetData(p_matrixData.AsArray());
+            _matrixBuffer.SetData(_nativeMatrixData.AsArray());
 
             //_effectedColorBuffer = new ComputeBuffer(count, sizeof(float) * 4);
             //_effectedMatrixBuffer = new ComputeBuffer(count, sizeof(float) * 16);
@@ -176,22 +186,11 @@ namespace InstancePainter.Runtime
             if (!Application.isPlaying)
                 return;
 #endif
-            
-            if (!_initialized) 
-                Invalidate();
-            
-            if (autoApplyModifiers)
+            if (autoApplyModifiers && Application.isPlaying)
             {
-                if (enableBinning && Application.isPlaying)
-                {
-                    ApplyModifiersWithBinning();
-                }
-                else
-                {
-                    ApplyModifiers();
-                }
+                ApplyModifiersWithBinning();
             }
-            
+
             Render();
         }
 
@@ -219,14 +218,29 @@ namespace InstancePainter.Runtime
                 }
             } else if (fallbackMaterial != null)
             {
-                for (int i = 0; i < _nativeMatrixData.Length; i++)
+                if (_fallbackMaterialBlock == null)
                 {
+                    _fallbackMaterialBlock = new MaterialPropertyBlock();
+                }
+                
+                int batches = Mathf.RoundToInt(_nativeMatrixData.Length / 1023f);
+                
+                NativeSlice<Matrix4x4> matrixBatchSlice;
+                NativeSlice<Vector4> colorBatchSlice;
+                for (int i = 0; i < batches; i++)
+                {
+                    matrixBatchSlice = new NativeSlice<Matrix4x4>(_modifiedMatrixData, i * 1023,
+                        i < batches - 1 ? 1023 : _modifiedMatrixData.Length - (batches - 1) * 1023);
+                    
+                    colorBatchSlice = new NativeSlice<Vector4>(_modifiedColorData, i * 1023,
+                        i < batches - 1 ? 1023 : _modifiedColorData.Length - (batches - 1) * 1023);
+
+                    _fallbackMaterialBlock.SetVectorArray("_Color", colorBatchSlice.ToArray());
+
                     for (int j = 0; j < mesh.subMeshCount; j++)
                     {
-                        Graphics.DrawMesh(mesh, _nativeMatrixData[i], fallbackMaterial, 0, null, j);
-                        
-                        // TODO possible to rewrite for old instancing but SRP batcher catches most optimizations anyway and shaders are more friendly for single usage
-                        //Graphics.DrawMeshInstanced(mesh, j,  fallbackMaterial, _nativeMatrixData.ToArray());
+                        Graphics.DrawMeshInstanced(mesh, j, fallbackMaterial, matrixBatchSlice.ToArray(),
+                            matrixBatchSlice.Length, _fallbackMaterialBlock);
                     }
                 }
             }
@@ -234,6 +248,10 @@ namespace InstancePainter.Runtime
 
         private void OnDestroy()
         {
+#if UNITY_EDITOR
+            SceneView.duringSceneGui -= OnSceneGUI;
+#endif
+            
             Dispose();
         }
 
@@ -249,6 +267,16 @@ namespace InstancePainter.Runtime
                 _nativeColorData.Dispose();
             }
             
+            if (_modifiedMatrixData.IsCreated)
+            {
+                _modifiedMatrixData.Dispose();
+            }
+
+            if (_modifiedColorData.IsCreated)
+            {
+                _modifiedColorData.Dispose();
+            }
+            
             _colorBuffer?.Release();
             _colorBuffer = null;
             _matrixBuffer?.Release();
@@ -262,54 +290,52 @@ namespace InstancePainter.Runtime
             }
         }
 
-        void DisposeEffects()
+        public void UpdateMatrixData(NativeList<Matrix4x4> p_matrixData)
         {
-            // _effectedColorBuffer?.Release();
-            // _effectedColorBuffer = null;
-            // _effectedMatrixBuffer?.Release();
-            // _effectedMatrixBuffer = null;
+            if (!p_matrixData.IsCreated)
+            {
+                Debug.LogError("Invalid matrix data.");
+                return;
+            }
+            
+            if (!_matrixBuffer.IsValid())
+            {
+                Debug.LogError("No matrix buffer created yet, you need to create it before invalidation.");
+                return;
+            }
+            
+            if (_matrixBuffer.count != p_matrixData.Length)
+            {
+                Debug.LogError("Invalid number of elements for created buffer " + _matrixBuffer.count + " vs " +
+                               p_matrixData.Length);
+                return;
+            }
+
+            _matrixBuffer.SetData(p_matrixData.AsArray());
         }
         
-        public void ApplyModifiers()
+        public void UpdateColorData(NativeList<Vector4> p_colorData)
         {
-            if (enableModifiers && modifiers != null && modifiers.Count > 0)
+            if (!p_colorData.IsCreated)
             {
-                var modifiedMatrixData = new NativeList<Matrix4x4>(Allocator.Temp);
-                var modifiedColorData = new NativeList<Vector4>(Allocator.Temp);
-
-                for (int i = 0; i < InstanceCount; i++)
-                {
-                    var matrix = _nativeMatrixData[i];
-                    var color = _nativeColorData[i];
-                    var contains = true;
-                    foreach (var modifier in modifiers)
-                    {
-                        if (modifier == null || !modifier.isActiveAndEnabled)
-                            continue;
-
-                        if (!modifier.Apply(ref matrix, ref color))
-                        {
-                            contains = false;
-                            break;
-                        }
-                    }
-
-                    if (contains)
-                    {
-                        modifiedMatrixData.Add(matrix);
-                        modifiedColorData.Add(color);
-                    }
-                }
-                
-                Invalidate(modifiedMatrixData, modifiedColorData);
-
-                modifiedMatrixData.Dispose();
-                modifiedColorData.Dispose();
+                Debug.LogError("Invalid matrix data.");
+                return;
             }
-            else
+            
+            if (!_colorBuffer.IsValid())
             {
-                Invalidate(_nativeMatrixData, _nativeColorData);
+                Debug.LogError("No matrix buffer created yet, you need to create it before invalidation.");
+                return;
             }
+            
+            if (_colorBuffer.count != p_colorData.Length)
+            {
+                Debug.LogError("Invalid number of elements for created buffer " + _colorBuffer.count + " vs " +
+                               p_colorData.Length);
+                return;
+            }
+
+            _colorBuffer.SetData(p_colorData.AsArray());
         }
 
 #region Binning
@@ -362,44 +388,36 @@ namespace InstancePainter.Runtime
             {
                 InvalidateBinning();
             }
-            
+
+            bool matrixChanged = false;
+            bool colorChanged = false;
             if (enableModifiers && modifiers != null && modifiers.Count > 0)
             {
-                var modifiedMatrixData = new NativeList<Matrix4x4>(Allocator.Temp);
-                var modifiedColorData = new NativeList<Vector4>(Allocator.Temp);
                 var binModifiers = new NativeList<int>(Allocator.Temp);
 
                 for (int i = 0; i < _binList.Length; i++)
                 {
-                    Profiler.BeginSample("Bin check");
                     for (int j = 0; j<modifiers.Count; j++)
                     {
                         var modifier = modifiers[j];
                         if (modifier == null || !modifier.isActiveAndEnabled)
                             continue;
 
-                        Profiler.BeginSample("Math check");
-                        
                         int bx = i % _binCountX;
                         int bz = Mathf.FloorToInt(i / _binCountX);
                         
+                        // Hit this bin
                         var contains = modifier.transform.position.x >= _binningBounds.xMin + bx*binSize - modifier.bounds.width/2 &&
                         modifier.transform.position.x <= _binningBounds.xMin + (bx+1)*binSize + modifier.bounds.width/2 &&
                         modifier.transform.position.z >= _binningBounds.yMin + bz*binSize - modifier.bounds.height/2 &&
                         modifier.transform.position.z <= _binningBounds.yMin + (bz+1)*binSize + modifier.bounds.height/2;
                         
-
-
-                        // Hit this bin
-                        //if (bx >= txMin && bx <= txMax && bz >= tzMin && bz <= tzMax)
                         if (contains)
                         {
                             binModifiers.Add(j);
                         }
                     }
-                    Profiler.EndSample();
-
-                    Profiler.BeginSample("Instance check");
+                    
                     if (binModifiers.Length > 0)
                     {
                         for (int j = 0; j < _binList[i].Count; j++)
@@ -410,17 +428,11 @@ namespace InstancePainter.Runtime
                             var contains = true;
                             foreach (var modifierIndex in binModifiers)
                             {
-                                if (!modifiers[modifierIndex].Apply(ref matrix, ref color))
+                                if (modifiers[modifierIndex].Apply(ref matrix, ref color))
                                 {
-                                    contains = false;
-                                    break;
+                                    _modifiedMatrixData[index] = matrix;
+                                    _modifiedColorData[index] = color;
                                 }
-                            }
-                            
-                            if (contains)
-                            {
-                                modifiedMatrixData.Add(matrix);
-                                modifiedColorData.Add(color);
                             }
                         }
                     }
@@ -429,15 +441,16 @@ namespace InstancePainter.Runtime
                     binModifiers.Clear();
                 }
                 
-                Invalidate(modifiedMatrixData, modifiedColorData);
+                UpdateMatrixData(_modifiedMatrixData);
+                UpdateColorData(_modifiedColorData);
+                //Invalidate(modifiedMatrixData, modifiedColorData); 
 
-                modifiedMatrixData.Dispose();
-                modifiedColorData.Dispose();
                 binModifiers.Dispose();
             }
             else
             {
-                Invalidate(_nativeMatrixData, _nativeColorData);
+                UpdateMatrixData(_nativeMatrixData);
+                UpdateColorData(_nativeColorData);
             }
         }
 
@@ -487,12 +500,10 @@ namespace InstancePainter.Runtime
 
         private void OnDisable()
         {
-            #if UNITY_EDITOR
+#if UNITY_EDITOR
             SceneView.duringSceneGui -= OnSceneGUI;
-            #endif
-
             Dispose();
-            _initialized = false;
+#endif
         }
 
         // public void TestCompute()
@@ -525,6 +536,14 @@ namespace InstancePainter.Runtime
         //         effectShader.Dispatch(0, Mathf.CeilToInt(current / threadCount), 1, 1);
         //     }
         // }
+        
+        void DisposeEffects()
+        {
+            // _effectedColorBuffer?.Release();
+            // _effectedColorBuffer = null;
+            // _effectedMatrixBuffer?.Release();
+            // _effectedMatrixBuffer = null;
+        }
         
 #if UNITY_EDITOR
         void OnSceneGUI(SceneView p_sceneView)

@@ -9,7 +9,7 @@ Shader "Instance Painter/Fallback/PixelShadowsFallback"
         [PerRendererData] _Color ("Color", Color) = (1,1,1)
         _AmbientLight ("Ambient Light", Color) = (0,0,0)
         
-        _WindIntensity ("_WindIntensity", Float) = .5
+        _WindIntensity ("Wind Intensity", Float) = .5
         _WindTiling ("Wind Tiling", Float) = 0
         _WindTimeScale ("Wind Time Scale", Float) = 1
         
@@ -45,7 +45,8 @@ Shader "Instance Painter/Fallback/PixelShadowsFallback"
             #pragma multi_compile _ ENABLE_RECEIVE_SHADOWS
 
             #pragma multi_compile_fog
-
+            #pragma multi_compile_instancing
+            
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
@@ -54,6 +55,7 @@ Shader "Instance Painter/Fallback/PixelShadowsFallback"
                 float4 positionOS   : POSITION;
                 half3 normalOS      : NORMAL;
                 half4 color         : COLOR0;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
             struct Varyings
@@ -63,36 +65,48 @@ Shader "Instance Painter/Fallback/PixelShadowsFallback"
                 float3 positionWS                : TEXCOORD2;
                 half3  normalWS                  : TEXCOORD3; 
                 half3 color                      : COLOR0;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
             CBUFFER_START(UnityPerMaterial)
-                half3 _Color;
+                //half3 _Color;
                 float _WindIntensity;
                 float _WindTiling;
                 float _WindTimeScale;
                 float3 _AmbientLight;
             CBUFFER_END
 
+            //#ifdef UNITY_INSTANCING_ENABLED
+            UNITY_INSTANCING_BUFFER_START(Props)
+                UNITY_DEFINE_INSTANCED_PROP(half4, _Color)
+            UNITY_INSTANCING_BUFFER_END(Props)
+            //#endif
+
             Varyings vert(Attributes IN)
             {
-                Varyings OUT;
-                
-                half3 normalWS = normalize(mul(UNITY_MATRIX_M, IN.normalOS));
+                Varyings OUT = (Varyings)0;
 
+                UNITY_SETUP_INSTANCE_ID(IN);
+                UNITY_TRANSFER_INSTANCE_ID(OUT, IN);
+                
+                half3 normalWS = TransformObjectToWorldNormal(IN.normalOS);
+
+                #if ENABLE_RECEIVE_SHADOWS
                 OUT.shadow.xyz = SampleSHVertex(normalWS);
+                #endif
                 
                 float4 position = IN.positionOS;
                 #if ENABLE_WIND
                 float3 positionForWind = TransformObjectToWorld(position);
                 position.x += _WindIntensity * sin(_Time.y * _WindTimeScale + positionForWind.x * _WindTiling + positionForWind.z * _WindTiling) * position.y;
                 #endif
-
+                
                 #if ENABLE_BILLBOARD
                 float4x4 v = unity_WorldToCamera;
                 float3 right = normalize(v._m00_m01_m02);
                 float3 up = normalize(v._m10_m11_m12);
                 float3 forward = normalize(v._m20_m21_m22);
-
+                
                 float4x4 rotationMatrix = float4x4(right, 0,
     	            up, 0,
     	            forward, 0,
@@ -102,7 +116,7 @@ Shader "Instance Painter/Fallback/PixelShadowsFallback"
                 position = mul(rotationMatrixInverse, position);
                 #endif
                 
-                float3 positionWS = TransformObjectToWorld(position);
+                float3 positionWS = TransformObjectToWorld(position.xyz);
 
                 // Light mainLight = GetMainLight(TransformWorldToShadowCoord(positionWS));
                 // half directDiffuse = dot(normalWS, mainLight.direction);
@@ -114,8 +128,13 @@ Shader "Instance Painter/Fallback/PixelShadowsFallback"
                 OUT.positionCS = TransformWorldToHClip(positionWS);
 
                 OUT.normalWS = normalWS;
-                
-                OUT.color = _Color * IN.color.xyz;
+
+                OUT.color = UNITY_ACCESS_INSTANCED_PROP(Props, _Color) * IN.color.xyz;
+                #ifdef UNITY_INSTANCING_ENABLED
+                //OUT.color = UNITY_ACCESS_INSTANCED_PROP(Props, _Color) * IN.color.xyz;
+                #else
+                //OUT.color = _Color * IN.color.xyz;
+                #endif
 
                 return OUT;
             }
@@ -171,6 +190,7 @@ Shader "Instance Painter/Fallback/PixelShadowsFallback"
             #pragma multi_compile _ ENABLE_BILLBOARD
 
             #pragma multi_compile_fog
+            #pragma multi_compile_instancing
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
@@ -178,11 +198,13 @@ Shader "Instance Painter/Fallback/PixelShadowsFallback"
             {
                 float4 positionOS   : POSITION;
                 half3 normalOS      : NORMAL;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
             struct Varyings
             {
                 float4 positionCS  : SV_POSITION;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
             CBUFFER_START(UnityPerMaterial)
@@ -190,11 +212,15 @@ Shader "Instance Painter/Fallback/PixelShadowsFallback"
                 float _WindIntensity;
                 float _WindTiling;
                 float _WindTimeScale;
+                float3 _AmbientLight;
             CBUFFER_END
 
-            Varyings vert(Attributes IN, uint instanceID : SV_InstanceID)
+            Varyings vert(Attributes IN)
             {
                 Varyings OUT;
+
+                UNITY_SETUP_INSTANCE_ID(IN);
+                UNITY_TRANSFER_INSTANCE_ID(OUT, IN);
 
                 float4 position = IN.positionOS;
                 
@@ -217,7 +243,7 @@ Shader "Instance Painter/Fallback/PixelShadowsFallback"
                 position = mul(rotationMatrixInverse, position);
                 #endif
                 
-                OUT.positionCS = TransformObjectToHClip(position);
+                OUT.positionCS = TransformObjectToHClip(position.xyz);
 
                 return OUT;
             }

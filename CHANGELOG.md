@@ -6,6 +6,41 @@ All notable changes to this project will be documented in this file.
 
 ### Release
 
+### Release 0.4.2 - 16.5.2022
+
+#### Changed
+
+- changed how buffers are handled for modifiers, no buffer change same instance count just buffer update
+- changed removed visibility property for modifiers
+- changed removed IPVisibilityModifier
+
+### Release 0.4.1 - 11.5.2022
+
+#### Fixed
+
+- fixed Instance Painter enabled state now gets correctly saved
+
+### Release 0.4.0 - 9.5.2022
+
+#### Added
+
+- added binning support for modifier space checks
+- added IPUnityEnderer that enumerates meshfilters in parent and puts them into instances
+- added support for prefab stage editing
+
+#### Changed
+
+- changed colliders are now removed modifiers have rect area for binning
+- changed various refactors in codebase
+- changed Unity Collections dependency to 1.2.3
+
+#### Fixes
+
+- fixed OnEnable/OnDisable invalidation now removed
+- fixed UNITY 2020 prefab stage namespace vs 2021
+
+### Release
+
 ### Release 0.3.1 - 11.4.2022
 
 #### Changed

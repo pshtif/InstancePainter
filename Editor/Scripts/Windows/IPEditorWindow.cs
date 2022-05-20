@@ -53,6 +53,7 @@ namespace InstancePainter.Editor
             if (GUILayout.Button(Core.Config.enabled ? "DISABLE" : "ENABLE", GUILayout.Height(32)))
             {
                 Core.Config.enabled = !Core.Config.enabled;
+                EditorUtility.SetDirty(Core.Config);
             }
             GUILayout.Space(4);
             GUI.color = Color.white;
@@ -148,7 +149,7 @@ namespace InstancePainter.Editor
             if (p_instanceDefinition == null || !p_instanceDefinition.minimized)
             {
                 p_instanceDefinition =
-                    (InstanceDefinition)EditorGUILayout.ObjectField("Definition", p_instanceDefinition, typeof(InstanceDefinition));
+                    (InstanceDefinition)EditorGUILayout.ObjectField(new GUIContent("Definition"), p_instanceDefinition, typeof(InstanceDefinition), false);
 
                 if (p_instanceDefinition != null)
                 {

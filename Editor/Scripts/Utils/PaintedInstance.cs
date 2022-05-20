@@ -22,6 +22,11 @@ namespace InstancePainter.Editor
             definition = p_definition;
         }
 
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+
         public override bool Equals(object obj)
         {
             if (!(obj is PaintedInstance))

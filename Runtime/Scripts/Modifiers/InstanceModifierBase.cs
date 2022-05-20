@@ -12,9 +12,17 @@ namespace InstancePainter.Runtime
     [Serializable]
     public abstract class InstanceModifierBase : MonoBehaviour
     {
-        public Rect bounds;
+        public virtual bool IsModifyingMatrix()
+        {
+            return false;
+        }
         
-        public bool modifyVisiblity = false;
+        public virtual bool IsModifyingColor()
+        {
+            return false;
+        }
+        
+        public Rect bounds;
 
         public bool Apply(ref Matrix4x4 p_matrix, ref Vector4 p_color)
         {
@@ -26,8 +34,8 @@ namespace InstancePainter.Runtime
             {
                 ApplyInternal(ref p_matrix, ref p_color);
             }
-            
-            return contains || !modifyVisiblity;
+
+            return contains;
         }
 
         public abstract bool ApplyInternal(ref Matrix4x4 p_matrix, ref Vector4 p_color);

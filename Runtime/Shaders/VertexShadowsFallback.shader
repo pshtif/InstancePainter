@@ -9,7 +9,7 @@ Shader "Instance Painter/Fallback/VertexShadowsFallback"
         [PerRendererData] _Color ("Color", Color) = (1,1,1)
         _AmbientLight ("Ambient Light", Color) = (0,0,0)
         
-        _WindIntensity ("_WindIntensity", Float) = .5
+        _WindIntensity ("Wind Intensity", Float) = .5
         _WindTiling ("Wind Tiling", Float) = 0
         _WindTimeScale ("Wind Time Scale", Float) = 1
         
@@ -45,7 +45,7 @@ Shader "Instance Painter/Fallback/VertexShadowsFallback"
             #pragma multi_compile _ ENABLE_RECEIVE_SHADOWS
 
             #pragma multi_compile_fog
-
+            
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
@@ -110,9 +110,8 @@ Shader "Instance Painter/Fallback/VertexShadowsFallback"
                 #if ENABLE_RECEIVE_SHADOWS
                 lighting *= mainLight.shadowAttenuation;
                 #endif
-
-                positionWS = mul(UNITY_MATRIX_V, positionWS);
-                OUT.positionCS = mul(UNITY_MATRIX_P, positionWS);
+                
+                OUT.positionCS = TransformWorldToHClip(positionWS);
                 
                 OUT.color = (lighting + _AmbientLight) * _Color * IN.color.xyz;
 

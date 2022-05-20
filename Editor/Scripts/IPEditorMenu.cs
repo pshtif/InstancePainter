@@ -12,6 +12,7 @@ namespace InstancePainter.Editor
         private static void ToggleEnabled()
         {
             IPEditorCore.Instance.Config.enabled = !IPEditorCore.Instance.Config.enabled;
+            EditorUtility.SetDirty(IPEditorCore.Instance.Config);
         }
 
         [MenuItem("Tools/Instance Painter/Enabled", true)]

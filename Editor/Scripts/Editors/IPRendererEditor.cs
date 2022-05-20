@@ -30,10 +30,10 @@ namespace InstancePainter.Editor
                 GenerateGameObjects();
             }
 
-            if (GUILayout.Button("ApplyModifiers"))
-            {
-                Renderer.ApplyModifiers();
-            }
+            // if (GUILayout.Button("ApplyModifiers"))
+            // {
+            //     Renderer.ApplyModifiers();
+            // }
         }
 
         void GenerateGameObjects()
