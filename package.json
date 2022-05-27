@@ -1,7 +1,7 @@
 {
   "name": "com.shtif.instancepainter",
   "displayName": "Instance Painter",
-  "version": "0.4.2",
+  "version": "0.4.6",
   "unity": "2020.3",
   "description": "Tool for paiting instances based on prefabs onto meshes and render them using instancing.",
   "author": {
