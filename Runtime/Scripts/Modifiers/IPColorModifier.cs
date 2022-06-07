@@ -8,11 +8,6 @@ namespace InstancePainter.Runtime
 {
     public class IPColorModifier : InstanceModifierBase
     {
-        public override bool IsModifyingColor()
-        {
-            return true;
-        }
-
         public Color color = Color.white;
         
         public override bool ApplyInternal(ref Matrix4x4 p_matrix, ref Vector4 p_color)

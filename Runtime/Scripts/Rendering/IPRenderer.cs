@@ -44,6 +44,9 @@ namespace InstancePainter.Runtime
         
         public bool autoInitialize = true;
 
+        private bool _initialized = false;
+        public bool IsInitialized => _initialized;
+
         public int InstanceCount => _nativeMatrixData.IsCreated ? _nativeMatrixData.Length : 0;
 
         private MaterialPropertyBlock _propertyBlock;
@@ -61,7 +64,7 @@ namespace InstancePainter.Runtime
         private List<int>[] _binList;
         private int _binCountX;
         private int _binCountZ;
-        private Rect _bounds;
+        private Bounds _bounds;
         private Rect _binningBounds;
 
         public bool enableModifiers = true;
@@ -71,6 +74,11 @@ namespace InstancePainter.Runtime
         public bool forceFallback = false;
         public Material fallbackMaterial;
         private MaterialPropertyBlock _fallbackMaterialBlock;
+        
+        private Matrix4x4[] _matrixBatchFallbackArray = new Matrix4x4[1023]; 
+        private Vector4[] _colorBatchFallbackArray = new Vector4[1023];
+
+        public bool IsFallback => SystemInfo.maxComputeBufferInputsVertex < 2 || forceFallback;
 
         //public ComputeShader modifierShader;
         //public ComputeShader effectShader;
@@ -86,20 +94,36 @@ namespace InstancePainter.Runtime
             
             if (!_nativeMatrixData.IsCreated)
             {
-                _nativeMatrixData = new NativeList<Matrix4x4>(Allocator.Persistent);
-                _nativeColorData = new NativeList<Vector4>(Allocator.Persistent);
-                
-                _modifiedMatrixData = new NativeList<Matrix4x4>(Allocator.Persistent);
-                _modifiedColorData = new NativeList<Vector4>(Allocator.Persistent);
+                CheckNativeContainerInitialized();
                 
                 _nativeMatrixData.CopyFromNBC(_matrixData);
                 _nativeColorData.CopyFromNBC(_colorData);
+                
+                _modifiedMatrixData.CopyFrom(_nativeMatrixData);
+                _modifiedColorData.CopyFrom(_nativeColorData);
+            }
+
+            if (_nativeMatrixData.Length != _nativeColorData.Length)
+            {
+                Debug.LogWarning("Matrix and color data length does not match.");
             }
 
 #if UNITY_EDITOR
-            Invalidate();
-            SceneView.duringSceneGui += OnSceneGUI;
+            if (!Application.isPlaying)
+            {
+                Invalidate();
+                SceneView.duringSceneGui += OnSceneGUI;
+            }
 #endif
+        }
+
+        void CheckNativeContainerInitialized()
+        {
+            if (!_nativeMatrixData.IsCreated) _nativeMatrixData = new NativeList<Matrix4x4>(Allocator.Persistent);
+            if (!_nativeColorData.IsCreated) _nativeColorData = new NativeList<Vector4>(Allocator.Persistent);
+                
+            if (!_modifiedMatrixData.IsCreated) _modifiedMatrixData = new NativeList<Matrix4x4>(Allocator.Persistent);
+            if (!_modifiedColorData.IsCreated) _modifiedColorData = new NativeList<Vector4>(Allocator.Persistent);
         }
 
         public void SetInstanceData(NativeList<Matrix4x4> p_matrixData, NativeList<Vector4> p_colorData)
@@ -114,70 +138,72 @@ namespace InstancePainter.Runtime
         {
             if (!autoInitialize)
                 return;
-            
-            InvalidateBounds();
+
             Invalidate();
-            InvalidateBinning();
         }
         
         public void Invalidate()
         {
-            if (SystemInfo.maxComputeBufferInputsVertex < 2)
-                return;
-            
-            if (_material == null)
-            {
-                _material = DefaultInstanceMaterial;
-            }
-
-            _material.SetVector("_PivotPosWS", transform.position);
-            _material.SetVector("_BoundSize", new Vector2(transform.localScale.x, transform.localScale.z));
-
             int count = _nativeMatrixData.IsCreated ? _nativeMatrixData.Length : 0;
             
-            _colorBuffer?.Release();
-            _matrixBuffer?.Release();
-            DisposeEffects();
-
-            _drawIndirectBuffers?.ToList().ForEach(cb => cb?.Release());
-            _drawIndirectBuffers = new ComputeBuffer[mesh.subMeshCount];
-
             if (count == 0)
                 return;
+            
+            CheckNativeContainerInitialized();
             
             // Duplicate to modified data so we always have original and modified
             _modifiedMatrixData.CopyFrom(_nativeMatrixData);
             _modifiedColorData.CopyFrom(_nativeColorData);
 
-            _colorBuffer = new ComputeBuffer(count, sizeof(float) * 4);
-            _colorBuffer.SetData(_nativeColorData.AsArray());
-            
-            _matrixBuffer = new ComputeBuffer(count, sizeof(float) * 16);
-            _matrixBuffer.SetData(_nativeMatrixData.AsArray());
-
-            //_effectedColorBuffer = new ComputeBuffer(count, sizeof(float) * 4);
-            //_effectedMatrixBuffer = new ComputeBuffer(count, sizeof(float) * 16);
-
-            _propertyBlock = new MaterialPropertyBlock();
-            _propertyBlock.SetBuffer("_colorBuffer", _colorBuffer);
-            _propertyBlock.SetBuffer("_matrixBuffer", _matrixBuffer);
-
-            _indirectArgs = new uint[5] { 0, 0, 0, 0, 0 };
-
-            for (int i = 0; i < mesh.subMeshCount; i++)
+            if (!IsFallback)
             {
-                var drawIndirectBuffer = new ComputeBuffer(1, _indirectArgs.Length * sizeof(uint),
-                    ComputeBufferType.IndirectArguments);
+                if (_material == null)
+                {
+                    _material = DefaultInstanceMaterial;
+                }
 
-                _indirectArgs[0] = (uint)mesh.GetIndexCount(i);
-                _indirectArgs[1] = (uint)count;
-                _indirectArgs[2] = (uint)mesh.GetIndexStart(i);
-                _indirectArgs[3] = (uint)mesh.GetBaseVertex(i);
-                _indirectArgs[4] = 0;
+                _material.SetVector("_PivotPosWS", transform.position);
+                _material.SetVector("_BoundSize", new Vector2(transform.localScale.x, transform.localScale.z));
 
-                drawIndirectBuffer.SetData(_indirectArgs);
-                _drawIndirectBuffers[i] = drawIndirectBuffer;
+                _colorBuffer?.Release();
+                _matrixBuffer?.Release();
+                DisposeEffects();
+
+                _drawIndirectBuffers?.ToList().ForEach(cb => cb?.Release());
+                _drawIndirectBuffers = new ComputeBuffer[mesh.subMeshCount];
+
+                _colorBuffer = new ComputeBuffer(count, sizeof(float) * 4);
+                _colorBuffer.SetData(_nativeColorData.AsArray());
+
+                _matrixBuffer = new ComputeBuffer(count, sizeof(float) * 16);
+                _matrixBuffer.SetData(_nativeMatrixData.AsArray());
+
+                _propertyBlock = new MaterialPropertyBlock();
+                _propertyBlock.SetBuffer("_colorBuffer", _colorBuffer);
+                _propertyBlock.SetBuffer("_matrixBuffer", _matrixBuffer);
+
+                _indirectArgs = new uint[5] { 0, 0, 0, 0, 0 };
+
+                for (int i = 0; i < mesh.subMeshCount; i++)
+                {
+                    var drawIndirectBuffer = new ComputeBuffer(1, _indirectArgs.Length * sizeof(uint),
+                        ComputeBufferType.IndirectArguments);
+
+                    _indirectArgs[0] = (uint)mesh.GetIndexCount(i);
+                    _indirectArgs[1] = (uint)count;
+                    _indirectArgs[2] = (uint)mesh.GetIndexStart(i);
+                    _indirectArgs[3] = (uint)mesh.GetBaseVertex(i);
+                    _indirectArgs[4] = 0;
+
+                    drawIndirectBuffer.SetData(_indirectArgs);
+                    _drawIndirectBuffers[i] = drawIndirectBuffer;
+                }
             }
+
+            InvalidateBounds();
+            InvalidateBinning();
+
+            _initialized = true;
         }
 
         void Update()
@@ -199,49 +225,57 @@ namespace InstancePainter.Runtime
             if (InstanceCount == 0)
                 return;
             
-            if (SystemInfo.maxComputeBufferInputsVertex >= 4 && !forceFallback)
+            if (IsFallback)
             {
-                // if (Application.isPlaying)
-                //     TestCompute();
-                
-                Bounds renderBound = new Bounds();
-                renderBound.SetMinMax(new Vector3(-1000, -1000, -1000), new Vector3(1000, 1000, 1000));
+                RenderFallback(p_camera);
+            } else {
+                RenderIndirect(p_camera);
+            }
+        }
 
-                //if (_effectedMatrixBuffer == null || !_effectedMatrixBuffer.IsValid() || _effectedMatrixBuffer.count == 0)
-                if (_matrixBuffer == null || !_matrixBuffer.IsValid() || _matrixBuffer.count == 0)
-                    return;
+        private void RenderIndirect(Camera p_camera)
+        {
+            if (_matrixBuffer == null || !_matrixBuffer.IsValid() || _matrixBuffer.count == 0)
+                return;
                 
-                for (int i = 0; i < mesh.subMeshCount; i++)
-                {
-                    Graphics.DrawMeshInstancedIndirect(mesh, i, _material, renderBound, _drawIndirectBuffers[i], 0,
-                        _propertyBlock, ShadowCastingMode.On, true, 0, p_camera);
-                }
-            } else if (fallbackMaterial != null)
+            for (int i = 0; i < mesh.subMeshCount; i++)
             {
-                if (_fallbackMaterialBlock == null)
-                {
-                    _fallbackMaterialBlock = new MaterialPropertyBlock();
-                }
-                
-                int batches = Mathf.RoundToInt(_nativeMatrixData.Length / 1023f);
-                
-                NativeSlice<Matrix4x4> matrixBatchSlice;
-                NativeSlice<Vector4> colorBatchSlice;
-                for (int i = 0; i < batches; i++)
-                {
-                    matrixBatchSlice = new NativeSlice<Matrix4x4>(_modifiedMatrixData, i * 1023,
-                        i < batches - 1 ? 1023 : _modifiedMatrixData.Length - (batches - 1) * 1023);
-                    
-                    colorBatchSlice = new NativeSlice<Vector4>(_modifiedColorData, i * 1023,
-                        i < batches - 1 ? 1023 : _modifiedColorData.Length - (batches - 1) * 1023);
+                Graphics.DrawMeshInstancedIndirect(mesh, i, _material, _bounds, _drawIndirectBuffers[i], 0,
+                    _propertyBlock, ShadowCastingMode.On, true, 0, p_camera);
+            }
+        }
 
-                    _fallbackMaterialBlock.SetVectorArray("_Color", colorBatchSlice.ToArray());
+        private void RenderFallback(Camera p_camera)
+        {
+            if (fallbackMaterial == null)
+            {
+                Debug.LogError("Fallback material not set.");
+            }
+            
+            if (_fallbackMaterialBlock == null)
+            {
+                _fallbackMaterialBlock = new MaterialPropertyBlock();
+            }
+                
+            int batches = Mathf.CeilToInt(_modifiedMatrixData.Length / 1023f);
 
-                    for (int j = 0; j < mesh.subMeshCount; j++)
-                    {
-                        Graphics.DrawMeshInstanced(mesh, j, fallbackMaterial, matrixBatchSlice.ToArray(),
-                            matrixBatchSlice.Length, _fallbackMaterialBlock);
-                    }
+            for (int i = 0; i < batches; i++)
+            {
+                var matrixBatchSubArray = _modifiedMatrixData.AsArray().GetSubArray(i * 1023,
+                    i < batches - 1 ? 1023 : _modifiedMatrixData.Length - (batches - 1) * 1023);
+                
+                var colorBatchSubArray = _modifiedColorData.AsArray().GetSubArray(i * 1023,
+                    i < batches - 1 ? 1023 : _modifiedColorData.Length - (batches - 1) * 1023);
+
+                NativeArray<Matrix4x4>.Copy(matrixBatchSubArray, _matrixBatchFallbackArray, matrixBatchSubArray.Length);
+                NativeArray<Vector4>.Copy(colorBatchSubArray, _colorBatchFallbackArray, colorBatchSubArray.Length);
+
+                _fallbackMaterialBlock.SetVectorArray("_Color", _colorBatchFallbackArray);
+
+                for (int j = 0; j < mesh.subMeshCount; j++)
+                {
+                    Graphics.DrawMeshInstanced(mesh, j, fallbackMaterial, _matrixBatchFallbackArray,
+                        matrixBatchSubArray.Length, _fallbackMaterialBlock);
                 }
             }
         }
@@ -251,7 +285,6 @@ namespace InstancePainter.Runtime
 #if UNITY_EDITOR
             SceneView.duringSceneGui -= OnSceneGUI;
 #endif
-            
             Dispose();
         }
 
@@ -290,17 +323,25 @@ namespace InstancePainter.Runtime
             }
         }
 
-        public void UpdateMatrixData(NativeList<Matrix4x4> p_matrixData)
+        public void UpdateModifiedMatrixData(NativeList<Matrix4x4> p_matrixData)
         {
+            _modifiedMatrixData.CopyFrom(p_matrixData);
+        }
+
+        public void UpdateMatrixBuffer(NativeList<Matrix4x4> p_matrixData)
+        {
+            if (IsFallback)
+                return;
+            
             if (!p_matrixData.IsCreated)
             {
                 Debug.LogError("Invalid matrix data.");
                 return;
             }
             
-            if (!_matrixBuffer.IsValid())
+            if (!IsInitialized)
             {
-                Debug.LogError("No matrix buffer created yet, you need to create it before invalidation.");
+                Debug.LogError("Renderer not initialized yet.");
                 return;
             }
             
@@ -311,10 +352,10 @@ namespace InstancePainter.Runtime
                 return;
             }
 
-            _matrixBuffer.SetData(p_matrixData.AsArray());
+            _matrixBuffer?.SetData(p_matrixData.AsArray());
         }
         
-        public void UpdateColorData(NativeList<Vector4> p_colorData)
+        public void UpdateColorBuffer(NativeList<Vector4> p_colorData)
         {
             if (!p_colorData.IsCreated)
             {
@@ -322,45 +363,48 @@ namespace InstancePainter.Runtime
                 return;
             }
             
-            if (!_colorBuffer.IsValid())
+            if (!IsInitialized)
             {
-                Debug.LogError("No matrix buffer created yet, you need to create it before invalidation.");
+                Debug.LogError("Renderer not initialized yet.");
                 return;
             }
             
-            if (_colorBuffer.count != p_colorData.Length)
+            if (!IsFallback && _colorBuffer.count != p_colorData.Length)
             {
-                Debug.LogError("Invalid number of elements for created buffer " + _colorBuffer.count + " vs " +
+                Debug.LogError("Invalid number of elements for created buffer " + _matrixBuffer.count + " vs " +
                                p_colorData.Length);
                 return;
             }
-
-            _colorBuffer.SetData(p_colorData.AsArray());
+            
+            _colorBuffer?.SetData(p_colorData.AsArray());
         }
 
 #region Binning
 
         public void InvalidateBounds()
         {
-            float minX, minZ, maxX, maxZ;
-            minX = minZ = float.MaxValue;
-            maxX = maxZ = float.MinValue;
+            float minX, minY, minZ, maxX, maxY, maxZ;
+            minX = minY = minZ = float.MaxValue;
+            maxX = maxY = maxZ = float.MinValue;
             for (int i = 0; i < _nativeMatrixData.Length; i++)
             {
                 Vector3 target = _nativeMatrixData[i].GetColumn(3);
                 minX = Mathf.Min(target.x, minX);
+                minY = Mathf.Min(target.y, minY);
                 minZ = Mathf.Min(target.z, minZ);
                 maxX = Mathf.Max(target.x, maxX);
+                maxY = Mathf.Max(target.y, maxY);
                 maxZ = Mathf.Max(target.z, maxZ);
             }
 
-            _bounds = new Rect(minX, minZ, maxX - minX, maxZ - minZ);
+            _bounds = new Bounds();
+            _bounds.SetMinMax(new Vector3(minX, minY, minZ), new Vector3(maxX, maxY, maxZ));
         }
 
         public void InvalidateBinning()
         {
             // We need atleast binsize bounds, if we have single instance it would be zero sized bounds
-            _binningBounds = new Rect(_bounds.xMin, _bounds.yMin, Mathf.Max(binSize, _bounds.width), Math.Max(binSize, _bounds.height));
+            _binningBounds = new Rect(_bounds.min.x, _bounds.min.z, Mathf.Max(binSize, _bounds.size.x), Math.Max(binSize, _bounds.size.z));
             
             _binCountX = Mathf.RoundToInt((_binningBounds.width) / binSize);
             _binCountZ = Mathf.RoundToInt((_binningBounds.height) / binSize);
@@ -384,15 +428,25 @@ namespace InstancePainter.Runtime
         
         public void ApplyModifiersWithBinning()
         {
-            if (_binList == null)
+            if (!IsInitialized)
             {
-                InvalidateBinning();
+                Debug.LogError("Renderer not initialized.");
+                return;
             }
 
             bool matrixChanged = false;
             bool colorChanged = false;
+            
+            _modifiedMatrixData.CopyFrom(_nativeMatrixData);
+            _modifiedColorData.CopyFrom(_nativeColorData);
+            
             if (enableModifiers && modifiers != null && modifiers.Count > 0)
             {
+                if (_binList == null)
+                {
+                    InvalidateBinning();
+                }
+
                 var binModifiers = new NativeList<int>(Allocator.Temp);
 
                 for (int i = 0; i < _binList.Length; i++)
@@ -425,7 +479,6 @@ namespace InstancePainter.Runtime
                             var index = _binList[i][j];
                             var matrix = _nativeMatrixData[index];
                             var color = _nativeColorData[index];
-                            var contains = true;
                             foreach (var modifierIndex in binModifiers)
                             {
                                 if (modifiers[modifierIndex].Apply(ref matrix, ref color))
@@ -436,21 +489,19 @@ namespace InstancePainter.Runtime
                             }
                         }
                     }
-                    Profiler.EndSample();
-                    
+
                     binModifiers.Clear();
                 }
                 
-                UpdateMatrixData(_modifiedMatrixData);
-                UpdateColorData(_modifiedColorData);
-                //Invalidate(modifiedMatrixData, modifiedColorData); 
+                UpdateMatrixBuffer(_modifiedMatrixData);
+                UpdateColorBuffer(_modifiedColorData);
 
                 binModifiers.Dispose();
             }
             else
             {
-                UpdateMatrixData(_nativeMatrixData);
-                UpdateColorData(_nativeColorData);
+                UpdateMatrixBuffer(_nativeMatrixData);
+                UpdateColorBuffer(_nativeColorData);
             }
         }
 
@@ -501,8 +552,11 @@ namespace InstancePainter.Runtime
         private void OnDisable()
         {
 #if UNITY_EDITOR
-            SceneView.duringSceneGui -= OnSceneGUI;
-            Dispose();
+            if (!Application.isPlaying)
+            {
+                SceneView.duringSceneGui -= OnSceneGUI;
+                Dispose();
+            }
 #endif
         }
 
@@ -558,6 +612,7 @@ namespace InstancePainter.Runtime
         {
             _matrixData = _nativeMatrixData.ToArray();
             _colorData = _nativeColorData.ToArray();
+
             EditorUtility.SetDirty(this);
         }
 #endif

@@ -45,7 +45,8 @@ Shader "Instance Painter/Fallback/NoShadowsFallback"
             #pragma multi_compile _ ENABLE_RECEIVE_SHADOWS
 
             #pragma multi_compile_fog
-
+            #pragma multi_compile_instancing
+            
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
@@ -54,29 +55,33 @@ Shader "Instance Painter/Fallback/NoShadowsFallback"
                 float4 positionOS   : POSITION;
                 half3 normalOS      : NORMAL;
                 half4 color : COLOR0;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
             struct Varyings
             {
                 float4 positionCS  : SV_POSITION;
                 half3 color : COLOR0;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
             CBUFFER_START(UnityPerMaterial)
-                half3 _Color;
                 float _WindIntensity;
                 float _WindTiling;
                 float _WindTimeScale;
                 float3 _AmbientLight;
-
-                StructuredBuffer<float4> _colorBuffer;
-                StructuredBuffer<float4x4> _matrixBuffer;
-                //StructuredBuffer<uint> _visibleIdBuffer;
             CBUFFER_END
+
+            UNITY_INSTANCING_BUFFER_START(Props)
+                UNITY_DEFINE_INSTANCED_PROP(half4, _Color)
+            UNITY_INSTANCING_BUFFER_END(Props)
 
             Varyings vert(Attributes IN)
             {
-                Varyings OUT;
+                Varyings OUT = (Varyings)0;
+
+                UNITY_SETUP_INSTANCE_ID(IN);
+                UNITY_TRANSFER_INSTANCE_ID(OUT, IN);
 
                 float4 position = IN.positionOS;
                 half3 normalWS = normalize(mul(UNITY_MATRIX_M, IN.normalOS));
@@ -116,7 +121,7 @@ Shader "Instance Painter/Fallback/NoShadowsFallback"
                 lighting *= mainLight.shadowAttenuation;
                 #endif
                 
-                OUT.color = (lighting + _AmbientLight) * _Color * IN.color.xyz;
+                OUT.color = (lighting + _AmbientLight) * UNITY_ACCESS_INSTANCED_PROP(Props, _Color) * IN.color.xyz;
 
                 return OUT;
             }

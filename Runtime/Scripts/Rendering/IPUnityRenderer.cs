@@ -77,8 +77,15 @@ namespace InstancePainter.Runtime
             {
                 _nativeMatrixData.Add(child.localToWorldMatrix);
             }
-            
-            _renderer.UpdateMatrixData(_nativeMatrixData);
+
+            if (_renderer.IsFallback)
+            {
+                _renderer.UpdateModifiedMatrixData(_nativeMatrixData);
+            }
+            else
+            {
+                _renderer.UpdateMatrixBuffer(_nativeMatrixData);
+            }
         }
 
         private void OnDisable()

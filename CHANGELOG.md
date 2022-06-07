@@ -6,6 +6,64 @@ All notable changes to this project will be documented in this file.
 
 ### Release
 
+### Release 0.4.10 - 7.6.2022
+
+#### Fixed
+
+- fixed modified native containers initialized even for scenarios before renderer is enabled
+
+### Release 0.4.9 - 30.5.2022
+
+#### Changed
+
+- fixed updating of modfied data and buffers between fallback/nonfallback rendering
+
+### Release 0.4.8 - 30.5.2022
+
+#### Changed
+
+- changed fallback rendering now doesn't allocate any memory for batches
+
+### Release 0.4.7 - 27.5.2022
+
+#### Fixed
+
+- fixed OnDisable is disposing only when we are not in playmode
+- fixed when in fallback initialization now correctly still copies modified data
+
+### Release 0.4.6 - 24.5.2022
+
+#### Added
+
+- added IsInitialized for IPRenderer
+- added renderbounds for instanced rendering
+
+#### Changed
+
+- changed cleanup of invalidation order
+
+### Release 0.4.6 - 23.5.2022
+
+#### Fixed
+
+- fixed rounding issue
+
+### Release 0.4.4 - 23.5.2022
+
+#### Fixed
+
+- fixed modified data length used instead of original for batches
+
+### Release 0.4.3 - 23.5.2022
+
+#### Added
+
+- added fallback rendering now uses DrawMeshInstanced
+
+#### Fixed
+
+- fixed fallback shaders cleaned up and fixed matrix transformations
+
 ### Release 0.4.2 - 16.5.2022
 
 #### Changed
@@ -34,7 +92,7 @@ All notable changes to this project will be documented in this file.
 - changed various refactors in codebase
 - changed Unity Collections dependency to 1.2.3
 
-#### Fixes
+#### Fixed
 
 - fixed OnEnable/OnDisable invalidation now removed
 - fixed UNITY 2020 prefab stage namespace vs 2021
@@ -47,7 +105,7 @@ All notable changes to this project will be documented in this file.
 
 - changed shader categorization (fallbacks under category)
 
-#### Fixes
+#### Fixed
 
 - fixed undo/redo which wasn't invalidating correctly since NativeCollection rework
 
@@ -62,7 +120,7 @@ All notable changes to this project will be documented in this file.
 
 - fallback property was removed once you have fallbackMaterial it will automatically fallback to it if HW doesn't meet instancing requirements
 
-#### Fixes
+#### Fixed
 
 - fixed now avoiding normal calculation and direction in billboarding mode for all shaders
 
