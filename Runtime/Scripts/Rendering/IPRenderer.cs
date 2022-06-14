@@ -247,6 +247,9 @@ namespace InstancePainter.Runtime
 
         private void RenderFallback(Camera p_camera)
         {
+            if (!SystemInfo.supportsInstancing)
+                return;
+
             if (fallbackMaterial == null)
             {
                 Debug.LogError("Fallback material not set.");
