@@ -3,7 +3,7 @@
  */
 
 using System.Collections.Generic;
-using InstancePainter.Runtime;
+using InstancePainter;
 using UnityEditor;
 using UnityEngine.Serialization;
 

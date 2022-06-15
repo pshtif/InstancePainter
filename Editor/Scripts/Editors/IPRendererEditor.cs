@@ -3,7 +3,7 @@
  */
 
 using System;
-using InstancePainter.Runtime;
+using InstancePainter;
 using UnityEditor;
 using UnityEngine;
 
@@ -25,6 +25,11 @@ namespace InstancePainter.Editor
 
             GUILayout.Label("Instance Count: " + Renderer.InstanceCount);
 
+            if (GUILayout.Button("Save to Collection"))
+            {
+                Renderer.SaveToInstanceCollection();
+            }
+            
             if (GUILayout.Button("Generate Game Objects"))
             {
                 GenerateGameObjects();

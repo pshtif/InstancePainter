@@ -5,7 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using InstancePainter.Runtime;
+using InstancePainter;
 using UnityEditor;
 using UnityEngine;
 using UnityEditor.SceneManagement;
@@ -21,7 +21,7 @@ namespace InstancePainter.Editor
     [InitializeOnLoad]
     public class IPEditorCore
     {
-        const string VERSION = "0.4.10";
+        const string VERSION = "0.5.0";
         
         public static IPEditorCore Instance { get; private set; }
         

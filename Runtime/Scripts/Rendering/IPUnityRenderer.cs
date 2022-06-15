@@ -7,7 +7,7 @@ using System.Linq;
 using Unity.Collections;
 using UnityEngine;
 
-namespace InstancePainter.Runtime
+namespace InstancePainter
 {
     [RequireComponent(typeof(IPRenderer))]
     public class IPUnityRenderer : MonoBehaviour

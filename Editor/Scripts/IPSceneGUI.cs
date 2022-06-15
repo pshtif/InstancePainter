@@ -2,7 +2,7 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
-using InstancePainter.Runtime;
+using InstancePainter;
 using UnityEditor;
 using UnityEngine;
 

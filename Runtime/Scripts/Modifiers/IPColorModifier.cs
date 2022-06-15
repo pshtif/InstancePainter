@@ -4,7 +4,7 @@
 
 using UnityEngine;
 
-namespace InstancePainter.Runtime
+namespace InstancePainter
 {
     public class IPColorModifier : InstanceModifierBase
     {

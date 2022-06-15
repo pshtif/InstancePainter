@@ -6,6 +6,18 @@ All notable changes to this project will be documented in this file.
 
 ### Release
 
+### Release 0.4.11 - 14.6.2022
+
+#### Added
+
+- Added instance renderers window to show all active renderers in the scene and their stats
+
+#### Changed
+
+- Changed when instanced rendering is now awailable even for fallback it will now fail silently
+
+### Release
+
 ### Release 0.4.10 - 7.6.2022
 
 #### Fixed

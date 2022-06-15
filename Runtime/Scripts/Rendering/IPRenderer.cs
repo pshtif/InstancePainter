@@ -3,17 +3,14 @@
  */
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Collections;
 using Unity.Collections.NotBurstCompatible;
-using UnityEditor;
 using UnityEngine;
-using UnityEngine.Profiling;
 using UnityEngine.Rendering;
 
-namespace InstancePainter.Runtime
+namespace InstancePainter
 {
     [ExecuteAlways]
     public class IPRenderer : MonoBehaviour
@@ -35,6 +32,8 @@ namespace InstancePainter.Runtime
         private NativeList<Matrix4x4> _modifiedMatrixData;
         private NativeList<Vector4> _modifiedColorData;
 
+        public InstanceCollection collection;
+        
         [HideInInspector]
         [SerializeField]
         private Matrix4x4[] _matrixData;
@@ -53,8 +52,6 @@ namespace InstancePainter.Runtime
         
         private ComputeBuffer _colorBuffer;
         private ComputeBuffer _matrixBuffer;
-        //private ComputeBuffer _effectedColorBuffer;
-        //private ComputeBuffer _effectedMatrixBuffer;
         private ComputeBuffer[] _drawIndirectBuffers;
         private uint[] _indirectArgs;
         
@@ -80,6 +77,28 @@ namespace InstancePainter.Runtime
 
         public bool IsFallback => SystemInfo.maxComputeBufferInputsVertex < 2 || forceFallback;
 
+        public string MeshName
+        {
+            get { return mesh == null ? "[NO MESH]" : mesh.name; }
+        }
+        
+        public int DrawCalls
+        {
+            get
+            {
+                if (mesh == null || InstanceCount == 0)
+                    return 0;
+                
+                if (IsFallback)
+                {
+                    int batches = Mathf.CeilToInt(_modifiedMatrixData.Length / 1023f);
+                    return batches * mesh.subMeshCount;
+                }
+                
+                return mesh.subMeshCount;
+            }
+        }
+
         //public ComputeShader modifierShader;
         //public ComputeShader effectShader;
         
@@ -89,6 +108,12 @@ namespace InstancePainter.Runtime
 
         public void OnEnable()
         {
+            if (collection != null)
+            {
+                _matrixData = collection.MatrixData;
+                _colorData = collection.ColorData;
+            }
+            
             if (_matrixData == null || _matrixData.Length == 0)
                 return;
             
@@ -112,9 +137,34 @@ namespace InstancePainter.Runtime
             if (!Application.isPlaying)
             {
                 Invalidate();
-                SceneView.duringSceneGui += OnSceneGUI;
+                UnityEditor.SceneView.duringSceneGui += OnSceneGUI;
             }
 #endif
+        }
+        
+#if UNITY_EDITOR
+        public void SaveToInstanceCollection()
+        {
+            InstanceCollection collection = InstanceCollection.CreateAssetWithPanel();
+            collection.SetData(_matrixData, _colorData);
+            UnityEditor.EditorUtility.SetDirty(collection);
+        }
+#endif
+
+        public void BindFromInstanceCollection(InstanceCollection p_collection)
+        {
+            CheckNativeContainerInitialized();
+                
+            _nativeMatrixData.CopyFromNBC(_matrixData);
+            _nativeColorData.CopyFromNBC(_colorData);
+                
+            _modifiedMatrixData.CopyFrom(_nativeMatrixData);
+            _modifiedColorData.CopyFrom(_nativeColorData);
+
+            if (IsInitialized)
+            {
+                Invalidate();
+            }
         }
 
         void CheckNativeContainerInitialized()
@@ -253,6 +303,7 @@ namespace InstancePainter.Runtime
             if (fallbackMaterial == null)
             {
                 Debug.LogError("Fallback material not set.");
+                return;
             }
             
             if (_fallbackMaterialBlock == null)
@@ -286,7 +337,7 @@ namespace InstancePainter.Runtime
         private void OnDestroy()
         {
 #if UNITY_EDITOR
-            SceneView.duringSceneGui -= OnSceneGUI;
+            UnityEditor.SceneView.duringSceneGui -= OnSceneGUI;
 #endif
             Dispose();
         }
@@ -464,10 +515,14 @@ namespace InstancePainter.Runtime
                         int bz = Mathf.FloorToInt(i / _binCountX);
                         
                         // Hit this bin
-                        var contains = modifier.transform.position.x >= _binningBounds.xMin + bx*binSize - modifier.bounds.width/2 &&
-                        modifier.transform.position.x <= _binningBounds.xMin + (bx+1)*binSize + modifier.bounds.width/2 &&
-                        modifier.transform.position.z >= _binningBounds.yMin + bz*binSize - modifier.bounds.height/2 &&
-                        modifier.transform.position.z <= _binningBounds.yMin + (bz+1)*binSize + modifier.bounds.height/2;
+                        var contains = modifier.transform.position.x >=
+                                       _binningBounds.xMin + bx * binSize - modifier.bounds.width / 2 &&
+                                       modifier.transform.position.x <= _binningBounds.xMin + (bx + 1) * binSize +
+                                       modifier.bounds.width / 2 &&
+                                       modifier.transform.position.z >= _binningBounds.yMin + bz * binSize -
+                                       modifier.bounds.height / 2 &&
+                                       modifier.transform.position.z <= _binningBounds.yMin + (bz + 1) * binSize +
+                                       modifier.bounds.height / 2;
                         
                         if (contains)
                         {
@@ -557,7 +612,7 @@ namespace InstancePainter.Runtime
 #if UNITY_EDITOR
             if (!Application.isPlaying)
             {
-                SceneView.duringSceneGui -= OnSceneGUI;
+                UnityEditor.SceneView.duringSceneGui -= OnSceneGUI;
                 Dispose();
             }
 #endif
@@ -603,7 +658,7 @@ namespace InstancePainter.Runtime
         }
         
 #if UNITY_EDITOR
-        void OnSceneGUI(SceneView p_sceneView)
+        void OnSceneGUI(UnityEditor.SceneView p_sceneView)
         {
             if (Application.isPlaying)
                 return;
@@ -616,7 +671,7 @@ namespace InstancePainter.Runtime
             _matrixData = _nativeMatrixData.ToArray();
             _colorData = _nativeColorData.ToArray();
 
-            EditorUtility.SetDirty(this);
+            UnityEditor.EditorUtility.SetDirty(this);
         }
 #endif
     }

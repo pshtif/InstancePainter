@@ -6,9 +6,9 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace InstancePainter.Runtime
+namespace InstancePainter
 {
-    [CreateAssetMenuAttribute(fileName = "PaintDefinition", menuName = "Instance Painter/Create Paint Definition", order = 0)]
+    [CreateAssetMenu(fileName = "PaintDefinition", menuName = "Instance Painter/Create Paint Definition", order = 0)]
     [Serializable]
     public class InstanceDefinition : ScriptableObject
     {
