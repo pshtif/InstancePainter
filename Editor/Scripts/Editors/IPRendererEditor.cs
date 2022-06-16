@@ -25,6 +25,16 @@ namespace InstancePainter.Editor
 
             GUILayout.Label("Instance Count: " + Renderer.InstanceCount);
 
+            EditorGUI.BeginChangeCheck();
+            
+            // InstanceData collection = EditorGUILayout.ObjectField("Collection", Renderer.GetCollection(),
+            //     typeof(InstanceData), false) as InstanceData;
+            //
+            // if (EditorGUI.EndChangeCheck())
+            // {
+            //     Renderer.SetCollection(collection);
+            // }
+
             if (GUILayout.Button("Save to Collection"))
             {
                 Renderer.SaveToInstanceCollection();

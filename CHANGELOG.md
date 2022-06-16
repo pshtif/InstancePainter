@@ -4,7 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
-### Release
+### Release 0.5.0 - 16.6.2022
+
+#### Added
+
+- Added scriptable object collection support, load save to asset
 
 ### Release 0.4.11 - 14.6.2022
 

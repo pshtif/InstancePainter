@@ -15,14 +15,6 @@ namespace InstancePainter
     [ExecuteAlways]
     public class IPRenderer : MonoBehaviour
     {
-        public Material DefaultInstanceMaterial
-        {
-            get
-            {
-                return new Material(Shader.Find("Instance Painter/InstancedIndirectShadows"));
-            }
-        }
-        
         public Material _material;
         public Mesh mesh;
         
@@ -32,7 +24,26 @@ namespace InstancePainter
         private NativeList<Matrix4x4> _modifiedMatrixData;
         private NativeList<Vector4> _modifiedColorData;
 
-        public InstanceCollection collection;
+        
+        private InstanceData _collection;
+
+        public InstanceData GetCollection()
+        {
+            return _collection;
+        }
+        
+        public void SetCollection(InstanceData p_collection)
+        {
+            _collection = p_collection;
+            
+            if (_collection != null)
+            {
+                _matrixData = _collection.MatrixData;
+                _colorData = _collection.ColorData;
+            }
+            
+            InvalidateNativeData();
+        }
         
         [HideInInspector]
         [SerializeField]
@@ -108,25 +119,17 @@ namespace InstancePainter
 
         public void OnEnable()
         {
-            if (collection != null)
+            if (_collection != null)
             {
-                _matrixData = collection.MatrixData;
-                _colorData = collection.ColorData;
+                _matrixData = _collection.MatrixData;
+                _colorData = _collection.ColorData;
             }
             
             if (_matrixData == null || _matrixData.Length == 0)
                 return;
-            
-            if (!_nativeMatrixData.IsCreated)
-            {
-                CheckNativeContainerInitialized();
-                
-                _nativeMatrixData.CopyFromNBC(_matrixData);
-                _nativeColorData.CopyFromNBC(_colorData);
-                
-                _modifiedMatrixData.CopyFrom(_nativeMatrixData);
-                _modifiedColorData.CopyFrom(_nativeColorData);
-            }
+
+
+            InvalidateNativeData();
 
             if (_nativeMatrixData.Length != _nativeColorData.Length)
             {
@@ -141,17 +144,28 @@ namespace InstancePainter
             }
 #endif
         }
+
+        private void InvalidateNativeData()
+        {
+            CheckNativeContainerInitialized();
+            
+            _nativeMatrixData.CopyFromNBC(_matrixData);
+            _nativeColorData.CopyFromNBC(_colorData);
+            
+            _modifiedMatrixData.CopyFrom(_nativeMatrixData);
+            _modifiedColorData.CopyFrom(_nativeColorData);
+        }
         
 #if UNITY_EDITOR
         public void SaveToInstanceCollection()
         {
-            InstanceCollection collection = InstanceCollection.CreateAssetWithPanel();
-            collection.SetData(_matrixData, _colorData);
-            UnityEditor.EditorUtility.SetDirty(collection);
+            InstanceDataAsset asset = InstanceDataAsset.CreateAssetWithPanel();
+            asset.collection.SetData(_matrixData, _colorData);
+            UnityEditor.EditorUtility.SetDirty(asset);
         }
 #endif
 
-        public void BindFromInstanceCollection(InstanceCollection p_collection)
+        public void BindFromInstanceCollection(InstanceData p_collection)
         {
             CheckNativeContainerInitialized();
                 
@@ -209,7 +223,7 @@ namespace InstancePainter
             {
                 if (_material == null)
                 {
-                    _material = DefaultInstanceMaterial;
+                    _material = MaterialUtils.DefaultInstanceMaterial;
                 }
 
                 _material.SetVector("_PivotPosWS", transform.position);
