@@ -23,7 +23,7 @@ namespace InstancePainter.Editor
             {
                 Undo.IncrementCurrentGroup();
                 Undo.SetCurrentGroupName("Erase Instances");
-                Undo.RegisterCompleteObjectUndo(Core.RendererObject.GetComponents<IPRenderer>(), "Record Renderers");
+                Undo.RegisterCompleteObjectUndo(Core.Renderer, "Record Renderers");
                 _undoId = Undo.GetCurrentGroup();
 
                 CacheValidEraseMeshes();
@@ -52,35 +52,35 @@ namespace InstancePainter.Editor
 
         public void Erase(RaycastHit p_hit)
         {
-            List<IPRenderer> invalidateRenderers = new List<IPRenderer>();
+            List<IData> invalidateDatas = new List<IData>();
 
             var sizeSq = Core.Config.brushSize * Core.Config.brushSize;
-            var renderers = Core.RendererObject.GetComponents<IPRenderer>();
-            foreach (IPRenderer renderer in renderers)
+            var datas = Core.Renderer.InstanceDatas;
+            foreach (IData data in datas)
             {
-                if (renderer.InstanceCount == 0 || (!_validEraseMeshes.Contains(renderer.mesh) && Core.Config.eraseActiveDefinition))
+                if (data.Count == 0 || (!_validEraseMeshes.Any(m=>data.IsMesh(m)) && Core.Config.eraseActiveDefinition))
                     continue;
 
                 var modified = false;
-                for (int i = renderer.InstanceCount - 1; i>=0; i--)
+                for (int i = data.Count - 1; i>=0; i--)
                 {
-                    var position = renderer.GetInstanceMatrix(i).GetColumn(3);
+                    var position = data.GetInstanceMatrix(i).GetColumn(3);
                     if (Vector3Utils.DistanceSq(position, p_hit.point) < sizeSq)
                     {
-                        renderer.RemoveInstance(i);
+                        data.RemoveInstance(i);
                         modified = true;
                     }
                 }
 
-                if (modified && !invalidateRenderers.Contains(renderer))
+                if (modified)
                 {
-                    invalidateRenderers.Add(renderer);
+                    invalidateDatas.AddIfUnique(data);
                 }
             }
             
-            invalidateRenderers.ForEach(r =>
+            invalidateDatas.ForEach(r =>
             {
-                r.Invalidate();
+                r.Invalidate(false);
                 r.UpdateSerializedData();
             });
         }

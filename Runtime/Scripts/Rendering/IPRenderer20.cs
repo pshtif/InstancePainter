@@ -15,15 +15,15 @@ namespace InstancePainter
     [ExecuteAlways]
     public class IPRenderer20 : MonoBehaviour
     {
-        private List<InstanceDataAsset> _instanceDatas;
+        private List<IData> _instanceDatas = new List<IData>();
+
+        public List<IData> InstanceDatas => _instanceDatas;
 
         public bool autoInitialize = true;
 
         private bool _initialized = false;
         public bool IsInitialized => _initialized;
 
-        private MaterialPropertyBlock _propertyBlock;
-        
         public float binSize = 1000;
 
         public bool enableModifiers = true;
@@ -36,26 +36,6 @@ namespace InstancePainter
 
 #if UNITY_EDITOR
         public bool enableEditorPreview = true;
-#endif
-        
-#if UNITY_EDITOR
-        public void OnEnable()
-        {
-            if (!Application.isPlaying)
-            {
-                Invalidate();
-                UnityEditor.SceneView.duringSceneGui += OnSceneGUI;
-            }
-        }
-        
-        private void OnDisable()
-        {
-            if (!Application.isPlaying)
-            {
-                UnityEditor.SceneView.duringSceneGui -= OnSceneGUI;
-                Dispose();
-            }
-        }
 #endif
 
         public void Start()
@@ -147,9 +127,6 @@ namespace InstancePainter
 
         private void OnDestroy()
         {
-#if UNITY_EDITOR
-            UnityEditor.SceneView.duringSceneGui -= OnSceneGUI;
-#endif
             Dispose();
         }
 
@@ -157,8 +134,26 @@ namespace InstancePainter
         {
             _instanceDatas.ForEach(id => id.Dispose());
         }
-
+        
 #if UNITY_EDITOR
+        public void OnEnable()
+        {
+            if (!Application.isPlaying)
+            {
+                Invalidate();
+                UnityEditor.SceneView.duringSceneGui += OnSceneGUI;
+            }
+        }
+        
+        private void OnDisable()
+        {
+            if (!Application.isPlaying)
+            {
+                UnityEditor.SceneView.duringSceneGui -= OnSceneGUI;
+                Dispose();
+            }
+        }
+
         void OnSceneGUI(UnityEditor.SceneView p_sceneView)
         {
             if (Application.isPlaying)

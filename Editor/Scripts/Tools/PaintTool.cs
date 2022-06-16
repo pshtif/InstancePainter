@@ -3,8 +3,6 @@
  */
 
 using System.Collections.Generic;
-using System.Linq;
-using InstancePainter;
 using UnityEditor;
 using UnityEngine;
 
@@ -49,8 +47,8 @@ namespace InstancePainter.Editor
             {
                 Undo.IncrementCurrentGroup();
                 Undo.SetCurrentGroupName("Paint Instances");
-                Undo.RegisterCompleteObjectUndo(Core.RendererObject, "Record Renderer Object");
-                Undo.RegisterCompleteObjectUndo(Core.RendererObject.GetComponents<IPRenderer>(), "Record Renderers");
+                Undo.RegisterCompleteObjectUndo(Core.Renderer.gameObject, "Record Renderer Object");
+                Undo.RegisterCompleteObjectUndo(Core.Renderer, "Record Renderers");
                 _undoId = Undo.GetCurrentGroup();
 
                 if (Core.Config.useMeshRaycasting)
@@ -113,7 +111,7 @@ namespace InstancePainter.Editor
         {
             var offset = Event.current.mousePosition - _paintStartMousePosition;
 
-            List<IPRenderer> renderers = new List<IPRenderer>();
+            List<IData> datas = new List<IData>();
             foreach (var instance in _paintedInstances)
             {
                 Quaternion originalRotation = Quaternion.LookRotation(
@@ -133,14 +131,14 @@ namespace InstancePainter.Editor
                 );
                 var scale = Vector3.one * offset.y / 10;
 
-                instance.renderer.SetInstanceMatrix(instance.index, Matrix4x4.TRS(_paintStartHit.point + position + instance.definition.positionOffset, rotation * originalRotation, originalScale + scale));
-                if (!renderers.Contains(instance.renderer))
-                    renderers.Add(instance.renderer);
+                instance.data.SetInstanceMatrix(instance.index, Matrix4x4.TRS(_paintStartHit.point + position + instance.definition.positionOffset, rotation * originalRotation, originalScale + scale));
+                
+                datas.AddIfUnique(instance.data);
             }
             
-            renderers.ForEach(r =>
+            datas.ForEach(r =>
             {
-                r.Invalidate();
+                r.Invalidate(false);
                 r.UpdateSerializedData();
             });
         }
@@ -152,17 +150,12 @@ namespace InstancePainter.Editor
 
             _lastPaintPosition = p_hit.point;
 
-            List<IPRenderer> invalidateRenderers = new List<IPRenderer>();
+            List<IData> invalidateDatas = new List<IData>();
             
             if (Core.Config.density == 1)
             {
-                var renderers = Core.PlaceInstance(p_hit.point, _cachedValidMeshes, _cachedValidColliders, _paintedInstances);
-
-                foreach (var renderer in renderers)
-                {
-                    if (!invalidateRenderers.Contains(renderer))
-                        invalidateRenderers.Add(renderer);
-                }
+                var datas = Core.PlaceInstance(p_hit.point, _cachedValidMeshes, _cachedValidColliders, _paintedInstances);
+                invalidateDatas.AddRangeIfUnique(datas);
             }
             else
             {
@@ -172,47 +165,41 @@ namespace InstancePainter.Editor
                     Vector3 position = direction * Random.Range(0, Core.Config.brushSize) +
                                        p_hit.point;
 
-                    var renderers = Core.PlaceInstance(position, _cachedValidMeshes, _cachedValidColliders, _paintedInstances);
-                    
-                    foreach (var renderer in renderers)
-                    {
-                        if (!invalidateRenderers.Contains(renderer))
-                            invalidateRenderers.Add(renderer);
-                    }
+                    var datas = Core.PlaceInstance(position, _cachedValidMeshes, _cachedValidColliders, _paintedInstances);
+                    invalidateDatas.AddRangeIfUnique(datas);
                 }
             }
             
-            invalidateRenderers.ForEach(r =>
+            invalidateDatas.ForEach(r =>
             {
-                r.Invalidate();
+                r.Invalidate(false);
                 r.UpdateSerializedData();
             });
         }
 
         void Colorize(RaycastHit p_hit)
         {
-            List<IPRenderer> invalidateRenderers = new List<IPRenderer>();
+            List<IData> invalidateDatas = new List<IData>();
 
-            var renderers = Core.RendererObject.GetComponents<IPRenderer>();
-            foreach (IPRenderer renderer in renderers)
+            var datas = Core.Renderer.InstanceDatas;
+            foreach (IData data in datas)
             {
-                for (int i = 0; i<renderer.InstanceCount; i++)
+                for (int i = 0; i<data.Count; i++)
                 {
-                    var position = renderer.GetInstanceMatrix(i).GetColumn(3);
+                    var position = data.GetInstanceMatrix(i).GetColumn(3);
                     var distance = Vector3.Distance(position, p_hit.point);
                     if (distance < Core.Config.brushSize)
                     {
-                        renderer.SetInstanceColor(i, Vector4.Lerp(renderer.GetInstanceColor(i),Core.Config.color, (1-distance/Core.Config.brushSize) * Core.Config.alpha));
-
-                        if (!invalidateRenderers.Contains(renderer))
-                            invalidateRenderers.Add(renderer);
+                        data.SetInstanceColor(i, Vector4.Lerp(data.GetInstanceColor(i),Core.Config.color, (1-distance/Core.Config.brushSize) * Core.Config.alpha));
+                        invalidateDatas.AddIfUnique(data);
                     }
                 }
             }
             
-            invalidateRenderers.ForEach(r =>
+            invalidateDatas.ForEach(r =>
             {
-                r.Invalidate();
+                r.Invalidate(false);
+                r.UpdateSerializedData();
             });
         }
         

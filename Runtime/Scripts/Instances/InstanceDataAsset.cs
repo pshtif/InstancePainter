@@ -2,6 +2,7 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
+using UnityEditor;
 using UnityEngine;
 
 namespace InstancePainter
@@ -9,6 +10,8 @@ namespace InstancePainter
     public class InstanceDataAsset : ScriptableObject, IData
     {
         public InstanceData collection;
+        
+        public int Count => collection.Count;
 
         public InstanceDataAsset()
         {
@@ -24,7 +27,50 @@ namespace InstancePainter
         {
             collection.Dispose();
         }
+
+        public bool IsMesh(Mesh p_mesh)
+        {
+            return collection.mesh == p_mesh;
+        }
+
+        public void AddInstance(Matrix4x4 p_matrix, Vector4 p_color)
+        {
+            collection.AddInstance(p_matrix, p_color);
+        }
+
+        public void RemoveInstance(int p_index)
+        {
+            collection.RemoveInstance(p_index);
+        }
+
+        public Matrix4x4 GetInstanceMatrix(int p_index)
+        {
+            return collection.GetInstanceMatrix(p_index);
+        }
         
+        public void SetInstanceMatrix(int p_index, Matrix4x4 p_matrix)
+        {
+            collection.SetInstanceMatrix(p_index, p_matrix);
+        }
+        
+        public Vector4 GetInstanceColor(int p_index)
+        {
+            return collection.GetInstanceColor(p_index);
+        }
+        
+        public void SetInstanceColor(int p_index, Vector4 p_color)
+        {
+            collection.SetInstanceColor(p_index, p_color);
+        }
+
+        public void UpdateSerializedData()
+        {
+            collection.UpdateSerializedData();
+            #if UNITY_EDITOR
+            EditorUtility.SetDirty(this);
+            #endif
+        }
+
 #if UNITY_EDITOR
         public static InstanceDataAsset CreateAssetWithPanel()
         {

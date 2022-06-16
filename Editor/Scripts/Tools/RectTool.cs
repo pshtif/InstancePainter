@@ -46,7 +46,7 @@ namespace InstancePainter.Editor
             {
                 Undo.IncrementCurrentGroup();
                 Undo.SetCurrentGroupName("Paint");
-                Undo.RegisterCompleteObjectUndo(Core.RendererObject.GetComponents<IPRenderer>(), "Record Renderers");
+                Undo.RegisterCompleteObjectUndo(Core.Renderer, "Record Renderers");
                 _undoId = Undo.GetCurrentGroup();
             }
             
@@ -119,28 +119,32 @@ namespace InstancePainter.Editor
 
             var rect = new Rect(minX, minZ, maxX - minX, maxZ - minZ);
             
-            List<IPRenderer> invalidateRenderers = new List<IPRenderer>();
-            
-            var renderers = Core.RendererObject.GetComponents<IPRenderer>();
-            foreach (IPRenderer renderer in renderers)
+            List<IData> invalidateDatas = new List<IData>();
+
+            var datas = Core.Renderer.InstanceDatas;
+            foreach (IData data in datas)
             {
-                for (int i = 0; i<renderer.InstanceCount; i++)
+                for (int i = 0; i<data.Count; i++)
                 {
-                    var position = renderer.GetInstanceMatrix(i).GetColumn(3);
+                    var position = data.GetInstanceMatrix(i).GetColumn(3);
                     Vector2 position2d = new Vector2(position.x, position.z); 
                     if (rect.Contains(position2d))
                     {
-                        renderer.RemoveInstance(i);
+                        data.RemoveInstance(i);
 
-                        if (renderer != null && !invalidateRenderers.Contains(renderer))
-                            invalidateRenderers.Add(renderer);
+                        if (data != null && !invalidateDatas.Contains(data))
+                            invalidateDatas.Add(data);
                         
                         i--;
                     }
                 }
             }
-            
-            invalidateRenderers.ForEach(r => r.Invalidate());
+
+            invalidateDatas.ForEach(r =>
+            {
+                r.Invalidate(false);
+                r.UpdateSerializedData();
+            });
         }
 
         void Fill(Vector3 p_startPoint, Vector3 p_endPoint)
@@ -163,22 +167,26 @@ namespace InstancePainter.Editor
             var minZ = Math.Min(p_startPoint.z, p_endPoint.z);
             var maxZ = Math.Max(p_startPoint.z, p_endPoint.z);
 
-            List<IPRenderer> invalidateRenderers = new List<IPRenderer>();
+            List<IData> invalidateDatas = new List<IData>();
             
             EditorUtility.DisplayProgressBar("InstancePainter", "Filling painted instances...", .5f);
 
             for (int i = 0; i < Core.Config.density; i++)
             {
-                var renderers = Core.PlaceInstance(new Vector3(Random.Range(minX, maxX), p_startPoint.y, Random.Range(minZ, maxZ)), validMeshes, validColliders, _paintedInstances);
+                var datas = Core.PlaceInstance(new Vector3(Random.Range(minX, maxX), p_startPoint.y, Random.Range(minZ, maxZ)), validMeshes, validColliders, _paintedInstances);
                 
-                foreach (var renderer in renderers)
+                foreach (var data in datas)
                 {
-                    if (!invalidateRenderers.Contains(renderer))
-                        invalidateRenderers.Add(renderer);
+                    if (!invalidateDatas.Contains(data))
+                        invalidateDatas.Add(data);
                 }
             }
-            
-            invalidateRenderers.ForEach(r => r.Invalidate());
+
+            invalidateDatas.ForEach(r =>
+            {
+                r.Invalidate(false);
+                r.UpdateSerializedData();
+            });
             
             EditorUtility.ClearProgressBar();
         }

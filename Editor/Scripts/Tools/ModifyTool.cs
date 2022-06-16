@@ -51,7 +51,7 @@ namespace InstancePainter.Editor
             {
                 Undo.IncrementCurrentGroup();
                 Undo.SetCurrentGroupName("Modify");
-                Undo.RegisterCompleteObjectUndo(Core.RendererObject.GetComponents<IPRenderer>(), "Record Renderers");
+                Undo.RegisterCompleteObjectUndo(Core.Renderer, "Record Renderers");
                 _undoId = Undo.GetCurrentGroup();
             }
             
@@ -103,7 +103,7 @@ namespace InstancePainter.Editor
         {
             GetHitInstances(p_hit);
             
-            List<IPRenderer> renderers = new List<IPRenderer>();
+            List<IData> datas = new List<IData>();
             foreach (var instance in _modifyInstances)
             {
                 if (AlreadyModified.Exists(a => a == instance))
@@ -111,17 +111,16 @@ namespace InstancePainter.Editor
 
                 instance.matrix *= Matrix4x4.Scale(Core.Config.modifyScale);
                 instance.matrix *= Matrix4x4.Translate(Core.Config.modifyPosition);
-                instance.renderer.SetInstanceMatrix(instance.index, instance.matrix);
+                instance.data.SetInstanceMatrix(instance.index, instance.matrix);
                 
-                if (!renderers.Contains(instance.renderer))
-                    renderers.Add(instance.renderer);
+                datas.AddIfUnique(instance.data);
                 
                 AlreadyModified.Add(instance);
             }
             
-            renderers.ForEach(r =>
+            datas.ForEach(r =>
             {
-                r.Invalidate();
+                r.Invalidate(false);
                 r.UpdateSerializedData();
             });
         }
@@ -130,14 +129,15 @@ namespace InstancePainter.Editor
         {
             _modifyInstances.Clear();
 
-            Core.RendererObject.GetComponents<IPRenderer>().ToList().ForEach(r =>
+            
+            Core.Renderer.InstanceDatas.ForEach(id =>
             {
-                for (int i = 0; i<r.InstanceCount; i++)
+                for (int i = 0; i<id.Count; i++)
                 {
-                    var matrix = r.GetInstanceMatrix(i);
+                    var matrix = id.GetInstanceMatrix(i);
                     if (Vector3.Distance(p_hit.point, matrix.GetColumn(3)) < Core.Config.brushSize)
                     {
-                        var instance = new PaintedInstance(r, matrix, i, null);
+                        var instance = new PaintedInstance(id, matrix, i, null);
                         _modifyInstances.Add(instance);
                     }
                 };
@@ -148,7 +148,7 @@ namespace InstancePainter.Editor
         {
             var offset = Event.current.mousePosition - _modifyStartMousePosition;
 
-            List<IPRenderer> renderers = new List<IPRenderer>();
+            List<IData> datas = new List<IData>();
             
             foreach (var instance in _modifyInstances)
             {
@@ -169,14 +169,14 @@ namespace InstancePainter.Editor
                 );
                 var scale = Vector3.one * offset.y / 10;
 
-                instance.renderer.SetInstanceMatrix(instance.index, Matrix4x4.TRS(_modifyStartHit.point + position, rotation * originalRotation, originalScale + scale));
-                if (!renderers.Contains(instance.renderer))
-                    renderers.Add(instance.renderer);
+                instance.data.SetInstanceMatrix(instance.index, Matrix4x4.TRS(_modifyStartHit.point + position, rotation * originalRotation, originalScale + scale));
+                
+                datas.AddIfUnique(instance.data);
             }
             
-            renderers.ForEach(r =>
+            datas.ForEach(r =>
             {
-                r.Invalidate();
+                r.Invalidate(false);
                 r.UpdateSerializedData();
             });
         }
@@ -185,7 +185,7 @@ namespace InstancePainter.Editor
         {
             var offset = p_hit.point - _modifyStartHit.point;
 
-            List<IPRenderer> renderers = new List<IPRenderer>();
+            List<IData> datas = new List<IData>();
             foreach (var instance in _modifyInstances)
             {
                 Quaternion originalRotation = Quaternion.LookRotation(
@@ -201,14 +201,14 @@ namespace InstancePainter.Editor
                     instance.matrix.GetColumn(2).magnitude
                 );
 
-                instance.renderer.SetInstanceMatrix(instance.index, Matrix4x4.TRS(position, originalRotation, originalScale));
-                if (!renderers.Contains(instance.renderer))
-                    renderers.Add(instance.renderer);
+                instance.data.SetInstanceMatrix(instance.index, Matrix4x4.TRS(position, originalRotation, originalScale));
+                
+                datas.AddIfUnique(instance.data);
             }
             
-            renderers.ForEach(r =>
+            datas.ForEach(r =>
             {
-                r.Invalidate();
+                r.Invalidate(false);
                 r.UpdateSerializedData();
             });
         }

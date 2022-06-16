@@ -58,18 +58,35 @@ namespace InstancePainter
         private Rect _binningBounds;
         [NonSerialized]
         private List<int>[] _binList;
+        [NonSerialized] 
+        private float _binSize;
         [NonSerialized]
         private int _binCountX;
         [NonSerialized]
         private int _binCountZ;
-        
-        #if UNITY_EDITOR
+
+        public int Count => _nativeMatrixData.IsCreated ? _nativeMatrixData.Length : 0;
+
+#if UNITY_EDITOR
         public void SetData(Matrix4x4[] p_matrixData, Vector4[] p_colorData)
         {
             _matrixData = p_matrixData;
             _colorData = p_colorData;
         }
         #endif
+
+        public InstanceData() { }
+        
+        public InstanceData(Mesh p_mesh, Material p_material)
+        {
+            mesh = p_mesh;
+            material = p_material;
+        }
+        
+        public bool IsMesh(Mesh p_mesh)
+        {
+            return mesh == p_mesh;
+        }
         
         void CheckNativeContainerInitialized()
         {
@@ -133,9 +150,6 @@ namespace InstancePainter
                     _drawIndirectBuffers[i] = drawIndirectBuffer;
                 }
             }
-
-            InvalidateBounds();
-            InvalidateBinning();
 
             _initialized = true;
         }
@@ -213,10 +227,10 @@ namespace InstancePainter
         public void InvalidateBinning()
         {
             // We need atleast binsize bounds, if we have single instance it would be zero sized bounds
-            _binningBounds = new Rect(_bounds.min.x, _bounds.min.z, Mathf.Max(binSize, _bounds.size.x), Math.Max(binSize, _bounds.size.z));
+            _binningBounds = new Rect(_bounds.min.x, _bounds.min.z, Mathf.Max(_binSize, _bounds.size.x), Math.Max(_binSize, _bounds.size.z));
             
-            _binCountX = Mathf.RoundToInt((_binningBounds.width) / binSize);
-            _binCountZ = Mathf.RoundToInt((_binningBounds.height) / binSize);
+            _binCountX = Mathf.RoundToInt((_binningBounds.width) / _binSize);
+            _binCountZ = Mathf.RoundToInt((_binningBounds.height) / _binSize);
 
             _binList = new List<int>[_binCountX * _binCountZ];
             for (int i = 0; i < _binList.Length; i++)
@@ -235,13 +249,10 @@ namespace InstancePainter
             }
         }
         
-        public void ApplyModifiersWithBinning()
+        public void ApplyModifiersWithBinning(List<InstanceModifierBase> p_modifiers)
         {
-            if (!IsInitialized)
-            {
-                Debug.LogError("Renderer not initialized.");
+            if (!_initialized)
                 return;
-            }
 
             bool matrixChanged = false;
             bool colorChanged = false;
@@ -249,7 +260,7 @@ namespace InstancePainter
             _modifiedMatrixData.CopyFrom(_nativeMatrixData);
             _modifiedColorData.CopyFrom(_nativeColorData);
             
-            if (enableModifiers && modifiers != null && modifiers.Count > 0)
+            if (p_modifiers != null && p_modifiers.Count > 0)
             {
                 if (_binList == null)
                 {
@@ -260,9 +271,9 @@ namespace InstancePainter
 
                 for (int i = 0; i < _binList.Length; i++)
                 {
-                    for (int j = 0; j<modifiers.Count; j++)
+                    for (int j = 0; j<p_modifiers.Count; j++)
                     {
-                        var modifier = modifiers[j];
+                        var modifier = p_modifiers[j];
                         if (modifier == null || !modifier.isActiveAndEnabled)
                             continue;
 
@@ -271,12 +282,12 @@ namespace InstancePainter
                         
                         // Hit this bin
                         var contains = modifier.transform.position.x >=
-                                       _binningBounds.xMin + bx * binSize - modifier.bounds.width / 2 &&
-                                       modifier.transform.position.x <= _binningBounds.xMin + (bx + 1) * binSize +
+                                       _binningBounds.xMin + bx * _binSize - modifier.bounds.width / 2 &&
+                                       modifier.transform.position.x <= _binningBounds.xMin + (bx + 1) * _binSize +
                                        modifier.bounds.width / 2 &&
-                                       modifier.transform.position.z >= _binningBounds.yMin + bz * binSize -
+                                       modifier.transform.position.z >= _binningBounds.yMin + bz * _binSize -
                                        modifier.bounds.height / 2 &&
-                                       modifier.transform.position.z <= _binningBounds.yMin + (bz + 1) * binSize +
+                                       modifier.transform.position.z <= _binningBounds.yMin + (bz + 1) * _binSize +
                                        modifier.bounds.height / 2;
                         
                         if (contains)
@@ -294,7 +305,7 @@ namespace InstancePainter
                             var color = _nativeColorData[index];
                             foreach (var modifierIndex in binModifiers)
                             {
-                                if (modifiers[modifierIndex].Apply(ref matrix, ref color))
+                                if (p_modifiers[modifierIndex].Apply(ref matrix, ref color))
                                 {
                                     _modifiedMatrixData[index] = matrix;
                                     _modifiedColorData[index] = color;

@@ -3,16 +3,17 @@
  */
 
 using System;
+using System.Collections.Generic;
 using InstancePainter;
 using UnityEditor;
 using UnityEngine;
 
 namespace InstancePainter.Editor
 {
-    [CustomEditor(typeof(IPRenderer))]
+    [CustomEditor(typeof(IPRenderer20))]
     public class IPRendererEditor : UnityEditor.Editor
     {
-        public IPRenderer Renderer => target as IPRenderer;
+        public IPRenderer20 Renderer => target as IPRenderer20;
         
         private void OnEnable()
         {
@@ -21,56 +22,57 @@ namespace InstancePainter.Editor
 
         public override void OnInspectorGUI()
         {
-            DrawDefaultInspector();
-
-            GUILayout.Label("Instance Count: " + Renderer.InstanceCount);
+//            DrawDefaultInspector();
 
             EditorGUI.BeginChangeCheck();
             
-            // InstanceData collection = EditorGUILayout.ObjectField("Collection", Renderer.GetCollection(),
-            //     typeof(InstanceData), false) as InstanceData;
-            //
-            // if (EditorGUI.EndChangeCheck())
-            // {
-            //     Renderer.SetCollection(collection);
-            // }
+            GUILayout.Label("Instances Datas "+Renderer.InstanceDatas.Count);
 
-            if (GUILayout.Button("Save to Collection"))
-            {
-                Renderer.SaveToInstanceCollection();
-            }
-            
-            if (GUILayout.Button("Generate Game Objects"))
-            {
-                GenerateGameObjects();
-            }
+            Renderer.InstanceDatas.ForEach(d => DrawIData(d));
 
-            // if (GUILayout.Button("ApplyModifiers"))
+            // if (GUILayout.Button("Generate Game Objects"))
             // {
-            //     Renderer.ApplyModifiers();
+            //     GenerateGameObjects();
             // }
         }
 
-        void GenerateGameObjects()
+        void DrawIData(IData p_data)
         {
-            Transform container = new GameObject().transform;
-            container.name = Renderer.mesh.name;
-            container.SetParent(Renderer.transform);
+            if (p_data is InstanceData) DrawInstanceData(p_data as InstanceData);
             
-            for (int i = 0; i<Renderer.InstanceCount; i++)
-            {
-                var matrix = Renderer.GetInstanceMatrix(i);
-                var filter = new GameObject().AddComponent<MeshFilter>();
-                var mr = filter.gameObject.AddComponent<MeshRenderer>();
-                mr.materials = new Material[Renderer.mesh.subMeshCount];
-                filter.sharedMesh = Renderer.mesh;
-                filter.name = Renderer.mesh.name + i;
-                filter.transform.localPosition = matrix.GetColumn(3);
-                filter.transform.rotation = ExtractRotation(matrix);
-                filter.transform.localScale = ExtractScaleFromMatrix(matrix);
-                filter.transform.SetParent(container);
-            }
+            if (p_data is InstanceDataAsset) DrawInstanceDataAsset(p_data as InstanceDataAsset);
         }
+
+        void DrawInstanceData(InstanceData p_data)
+        {
+            GUILayout.Label("Count: "+p_data.Count);
+        }
+
+        void DrawInstanceDataAsset(InstanceDataAsset p_data)
+        {
+            
+        }
+
+        // void GenerateGameObjects()
+        // {
+        //     Transform container = new GameObject().transform;
+        //     container.name = Renderer.mesh.name;
+        //     container.SetParent(Renderer.transform);
+        //     
+        //     for (int i = 0; i<Renderer.Count; i++)
+        //     {
+        //         var matrix = Renderer.GetInstanceMatrix(i);
+        //         var filter = new GameObject().AddComponent<MeshFilter>();
+        //         var mr = filter.gameObject.AddComponent<MeshRenderer>();
+        //         mr.materials = new Material[Renderer.mesh.subMeshCount];
+        //         filter.sharedMesh = Renderer.mesh;
+        //         filter.name = Renderer.mesh.name + i;
+        //         filter.transform.localPosition = matrix.GetColumn(3);
+        //         filter.transform.rotation = ExtractRotation(matrix);
+        //         filter.transform.localScale = ExtractScaleFromMatrix(matrix);
+        //         filter.transform.SetParent(container);
+        //     }
+        // }
         
         public static Vector3 ExtractScaleFromMatrix(Matrix4x4 matrix)
         {
