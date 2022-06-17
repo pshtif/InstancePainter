@@ -68,7 +68,7 @@ namespace InstancePainter.Editor
 
         void DrawIData(IData p_data)
         {
-            GUILayout.Label("Instance Cluster: "+p_data.Count, StyleUtils.ClusterStyle, GUILayout.Height(20));
+            GUILayout.Label("Instance Cluster: "+p_data.GetCount(), StyleUtils.ClusterStyle, GUILayout.Height(20));
             //
             var rect = GUILayoutUtility.GetLastRect();
             if (GUI.Button(new Rect(rect.x+rect.width-14, rect.y, 16, 16), p_data.minimized ? "+" : "-", Skin.GetStyle("minimizebutton")))
@@ -87,7 +87,7 @@ namespace InstancePainter.Editor
 
         void DrawInstanceData(InstanceData p_data)
         {
-            GUILayout.Label("Count: "+p_data.Count);
+            GUILayout.Label("Count: "+p_data.GetCount());
 
             EditorGUI.BeginChangeCheck();
             

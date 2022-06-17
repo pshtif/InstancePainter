@@ -99,8 +99,6 @@ namespace InstancePainter
         
         public void OnEnable()
         {
-            InstanceDatas.ForEach(id => id.InitializeSerializedData());
-            
 #if UNITY_EDITOR
             if (!Application.isPlaying)
             {

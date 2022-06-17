@@ -10,7 +10,7 @@ namespace InstancePainter
 {
     public interface IData
     {
-        int Count { get; }
+        int GetCount();
 
         Matrix4x4 GetInstanceMatrix(int p_index);
 
@@ -36,12 +36,12 @@ namespace InstancePainter
 
         void ApplyModifiers(List<InstanceModifierBase> p_modifiers, float p_binSize);
 
-        void InitializeSerializedData();
-
 #if UNITY_EDITOR
         bool minimized { get; set; }
 
         string GetMeshName();
+
+        void UndoRedoPerformed();
         
         void UpdateSerializedData();
 #endif

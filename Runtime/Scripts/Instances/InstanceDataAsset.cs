@@ -31,7 +31,10 @@ namespace InstancePainter
         }
         #endif
         
-        public int Count => collection.Count;
+        public int GetCount()
+        {
+            return collection.GetCount();
+        }
 
         public InstanceDataAsset()
         {
@@ -88,23 +91,23 @@ namespace InstancePainter
             collection.SetInstanceColor(p_index, p_color);
         }
 
-        public void InitializeSerializedData()
-        {
-            collection.InitializeSerializedData();
-        }
-        
         public void ApplyModifiers(List<InstanceModifierBase> p_modifiers, float p_binSize)
         {
             collection.ApplyModifiers(p_modifiers, p_binSize);
         }
 
 #if UNITY_EDITOR
+        
+        public void UndoRedoPerformed()
+        {
+            collection.UndoRedoPerformed();
+        }
+        
         public void UpdateSerializedData()
         {
             collection.UpdateSerializedData();
-#if UNITY_EDITOR
+            
             EditorUtility.SetDirty(this);
-#endif
         }
         
         public static InstanceDataAsset CreateAssetWithPanel()

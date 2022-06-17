@@ -58,11 +58,11 @@ namespace InstancePainter.Editor
             var datas = Core.Renderer.InstanceDatas;
             foreach (IData data in datas)
             {
-                if (data.Count == 0 || (!_validEraseMeshes.Any(m=>data.IsMesh(m)) && Core.Config.eraseActiveDefinition))
+                if (data.GetCount() == 0 || (!_validEraseMeshes.Any(m=>data.IsMesh(m)) && Core.Config.eraseActiveDefinition))
                     continue;
 
                 var modified = false;
-                for (int i = data.Count - 1; i>=0; i--)
+                for (int i = data.GetCount() - 1; i>=0; i--)
                 {
                     var position = data.GetInstanceMatrix(i).GetColumn(3);
                     if (Vector3Utils.DistanceSq(position, p_hit.point) < sizeSq)

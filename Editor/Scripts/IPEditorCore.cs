@@ -87,7 +87,7 @@ namespace InstancePainter.Editor
         {
             GameObject.FindObjectsOfType<IPRenderer20>().ToList().ForEach(r =>
             {
-                r.OnEnable();
+                r.InstanceDatas.ForEach(id => id.UndoRedoPerformed());
             });
             
             SceneView.RepaintAll();
@@ -190,7 +190,7 @@ namespace InstancePainter.Editor
                    if (!meshes.Any(m => data.IsMesh(m)))
                      continue;
                  
-                   for (int i = 0; i < data.Count; i++)
+                   for (int i = 0; i < data.GetCount(); i++)
                    {
                        var matrix = data.GetInstanceMatrix(i);
                        if (Vector3.Distance(p_position, matrix.GetColumn(3)) < Config.minimalDistance)
@@ -224,8 +224,8 @@ namespace InstancePainter.Editor
                     var data = AddInstance(instanceDefinition, filter.sharedMesh, position, rotation,
                         scale, Config.color);
 
-                    var instance = new PaintedInstance(data, data.GetInstanceMatrix(data.Count - 1),
-                        data.Count - 1, instanceDefinition);
+                    var instance = new PaintedInstance(data, data.GetInstanceMatrix(data.GetCount() - 1),
+                        data.GetCount() - 1, instanceDefinition);
                     p_paintedInstances?.Add(instance);
 
                     paintedDatas.Add(data);

@@ -45,11 +45,10 @@ namespace InstancePainter.Editor
 
             if (Event.current.button == 0 && !Event.current.alt && Event.current.type == EventType.MouseDown)
             {
-                //Undo.IncrementCurrentGroup();
-                //Undo.SetCurrentGroupName("Paint Instances");
-                //Undo.RegisterCompleteObjectUndo(Core.Renderer.gameObject, "Record Renderer Object");
+                Undo.IncrementCurrentGroup();
+                Undo.SetCurrentGroupName("Paint Instances");
                 Undo.RegisterCompleteObjectUndo(Core.Renderer, "Record Renderer");
-                //_undoId = Undo.GetCurrentGroup();
+                _undoId = Undo.GetCurrentGroup();
 
                 if (Core.Config.useMeshRaycasting)
                 {
@@ -103,7 +102,7 @@ namespace InstancePainter.Editor
             if (Event.current.button == 0 && !Event.current.alt && Event.current.type == EventType.MouseUp)
             {
                 _state = PaintToolState.NONE;
-                //Undo.CollapseUndoOperations(_undoId);
+                Undo.CollapseUndoOperations(_undoId);
             }
         }
 
@@ -175,7 +174,7 @@ namespace InstancePainter.Editor
             var datas = Core.Renderer.InstanceDatas;
             foreach (IData data in datas)
             {
-                for (int i = 0; i<data.Count; i++)
+                for (int i = 0; i<data.GetCount(); i++)
                 {
                     var position = data.GetInstanceMatrix(i).GetColumn(3);
                     var distance = Vector3.Distance(position, p_hit.point);

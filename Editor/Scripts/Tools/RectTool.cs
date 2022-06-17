@@ -124,7 +124,7 @@ namespace InstancePainter.Editor
             var datas = Core.Renderer.InstanceDatas;
             foreach (IData data in datas)
             {
-                for (int i = 0; i<data.Count; i++)
+                for (int i = 0; i<data.GetCount(); i++)
                 {
                     var position = data.GetInstanceMatrix(i).GetColumn(3);
                     Vector2 position2d = new Vector2(position.x, position.z); 

@@ -65,10 +65,6 @@ namespace InstancePainter
             if (count == 0)
                 return;
 
-            // Duplicate to modified data so we always have original and modified
-            //_modifiedMatrixData.CopyFrom(_nativeMatrixData);
-            //_modifiedColorData.CopyFrom(_nativeColorData);
-            
             if (!p_fallback)
             {
                 _colorBuffer?.Release();

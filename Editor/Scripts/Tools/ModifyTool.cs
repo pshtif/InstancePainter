@@ -128,7 +128,7 @@ namespace InstancePainter.Editor
             
             Core.Renderer.InstanceDatas.ForEach(id =>
             {
-                for (int i = 0; i<id.Count; i++)
+                for (int i = 0; i<id.GetCount(); i++)
                 {
                     var matrix = id.GetInstanceMatrix(i);
                     if (Vector3.Distance(p_hit.point, matrix.GetColumn(3)) < Core.Config.brushSize)
