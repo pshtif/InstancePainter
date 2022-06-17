@@ -2,6 +2,8 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
+using System.Collections.Generic;
+using Mono.Collections.Generic;
 using UnityEngine;
 
 namespace InstancePainter
@@ -32,14 +34,16 @@ namespace InstancePainter
 
         void RemoveInstance(int p_index);
 
+        void ApplyModifiers(List<InstanceModifierBase> p_modifiers, float p_binSize);
+
         void InitializeSerializedData();
-        
-        void UpdateSerializedData();
-        
+
 #if UNITY_EDITOR
         bool minimized { get; set; }
 
         string GetMeshName();
+        
+        void UpdateSerializedData();
 #endif
     }
 }

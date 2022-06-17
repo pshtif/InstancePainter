@@ -42,6 +42,8 @@ namespace InstancePainter
         public bool enableEditorPreview = true;
 
         public bool instanceDataMinimized = false;
+        
+        public bool modifiersMinimized = false;
 #endif
 
         void Update()
@@ -52,7 +54,7 @@ namespace InstancePainter
 #endif
             if (autoApplyModifiers && Application.isPlaying)
             {
-                //ApplyModifiersWithBinning();
+                InstanceDatas.ForEach(id => id.ApplyModifiers(modifiers, binSize));
             }
 
             Render();

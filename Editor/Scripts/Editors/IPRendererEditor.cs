@@ -24,11 +24,12 @@ namespace InstancePainter.Editor
 
         public override void OnInspectorGUI()
         {
-//            DrawDefaultInspector();
-
             EditorGUI.BeginChangeCheck();
 
             Renderer.forceFallback = EditorGUILayout.Toggle("Force Fallback", Renderer.forceFallback);
+            Renderer.enableModifiers = EditorGUILayout.Toggle("Enable Modifiers", Renderer.enableModifiers);
+            Renderer.autoApplyModifiers = EditorGUILayout.Toggle("Auto Apply Modifiers", Renderer.autoApplyModifiers);
+            Renderer.binSize = EditorGUILayout.FloatField("Bin Size", Renderer.binSize);
 
             GUILayout.Label("INSTANCE CLUSTERS: "+Renderer.InstanceDatas.Count, StyleUtils.TitleStyle);
             
@@ -43,6 +44,22 @@ namespace InstancePainter.Editor
                 Renderer.InstanceDatas.ForEach(d => DrawIData(d));
             }
 
+            GUILayout.Label("INSTANCE MODIFIERS: "+Renderer.modifiers.Count, StyleUtils.TitleStyle);
+            
+            rect = GUILayoutUtility.GetLastRect();
+            if (GUI.Button(new Rect(rect.x+rect.width-14, rect.y, 16, 16), Renderer.modifiersMinimized ? "+" : "-", Skin.GetStyle("minimizebutton")))
+            {
+                Renderer.modifiersMinimized = !Renderer.modifiersMinimized;
+            }
+            
+            if (!Renderer.modifiersMinimized)
+            {
+                SerializedProperty modifiers = serializedObject.FindProperty("modifiers");
+                EditorGUILayout.PropertyField(modifiers, new GUIContent("Modifiers"), true);
+
+                serializedObject.ApplyModifiedProperties();
+            }
+            
             // if (GUILayout.Button("Generate Game Objects"))
             // {
             //     GenerateGameObjects();

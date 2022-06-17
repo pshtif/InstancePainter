@@ -2,6 +2,7 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -92,15 +93,20 @@ namespace InstancePainter
             collection.InitializeSerializedData();
         }
         
-        public void UpdateSerializedData()
+        public void ApplyModifiers(List<InstanceModifierBase> p_modifiers, float p_binSize)
         {
-            collection.UpdateSerializedData();
-            #if UNITY_EDITOR
-            EditorUtility.SetDirty(this);
-            #endif
+            collection.ApplyModifiers(p_modifiers, p_binSize);
         }
 
 #if UNITY_EDITOR
+        public void UpdateSerializedData()
+        {
+            collection.UpdateSerializedData();
+#if UNITY_EDITOR
+            EditorUtility.SetDirty(this);
+#endif
+        }
+        
         public static InstanceDataAsset CreateAssetWithPanel()
         {
             var path = UnityEditor.EditorUtility.SaveFilePanelInProject(

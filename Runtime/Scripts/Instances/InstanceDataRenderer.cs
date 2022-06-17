@@ -39,18 +39,23 @@ namespace InstancePainter
         private Rect _binningBounds;
         [NonSerialized]
         private List<int>[] _binList;
-        [NonSerialized] 
-        private float _binSize;
         [NonSerialized]
         private int _binCountX;
         [NonSerialized]
         private int _binCountZ;
 
-        private bool _isDirty = true;
+        private bool _isGPUDirty = true;
 
-        public void SetDirty()
+        private bool _isBoundsDirty = true;
+
+        public void SetGPUDirty()
         {
-            _isDirty = true;
+            _isGPUDirty = true;
+        }
+
+        public void SetBoundsDirty()
+        {
+            _isBoundsDirty = true;
         }
         
         public void Invalidate(bool p_fallback, NativeList<Matrix4x4> p_matrixData, NativeList<Vector4> p_colorData, Mesh p_mesh)
@@ -120,10 +125,15 @@ namespace InstancePainter
             if (p_mesh == null || p_material == null)
                 return;
 
-            if (_isDirty)
+            if (_isBoundsDirty)
+            {
+                InvalidateBounds(p_matrixData);
+            }
+            
+            if (_isGPUDirty)
             {
                 Invalidate(false, p_matrixData, p_colorData, p_mesh);
-                _isDirty = false;
+                _isGPUDirty = false;
             }
             
             for (int i = 0; i < p_mesh.subMeshCount; i++)
@@ -182,15 +192,17 @@ namespace InstancePainter
 
             _bounds = new Bounds();
             _bounds.SetMinMax(new Vector3(minX, minY, minZ), new Vector3(maxX, maxY, maxZ));
+
+            _isBoundsDirty = false;
         }
         
-        public void InvalidateBinning(NativeList<Matrix4x4> p_matrixData)
+        public void InvalidateBinning(NativeList<Matrix4x4> p_matrixData, float p_binSize)
         {
             // We need atleast binsize bounds, if we have single instance it would be zero sized bounds
-            _binningBounds = new Rect(_bounds.min.x, _bounds.min.z, Mathf.Max(_binSize, _bounds.size.x), Math.Max(_binSize, _bounds.size.z));
+            _binningBounds = new Rect(_bounds.min.x, _bounds.min.z, Mathf.Max(p_binSize, _bounds.size.x), Math.Max(p_binSize, _bounds.size.z));
             
-            _binCountX = Mathf.RoundToInt((_binningBounds.width) / _binSize);
-            _binCountZ = Mathf.RoundToInt((_binningBounds.height) / _binSize);
+            _binCountX = p_binSize == 0 ? 1 : Mathf.RoundToInt((_binningBounds.width) / p_binSize);
+            _binCountZ = p_binSize == 0 ? 1 : Mathf.RoundToInt((_binningBounds.height) / p_binSize);
 
             _binList = new List<int>[_binCountX * _binCountZ];
             for (int i = 0; i < _binList.Length; i++)
@@ -209,80 +221,90 @@ namespace InstancePainter
             }
         }
 
-        public void ApplyModifiersWithBinning(List<InstanceModifierBase> p_modifiers,
+        public void ApplyModifiers(List<InstanceModifierBase> p_modifiers, float p_binSize,
             NativeList<Matrix4x4> p_originalMatrixData, NativeList<Vector4> p_originalColorData,
             NativeList<Matrix4x4> p_modifiedMatrixData, NativeList<Vector4> p_modifiedColorData)
         {
             p_modifiedMatrixData.CopyFrom(p_originalMatrixData);
             p_modifiedColorData.CopyFrom(p_originalColorData);
 
+            if (_isBoundsDirty || _binList == null)
+            {
+                InvalidateBounds(p_originalMatrixData);
+                InvalidateBinning(p_originalMatrixData, p_binSize);
+            }
+
             if (p_modifiers != null && p_modifiers.Count > 0)
             {
-                if (_binList == null)
-                {
-                    InvalidateBinning(p_originalMatrixData);
-                } 
-
-                var binModifiers = new NativeList<int>(Allocator.Temp);
-
-                for (int i = 0; i < _binList.Length; i++)
-                {
-                    for (int j = 0; j < p_modifiers.Count; j++)
-                    {
-                        var modifier = p_modifiers[j];
-                        if (modifier == null || !modifier.isActiveAndEnabled)
-                            continue;
-
-                        int bx = i % _binCountX;
-                        int bz = Mathf.FloorToInt(i / _binCountX);
-
-                        // Hit this bin
-                        var contains = modifier.transform.position.x >=
-                                       _binningBounds.xMin + bx * _binSize - modifier.bounds.width / 2 &&
-                                       modifier.transform.position.x <= _binningBounds.xMin + (bx + 1) * _binSize +
-                                       modifier.bounds.width / 2 &&
-                                       modifier.transform.position.z >= _binningBounds.yMin + bz * _binSize -
-                                       modifier.bounds.height / 2 &&
-                                       modifier.transform.position.z <= _binningBounds.yMin + (bz + 1) * _binSize +
-                                       modifier.bounds.height / 2;
-
-                        if (contains)
-                        {
-                            binModifiers.Add(j);
-                        }
-                    }
-
-                    if (binModifiers.Length > 0)
-                    {
-                        for (int j = 0; j < _binList[i].Count; j++)
-                        {
-                            var index = _binList[i][j];
-                            var matrix = p_originalMatrixData[index];
-                            var color = p_originalColorData[index];
-                            foreach (var modifierIndex in binModifiers)
-                            {
-                                if (p_modifiers[modifierIndex].Apply(ref matrix, ref color))
-                                {
-                                    p_modifiedMatrixData[index] = matrix;
-                                    p_modifiedColorData[index] = color;
-                                }
-                            }
-                        }
-                    }
-
-                    binModifiers.Clear();
-                }
-
-                _matrixBuffer?.SetData(p_modifiedMatrixData.AsArray());
-                _colorBuffer?.SetData(p_modifiedColorData.AsArray());
-
-                binModifiers.Dispose();
+                ApplyModifiersUsingBinning(p_modifiers, p_binSize, p_originalMatrixData, p_originalColorData,
+                        p_modifiedMatrixData, p_modifiedColorData);
             }
             else
             {
                 _matrixBuffer?.SetData(p_modifiedMatrixData.AsArray());
                 _colorBuffer?.SetData(p_modifiedColorData.AsArray());
             }
+        }
+
+        public void ApplyModifiersUsingBinning(List<InstanceModifierBase> p_modifiers, float p_binSize,
+            NativeList<Matrix4x4> p_originalMatrixData, NativeList<Vector4> p_originalColorData,
+            NativeList<Matrix4x4> p_modifiedMatrixData, NativeList<Vector4> p_modifiedColorData)
+
+        {
+            var binModifiers = new NativeList<int>(Allocator.Temp);
+
+            for (int i = 0; i < _binList.Length; i++)
+            {
+                for (int j = 0; j < p_modifiers.Count; j++)
+                {
+                    var modifier = p_modifiers[j];
+                    if (modifier == null || !modifier.isActiveAndEnabled)
+                        continue;
+
+                    int bx = i % _binCountX;
+                    int bz = Mathf.FloorToInt(i / _binCountX);
+
+                    // Hit this bin
+                    var contains = modifier.transform.position.x >=
+                                   _binningBounds.xMin + bx * p_binSize - modifier.bounds.width / 2 &&
+                                   modifier.transform.position.x <= _binningBounds.xMin + (bx + 1) * p_binSize +
+                                   modifier.bounds.width / 2 &&
+                                   modifier.transform.position.z >= _binningBounds.yMin + bz * p_binSize -
+                                   modifier.bounds.height / 2 &&
+                                   modifier.transform.position.z <= _binningBounds.yMin + (bz + 1) * p_binSize +
+                                   modifier.bounds.height / 2;
+
+                    if (contains)
+                    {
+                        binModifiers.Add(j);
+                    }
+                }
+
+                if (binModifiers.Length > 0)
+                {
+                    for (int j = 0; j < _binList[i].Count; j++)
+                    {
+                        var index = _binList[i][j];
+                        var matrix = p_originalMatrixData[index];
+                        var color = p_originalColorData[index];
+                        foreach (var modifierIndex in binModifiers)
+                        {
+                            if (p_modifiers[modifierIndex].Apply(ref matrix, ref color))
+                            {
+                                p_modifiedMatrixData[index] = matrix;
+                                p_modifiedColorData[index] = color;
+                            }
+                        }
+                    }
+                }
+
+                binModifiers.Clear();
+            }
+            
+            _matrixBuffer?.SetData(p_modifiedMatrixData.AsArray());
+            _colorBuffer?.SetData(p_modifiedColorData.AsArray());
+
+            binModifiers.Dispose();
         }
     }
 }
