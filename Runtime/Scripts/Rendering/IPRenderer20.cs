@@ -40,6 +40,8 @@ namespace InstancePainter
 
 #if UNITY_EDITOR
         public bool enableEditorPreview = true;
+
+        public bool instanceDataMinimized = false;
 #endif
 
         void Update()
@@ -60,56 +62,12 @@ namespace InstancePainter
         {
             if (IsFallback)
             {
-                RenderFallback(p_camera);
+                InstanceDatas.ForEach(id => id.RenderFallback(p_camera));
             } else {
-                RenderIndirect(p_camera);
+                InstanceDatas.ForEach(id => id.RenderIndirect(p_camera));
             }
         }
-
-        private void RenderIndirect(Camera p_camera)
-        {
-            InstanceDatas.ForEach(id => id.RenderIndirect(p_camera));
-        }
-
-        private void RenderFallback(Camera p_camera)
-        {
-            if (!SystemInfo.supportsInstancing)
-                return;
         
-            // if (fallbackMaterial == null)
-            // {
-            //     Debug.LogError("Fallback material not set.");
-            //     return;
-            // }
-            //
-            // if (_fallbackPropertyBlock == null)
-            // {
-            //     _fallbackPropertyBlock = new MaterialPropertyBlock();
-            // }
-            //     
-            // int batches = Mathf.CeilToInt(_modifiedMatrixData.Length / 1023f);
-            //
-            // for (int i = 0; i < batches; i++)
-            // {
-            //     var matrixBatchSubArray = _modifiedMatrixData.AsArray().GetSubArray(i * 1023,
-            //         i < batches - 1 ? 1023 : _modifiedMatrixData.Length - (batches - 1) * 1023);
-            //     
-            //     var colorBatchSubArray = _modifiedColorData.AsArray().GetSubArray(i * 1023,
-            //         i < batches - 1 ? 1023 : _modifiedColorData.Length - (batches - 1) * 1023);
-            //
-            //     NativeArray<Matrix4x4>.Copy(matrixBatchSubArray, _matrixBatchFallbackArray, matrixBatchSubArray.Length);
-            //     NativeArray<Vector4>.Copy(colorBatchSubArray, _colorBatchFallbackArray, colorBatchSubArray.Length);
-            //
-            //     _fallbackPropertyBlock.SetVectorArray("_Color", _colorBatchFallbackArray);
-            //
-            //     for (int j = 0; j < mesh.subMeshCount; j++)
-            //     {
-            //         Graphics.DrawMeshInstanced(mesh, j, fallbackMaterial, _matrixBatchFallbackArray,
-            //             matrixBatchSubArray.Length, _fallbackPropertyBlock);
-            //     }
-            // }
-        }
-
         private void OnDestroy()
         {
             Dispose();

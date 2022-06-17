@@ -37,16 +37,9 @@ namespace InstancePainter.Editor
 
         public void OnGUI()
         {
-            var style = new GUIStyle();
-            style.normal.background = TextureUtils.GetColorTexture(new Color(.1f, .1f, .1f));
-            style.normal.textColor = new Color(1, 0.5f, 0);
-            style.fontStyle = FontStyle.Bold;
-            style.alignment = TextAnchor.MiddleCenter;
-            style.fontSize = 14;
-
             _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
 
-            EditorGUILayout.LabelField("Instance Painter Editor", style, GUILayout.Height(28));
+            EditorGUILayout.LabelField("Instance Painter Editor", StyleUtils.TitleStyle, GUILayout.Height(28));
             GUILayout.Space(4);
 
             GUI.color = new Color(1, 0.5f, 0);

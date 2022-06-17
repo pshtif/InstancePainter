@@ -37,32 +37,44 @@ namespace InstancePainter
         private NativeList<Vector4> _modifiedColorData;
 
         [NonSerialized]
-        private bool _initialized = false;
-
-        [NonSerialized]
         private InstanceDataRenderer _renderer;
+        
+#if UNITY_EDITOR
+        public bool minimized { get; set; } = false;
+
+        public string GetMeshName()
+        {
+            return mesh == null ? "NONE" : mesh.name;
+        }
+#endif
 
         public void RenderIndirect(Camera p_camera)
         {
-            material ??= MaterialUtils.DefaultInstanceMaterial;
-            _renderer ??= new InstanceDataRenderer();
+            // Cannot use ??= due to Unity nullchecks
+            if (fallbackMaterial == null)
+            {
+                material ??= MaterialUtils.DefaultInstanceMaterial;
+            }
 
+            _renderer ??= new InstanceDataRenderer();
             _renderer.RenderIndirect(p_camera, mesh, material, _nativeMatrixData, _nativeColorData);
+        }
+        
+        public void RenderFallback(Camera p_camera)
+        {
+            // Cannot use ??= due to Unity nullchecks
+            if (fallbackMaterial == null)
+            {
+                fallbackMaterial = MaterialUtils.DefaultFallbackMaterial;
+            }
+
+            _renderer ??= new InstanceDataRenderer();
+            _renderer.RenderFallback(p_camera, mesh, fallbackMaterial, _modifiedMatrixData, _modifiedColorData);
         }
 
         public int Count => _nativeMatrixData.IsCreated ? _nativeMatrixData.Length : 0;
 
-#if UNITY_EDITOR
-        public void SetData(Matrix4x4[] p_matrixData, Vector4[] p_colorData)
-        {
-            _matrixData = p_matrixData;
-            _colorData = p_colorData;
-        }
-        #endif
-
-        public InstanceData()
-        {
-        }
+        public InstanceData() { }
         
         public InstanceData(Mesh p_mesh, Material p_material)
         {
@@ -96,27 +108,13 @@ namespace InstancePainter
             
             _renderer?.SetDirty();
         }
-        
-        // Yep we need to do this explicitly because native collections are freed before OnBeforeSerialized which would be the obvious way to do this
-        public void UpdateSerializedData()
-        {
-            _matrixData = _nativeMatrixData.ToArray();
-            _colorData = _nativeColorData.ToArray();
-            
-            _modifiedMatrixData.CopyFrom(_nativeMatrixData);
-            _modifiedColorData.CopyFrom(_nativeColorData);
 
-            _renderer?.SetDirty();
-        }
-        
         public void AddInstance(Matrix4x4 p_matrix, Vector4 p_color)
         {
             CreateNativeContainers();
             
             _nativeMatrixData.Add(p_matrix);
             _nativeColorData.Add(p_color);
-            
-            
         }
 
         public void RemoveInstance(int p_index)
@@ -155,5 +153,19 @@ namespace InstancePainter
 
             _renderer?.Dispose();
         }
+        
+#if UNITY_EDITOR
+        // Yep we need to do this explicitly because native collections are freed before OnBeforeSerialized which would be the obvious way to do this
+        public void UpdateSerializedData()
+        {
+            _matrixData = _nativeMatrixData.ToArray();
+            _colorData = _nativeColorData.ToArray();
+            
+            _modifiedMatrixData.CopyFrom(_nativeMatrixData);
+            _modifiedColorData.CopyFrom(_nativeColorData);
+
+            _renderer?.SetDirty();
+        }
+#endif
     }
 }

@@ -12,7 +12,17 @@ namespace InstancePainter
         {
             get
             {
-                return new Material(Shader.Find("Instance Painter/InstancedIndirectShadows"));
+                return new Material(Shader.Find("Instance Painter/InstancedIndirectPixelShadows"));
+            }
+        }
+        
+        public static Material DefaultFallbackMaterial
+        {
+            get
+            {
+                var material = new Material(Shader.Find("Instance Painter/Fallback/PixelShadowsFallback"));
+                material.enableInstancing = true;
+                return material;
             }
         }
     }

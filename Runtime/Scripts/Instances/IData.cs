@@ -23,6 +23,8 @@ namespace InstancePainter
         //void Invalidate(bool p_fallback);
 
         void RenderIndirect(Camera p_camera);
+        
+        void RenderFallback(Camera p_camera);
 
         void Dispose();
 
@@ -33,5 +35,11 @@ namespace InstancePainter
         void InitializeSerializedData();
         
         void UpdateSerializedData();
+        
+#if UNITY_EDITOR
+        bool minimized { get; set; }
+
+        string GetMeshName();
+#endif
     }
 }

@@ -15,6 +15,8 @@ namespace InstancePainter.Editor
     {
         public IPRenderer20 Renderer => target as IPRenderer20;
         
+        public GUISkin Skin => (GUISkin)Resources.Load("Skins/InstancePainterSkin");
+        
         private void OnEnable()
         {
             
@@ -25,10 +27,21 @@ namespace InstancePainter.Editor
 //            DrawDefaultInspector();
 
             EditorGUI.BeginChangeCheck();
-            
-            GUILayout.Label("Instances Datas "+Renderer.InstanceDatas.Count);
 
-            Renderer.InstanceDatas.ForEach(d => DrawIData(d));
+            Renderer.forceFallback = EditorGUILayout.Toggle("Force Fallback", Renderer.forceFallback);
+
+            GUILayout.Label("INSTANCE CLUSTERS: "+Renderer.InstanceDatas.Count, StyleUtils.TitleStyle);
+            
+            var rect = GUILayoutUtility.GetLastRect();
+            if (GUI.Button(new Rect(rect.x+rect.width-14, rect.y, 16, 16), Renderer.instanceDataMinimized ? "+" : "-", Skin.GetStyle("minimizebutton")))
+            {
+                Renderer.instanceDataMinimized = !Renderer.instanceDataMinimized;
+            }
+
+            if (!Renderer.instanceDataMinimized)
+            {
+                Renderer.InstanceDatas.ForEach(d => DrawIData(d));
+            }
 
             // if (GUILayout.Button("Generate Game Objects"))
             // {
@@ -38,6 +51,18 @@ namespace InstancePainter.Editor
 
         void DrawIData(IData p_data)
         {
+            GUILayout.Label("Instance Cluster: "+p_data.Count, StyleUtils.ClusterStyle, GUILayout.Height(20));
+            //
+            var rect = GUILayoutUtility.GetLastRect();
+            if (GUI.Button(new Rect(rect.x+rect.width-14, rect.y, 16, 16), p_data.minimized ? "+" : "-", Skin.GetStyle("minimizebutton")))
+            {
+                p_data.minimized = !p_data.minimized;
+            }
+            GUI.Label(new Rect(rect.x+rect.width-220, rect.y+2, 200, 16), p_data.GetMeshName(), StyleUtils.ClusterMeshNameStyle);
+
+            if (p_data.minimized)
+                return;
+            
             if (p_data is InstanceData) DrawInstanceData(p_data as InstanceData);
             
             if (p_data is InstanceDataAsset) DrawInstanceDataAsset(p_data as InstanceDataAsset);
@@ -52,7 +77,10 @@ namespace InstancePainter.Editor
             p_data.enabled = EditorGUILayout.Toggle("Enabled", p_data.enabled);
 
             p_data.mesh = (Mesh)EditorGUILayout.ObjectField(new GUIContent("Mesh"), p_data.mesh, typeof(Mesh), false);
+            
             p_data.material = (Material)EditorGUILayout.ObjectField(new GUIContent("Material"), p_data.material, typeof(Material), false);
+            
+            p_data.fallbackMaterial = (Material)EditorGUILayout.ObjectField(new GUIContent("FallbackMaterial"), p_data.fallbackMaterial, typeof(Material), false);
 
             if (EditorGUI.EndChangeCheck())
             {

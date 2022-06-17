@@ -125,11 +125,42 @@ namespace InstancePainter
                 Invalidate(false, p_matrixData, p_colorData, p_mesh);
                 _isDirty = false;
             }
-
+            
             for (int i = 0; i < p_mesh.subMeshCount; i++)
             {
                 Graphics.DrawMeshInstancedIndirect(p_mesh, i, p_material, _bounds, _drawIndirectBuffers[i], 0,
                     _propertyBlock, ShadowCastingMode.On, true, 0, p_camera);
+            }
+        }
+
+        public void RenderFallback(Camera p_camera, Mesh p_mesh, Material p_material,
+            NativeList<Matrix4x4> p_matrixData, NativeList<Vector4> p_colorData)
+        {
+            if (!SystemInfo.supportsInstancing)
+                return;
+
+            _fallbackPropertyBlock ??= new MaterialPropertyBlock();
+
+            int batches = Mathf.CeilToInt(p_matrixData.Length / 1023f);
+
+            for (int i = 0; i < batches; i++)
+            {
+                var matrixBatchSubArray = p_matrixData.AsArray().GetSubArray(i * 1023,
+                    i < batches - 1 ? 1023 : p_matrixData.Length - (batches - 1) * 1023);
+                
+                var colorBatchSubArray = p_colorData.AsArray().GetSubArray(i * 1023,
+                    i < batches - 1 ? 1023 : p_colorData.Length - (batches - 1) * 1023);
+
+                NativeArray<Matrix4x4>.Copy(matrixBatchSubArray, _matrixBatchFallbackArray, matrixBatchSubArray.Length);
+                NativeArray<Vector4>.Copy(colorBatchSubArray, _colorBatchFallbackArray, colorBatchSubArray.Length);
+
+                _fallbackPropertyBlock.SetVectorArray("_Color", _colorBatchFallbackArray);
+
+                for (int j = 0; j < p_mesh.subMeshCount; j++)
+                {
+                    Graphics.DrawMeshInstanced(p_mesh, j, p_material, _matrixBatchFallbackArray,
+                        matrixBatchSubArray.Length, _fallbackPropertyBlock);
+                }
             }
         }
         

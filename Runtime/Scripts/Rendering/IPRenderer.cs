@@ -160,7 +160,7 @@ namespace InstancePainter
         public void SaveToInstanceCollection()
         {
             InstanceDataAsset asset = InstanceDataAsset.CreateAssetWithPanel();
-            asset.collection.SetData(_matrixData, _colorData);
+            //asset.collection.SetData(_matrixData, _colorData);
             UnityEditor.EditorUtility.SetDirty(asset);
         }
 #endif

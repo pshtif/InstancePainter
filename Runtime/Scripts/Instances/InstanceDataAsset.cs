@@ -10,6 +10,25 @@ namespace InstancePainter
     public class InstanceDataAsset : ScriptableObject, IData
     {
         public InstanceData collection;
+
+        #if UNITY_EDITOR
+        public bool minimized
+        {
+            get
+            {
+                return collection.minimized;
+            }
+            set
+            {
+                collection.minimized = value;
+            }
+        }
+
+        public string GetMeshName()
+        {
+            return collection.GetMeshName();
+        }
+        #endif
         
         public int Count => collection.Count;
 
@@ -17,15 +36,15 @@ namespace InstancePainter
         {
             collection = new InstanceData();
         }
-
-        public void Invalidate(bool p_fallback)
-        {
-            //collection.Invalidate(p_fallback);
-        }
-
+        
         public void RenderIndirect(Camera p_camera)
         {
             collection.RenderIndirect(p_camera);
+        }
+        
+        public void RenderFallback(Camera p_camera)
+        {
+            collection.RenderFallback(p_camera);
         }
         
         public void Dispose()
