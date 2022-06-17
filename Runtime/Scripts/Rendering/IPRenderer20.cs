@@ -25,8 +25,6 @@ namespace InstancePainter
 
         public List<IData> InstanceDatas => _instanceDatas;
 
-        public bool autoInitialize = true;
-
         private bool _initialized = false;
         public bool IsInitialized => _initialized;
 
@@ -43,21 +41,6 @@ namespace InstancePainter
 #if UNITY_EDITOR
         public bool enableEditorPreview = true;
 #endif
-
-        public void Start()
-        {
-            if (!autoInitialize)
-                return;
-
-            _instanceDatas.ForEach(id => id.Invalidate(IsFallback));
-        }
-        
-        public void Invalidate()
-        {
-            _instanceDatas.ForEach(id => id.Invalidate(IsFallback));
-            
-            _initialized = true;
-        }
 
         void Update()
         {
@@ -161,7 +144,6 @@ namespace InstancePainter
 #if UNITY_EDITOR
             if (!Application.isPlaying)
             {
-                Invalidate();
                 UnityEditor.SceneView.duringSceneGui += OnSceneGUI;
             }
 #endif

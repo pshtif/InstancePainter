@@ -20,7 +20,7 @@ namespace InstancePainter
 
         public void Invalidate(bool p_fallback)
         {
-            collection.Invalidate(p_fallback);
+            //collection.Invalidate(p_fallback);
         }
 
         public void RenderIndirect(Camera p_camera)

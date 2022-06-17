@@ -135,12 +135,8 @@ namespace InstancePainter.Editor
                 
                 datas.AddIfUnique(instance.data);
             }
-            
-            datas.ForEach(data =>
-            {
-                data.Invalidate(false);
-                data.UpdateSerializedData();
-            });
+
+            datas.ForEach(data => data.UpdateSerializedData());
         }
         
         void Paint(RaycastHit p_hit)
@@ -168,12 +164,8 @@ namespace InstancePainter.Editor
                     invalidateDatas.AddRangeIfUnique(datas);
                 }
             }
-            
-            invalidateDatas.ForEach(r =>
-            {
-                r.Invalidate(false);
-                r.UpdateSerializedData();
-            });
+
+            invalidateDatas.ForEach(d => d.UpdateSerializedData());
         }
 
         void Colorize(RaycastHit p_hit)
@@ -194,12 +186,8 @@ namespace InstancePainter.Editor
                     }
                 }
             }
-            
-            invalidateDatas.ForEach(r =>
-            {
-                r.Invalidate(false);
-                r.UpdateSerializedData();
-            });
+
+            invalidateDatas.ForEach(d => d.UpdateSerializedData());
         }
         
         void DrawPaintHandle(Vector3 p_position, Vector3 p_normal, float p_size)

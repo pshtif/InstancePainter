@@ -80,7 +80,6 @@ namespace InstancePainter.Editor
             
             invalidateDatas.ForEach(r =>
             {
-                r.Invalidate(false);
                 r.UpdateSerializedData();
             });
         }

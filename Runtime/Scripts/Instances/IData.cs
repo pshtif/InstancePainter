@@ -20,7 +20,7 @@ namespace InstancePainter
         
         bool IsMesh(Mesh p_mesh);
 
-        void Invalidate(bool p_fallback);
+        //void Invalidate(bool p_fallback);
 
         void RenderIndirect(Camera p_camera);
 

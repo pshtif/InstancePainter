@@ -117,12 +117,8 @@ namespace InstancePainter.Editor
                 
                 AlreadyModified.Add(instance);
             }
-            
-            datas.ForEach(r =>
-            {
-                r.Invalidate(false);
-                r.UpdateSerializedData();
-            });
+
+            datas.ForEach(d => d.UpdateSerializedData());
         }
 
         public void GetHitInstances(RaycastHit p_hit)
@@ -173,12 +169,8 @@ namespace InstancePainter.Editor
                 
                 datas.AddIfUnique(instance.data);
             }
-            
-            datas.ForEach(r =>
-            {
-                r.Invalidate(false);
-                r.UpdateSerializedData();
-            });
+
+            datas.ForEach(d => d.UpdateSerializedData());
         }
         
         void ModifyPosition(RaycastHit p_hit)
@@ -205,12 +197,8 @@ namespace InstancePainter.Editor
                 
                 datas.AddIfUnique(instance.data);
             }
-            
-            datas.ForEach(r =>
-            {
-                r.Invalidate(false);
-                r.UpdateSerializedData();
-            });
+
+            datas.ForEach(d => d.UpdateSerializedData());
         }
         
         void DrawModifyHandle(Vector3 p_position, Vector3 p_normal, float p_size)

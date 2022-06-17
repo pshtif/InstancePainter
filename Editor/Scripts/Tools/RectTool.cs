@@ -140,11 +140,7 @@ namespace InstancePainter.Editor
                 }
             }
 
-            invalidateDatas.ForEach(r =>
-            {
-                r.Invalidate(false);
-                r.UpdateSerializedData();
-            });
+            invalidateDatas.ForEach(d => d.UpdateSerializedData());
         }
 
         void Fill(Vector3 p_startPoint, Vector3 p_endPoint)
@@ -182,12 +178,8 @@ namespace InstancePainter.Editor
                 }
             }
 
-            invalidateDatas.ForEach(r =>
-            {
-                r.Invalidate(false);
-                r.UpdateSerializedData();
-            });
-            
+            invalidateDatas.ForEach(d => d.UpdateSerializedData());
+
             EditorUtility.ClearProgressBar();
         }
         

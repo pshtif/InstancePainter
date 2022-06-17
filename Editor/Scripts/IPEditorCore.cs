@@ -88,7 +88,6 @@ namespace InstancePainter.Editor
             GameObject.FindObjectsOfType<IPRenderer20>().ToList().ForEach(r =>
             {
                 r.OnEnable();
-                r.Invalidate();
             });
             
             SceneView.RepaintAll();
