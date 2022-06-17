@@ -45,11 +45,11 @@ namespace InstancePainter.Editor
 
             if (Event.current.button == 0 && !Event.current.alt && Event.current.type == EventType.MouseDown)
             {
-                Undo.IncrementCurrentGroup();
-                Undo.SetCurrentGroupName("Paint Instances");
-                Undo.RegisterCompleteObjectUndo(Core.Renderer.gameObject, "Record Renderer Object");
-                Undo.RegisterCompleteObjectUndo(Core.Renderer, "Record Renderers");
-                _undoId = Undo.GetCurrentGroup();
+                //Undo.IncrementCurrentGroup();
+                //Undo.SetCurrentGroupName("Paint Instances");
+                //Undo.RegisterCompleteObjectUndo(Core.Renderer.gameObject, "Record Renderer Object");
+                Undo.RegisterCompleteObjectUndo(Core.Renderer, "Record Renderer");
+                //_undoId = Undo.GetCurrentGroup();
 
                 if (Core.Config.useMeshRaycasting)
                 {
@@ -103,7 +103,7 @@ namespace InstancePainter.Editor
             if (Event.current.button == 0 && !Event.current.alt && Event.current.type == EventType.MouseUp)
             {
                 _state = PaintToolState.NONE;
-                Undo.CollapseUndoOperations(_undoId);
+                //Undo.CollapseUndoOperations(_undoId);
             }
         }
 
@@ -136,10 +136,10 @@ namespace InstancePainter.Editor
                 datas.AddIfUnique(instance.data);
             }
             
-            datas.ForEach(r =>
+            datas.ForEach(data =>
             {
-                r.Invalidate(false);
-                r.UpdateSerializedData();
+                data.Invalidate(false);
+                data.UpdateSerializedData();
             });
         }
         
@@ -162,8 +162,7 @@ namespace InstancePainter.Editor
                 for (int i = 0; i < Core.Config.density; i++)
                 {
                     Vector3 direction = Quaternion.AngleAxis(Random.Range(0, 360), Vector3.up) * Vector3.right;
-                    Vector3 position = direction * Random.Range(0, Core.Config.brushSize) +
-                                       p_hit.point;
+                    Vector3 position = direction * Random.Range(0, Core.Config.brushSize) + p_hit.point;
 
                     var datas = Core.PlaceInstance(position, _cachedValidMeshes, _cachedValidColliders, _paintedInstances);
                     invalidateDatas.AddRangeIfUnique(datas);

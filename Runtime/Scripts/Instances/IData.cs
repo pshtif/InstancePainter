@@ -22,12 +22,16 @@ namespace InstancePainter
 
         void Invalidate(bool p_fallback);
 
+        void RenderIndirect(Camera p_camera);
+
         void Dispose();
 
         void AddInstance(Matrix4x4 p_matrix, Vector4 p_color);
 
         void RemoveInstance(int p_index);
 
+        void InitializeSerializedData();
+        
         void UpdateSerializedData();
     }
 }

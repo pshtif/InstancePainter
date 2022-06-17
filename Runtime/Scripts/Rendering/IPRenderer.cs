@@ -501,9 +501,7 @@ namespace InstancePainter
                 Debug.LogError("Renderer not initialized.");
                 return;
             }
-
-            bool matrixChanged = false;
-            bool colorChanged = false;
+            
             
             _modifiedMatrixData.CopyFrom(_nativeMatrixData);
             _modifiedColorData.CopyFrom(_nativeColorData);

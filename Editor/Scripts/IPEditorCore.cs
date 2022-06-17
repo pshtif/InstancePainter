@@ -5,11 +5,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using InstancePainter;
 using UnityEditor;
-using UnityEngine;
 using UnityEditor.SceneManagement;
-using UnityEngine.Profiling;
+using UnityEngine;
 using Random = UnityEngine.Random;
 
 #if UNITY_2020
@@ -87,7 +85,7 @@ namespace InstancePainter.Editor
 
         void UndoRedoCallback()
         {
-            GameObject.FindObjectsOfType<IPRenderer>().ToList().ForEach(r =>
+            GameObject.FindObjectsOfType<IPRenderer20>().ToList().ForEach(r =>
             {
                 r.OnEnable();
                 r.Invalidate();
@@ -134,6 +132,7 @@ namespace InstancePainter.Editor
             if (data == null)
             {
                 data = new InstanceData(p_mesh, p_definition.material);
+                Renderer.InstanceDatas.Add(data);
             }
 
             return data;
@@ -142,7 +141,7 @@ namespace InstancePainter.Editor
         public IData AddInstance(InstanceDefinition p_definition, Mesh p_mesh, Vector3 p_position, Quaternion p_rotation, Vector3 p_scale, Vector4 p_color)
         {
             var data = GetDataForDefinition(p_mesh, p_definition);
-
+            
             data.AddInstance(Matrix4x4.TRS(p_position, p_rotation, p_scale), p_color);
 
             return data;
@@ -182,27 +181,26 @@ namespace InstancePainter.Editor
                 return paintedDatas.ToArray();
 
             MeshFilter[] filters = instanceDefinition.prefab.GetComponentsInChildren<MeshFilter>();
-            Mesh[] meshes = filters.Select(f => f.sharedMesh).ToArray();
             
+            Mesh[] meshes = filters.Select(f => f.sharedMesh).ToArray();
             // Do proximity check
-            // if (Config.minimalDistance > 0)
-            // {
-            //     var checkRenderers = RendererObject.GetComponents<IPRenderer>();
-            //     foreach (var renderer in checkRenderers)
-            //     {
-            //         if (!meshes.Contains(renderer.mesh))
-            //             continue;
-            //         
-            //         for (int i = 0; i < renderer.InstanceCount; i++)
-            //         {
-            //             var matrix = renderer.GetInstanceMatrix(i);
-            //             if (Vector3.Distance(p_position, matrix.GetColumn(3)) < Config.minimalDistance)
-            //             {
-            //                 return paintedRenderers.ToArray();
-            //             }
-            //         }
-            //     }
-            // }
+            if (Config.minimalDistance > 0)
+            {
+                foreach (var data in Renderer.InstanceDatas)
+                {
+                   if (!meshes.Any(m => data.IsMesh(m)))
+                     continue;
+                 
+                   for (int i = 0; i < data.Count; i++)
+                   {
+                       var matrix = data.GetInstanceMatrix(i);
+                       if (Vector3.Distance(p_position, matrix.GetColumn(3)) < Config.minimalDistance)
+                       {
+                           return paintedDatas.ToArray();
+                       }
+                   }
+               }
+            }
 
             foreach (var filter in filters)
             {

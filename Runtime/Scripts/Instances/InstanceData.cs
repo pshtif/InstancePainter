@@ -2,20 +2,27 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Collections;
+using Unity.Collections.NotBurstCompatible;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace InstancePainter
 {
+    [Serializable]
     public class InstanceData : IData
     {
+        public bool enabled = true;
+        
         public Material material;
         public Mesh mesh;
         
         public Material fallbackMaterial;
 
+        [SerializeField]
         private Matrix4x4[] _matrixData;
         public Matrix4x4[] MatrixData => _matrixData;
         
+        [SerializeField]
         private Vector4[] _colorData;
         public Vector4[] ColorData => _colorData;
         
@@ -87,29 +94,18 @@ namespace InstancePainter
         {
             return mesh == p_mesh;
         }
-        
-        void CheckNativeContainerInitialized()
-        {
-            if (!_nativeMatrixData.IsCreated) _nativeMatrixData = new NativeList<Matrix4x4>(Allocator.Persistent);
-            if (!_nativeColorData.IsCreated) _nativeColorData = new NativeList<Vector4>(Allocator.Persistent);
-                
-            if (!_modifiedMatrixData.IsCreated) _modifiedMatrixData = new NativeList<Matrix4x4>(Allocator.Persistent);
-            if (!_modifiedColorData.IsCreated) _modifiedColorData = new NativeList<Vector4>(Allocator.Persistent);
-        }
-        
+
         public void Invalidate(bool p_fallback)
         {
             int count = _nativeMatrixData.IsCreated ? _nativeMatrixData.Length : 0;
             
             if (count == 0)
                 return;
-            
-            CheckNativeContainerInitialized();
-            
+
             // Duplicate to modified data so we always have original and modified
             _modifiedMatrixData.CopyFrom(_nativeMatrixData);
             _modifiedColorData.CopyFrom(_nativeColorData);
-
+            
             if (!p_fallback)
             {
                 if (material == null)
@@ -153,26 +149,49 @@ namespace InstancePainter
 
             _initialized = true;
         }
+
+        public void RenderIndirect(Camera p_camera)
+        {
+            if (mesh == null || material == null || Count == 0 || !enabled)
+                return;
+
+            for (int i = 0; i < mesh.subMeshCount; i++)
+            {
+                Graphics.DrawMeshInstancedIndirect(mesh, i, material, _bounds, _drawIndirectBuffers[i], 0,
+                    _propertyBlock, ShadowCastingMode.On, true, 0, p_camera);
+            }
+        }
+
+        void CreateNativeContainers()
+        {
+            if (!_nativeMatrixData.IsCreated) _nativeMatrixData = new NativeList<Matrix4x4>(Allocator.Persistent);
+            if (!_nativeColorData.IsCreated) _nativeColorData = new NativeList<Vector4>(Allocator.Persistent);
+                
+            if (!_modifiedMatrixData.IsCreated) _modifiedMatrixData = new NativeList<Matrix4x4>(Allocator.Persistent);
+            if (!_modifiedColorData.IsCreated) _modifiedColorData = new NativeList<Vector4>(Allocator.Persistent);
+        }
         
+        public void InitializeSerializedData()
+        {
+            CreateNativeContainers();
+            
+            _nativeMatrixData.CopyFromNBC(_matrixData);
+            _nativeColorData.CopyFromNBC(_colorData);
+            
+            _modifiedMatrixData.CopyFrom(_nativeMatrixData);
+            _modifiedColorData.CopyFrom(_nativeColorData);
+        }
+        
+        // Yep we need to do this explicitly because native collections are freed before OnBeforeSerialized which would be the obvious way to do this
         public void UpdateSerializedData()
         {
             _matrixData = _nativeMatrixData.ToArray();
             _colorData = _nativeColorData.ToArray();
-
-            //UnityEditor.EditorUtility.SetDirty(this);
         }
         
         public void AddInstance(Matrix4x4 p_matrix, Vector4 p_color)
         {
-            if (!_nativeMatrixData.IsCreated)
-            {
-                _nativeMatrixData = new NativeList<Matrix4x4>(Allocator.Persistent);
-            }
-
-            if (!_nativeColorData.IsCreated)
-            {
-                _nativeColorData = new NativeList<Vector4>(Allocator.Persistent);
-            }
+            CreateNativeContainers();
             
             _nativeMatrixData.Add(p_matrix);
             _nativeColorData.Add(p_color);
@@ -254,9 +273,6 @@ namespace InstancePainter
             if (!_initialized)
                 return;
 
-            bool matrixChanged = false;
-            bool colorChanged = false;
-            
             _modifiedMatrixData.CopyFrom(_nativeMatrixData);
             _modifiedColorData.CopyFrom(_nativeColorData);
             

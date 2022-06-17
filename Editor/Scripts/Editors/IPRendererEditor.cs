@@ -46,6 +46,18 @@ namespace InstancePainter.Editor
         void DrawInstanceData(InstanceData p_data)
         {
             GUILayout.Label("Count: "+p_data.Count);
+
+            EditorGUI.BeginChangeCheck();
+            
+            p_data.enabled = EditorGUILayout.Toggle("Enabled", p_data.enabled);
+
+            p_data.mesh = (Mesh)EditorGUILayout.ObjectField(new GUIContent("Mesh"), p_data.mesh, typeof(Mesh), false);
+            p_data.material = (Material)EditorGUILayout.ObjectField(new GUIContent("Material"), p_data.material, typeof(Material), false);
+
+            if (EditorGUI.EndChangeCheck())
+            {
+                SceneView.RepaintAll();
+            }
         }
 
         void DrawInstanceDataAsset(InstanceDataAsset p_data)

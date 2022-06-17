@@ -13,8 +13,14 @@ using UnityEngine.Rendering;
 namespace InstancePainter
 {
     [ExecuteAlways]
-    public class IPRenderer20 : MonoBehaviour
+    public class IPRenderer20 : MonoBehaviour, ISerializationCallbackReceiver
     {
+        [SerializeField]
+        private List<InstanceData> _serializedInstanceDatas;
+        [SerializeField]
+        private List<InstanceDataAsset> _serializedInstanceDataAssets;
+        
+        [NonSerialized]
         private List<IData> _instanceDatas = new List<IData>();
 
         public List<IData> InstanceDatas => _instanceDatas;
@@ -48,8 +54,8 @@ namespace InstancePainter
         
         public void Invalidate()
         {
-
-
+            _instanceDatas.ForEach(id => id.Invalidate(IsFallback));
+            
             _initialized = true;
         }
 
@@ -79,11 +85,7 @@ namespace InstancePainter
 
         private void RenderIndirect(Camera p_camera)
         {
-            // for (int i = 0; i < mesh.subMeshCount; i++)
-            // {
-            //     Graphics.DrawMeshInstancedIndirect(mesh, i, _material, _bounds, _drawIndirectBuffers[i], 0,
-            //         _propertyBlock, ShadowCastingMode.On, true, 0, p_camera);
-            // }
+            InstanceDatas.ForEach(id => id.RenderIndirect(p_camera));
         }
 
         private void RenderFallback(Camera p_camera)
@@ -135,16 +137,37 @@ namespace InstancePainter
             _instanceDatas.ForEach(id => id.Dispose());
         }
         
-#if UNITY_EDITOR
+        public void OnBeforeSerialize()
+        {
+            _serializedInstanceDatas = _instanceDatas.FindAll(id => id is InstanceData).Select(id => (InstanceData)id)
+                .ToList();
+            
+            _serializedInstanceDataAssets = _instanceDatas.FindAll(id => id is InstanceDataAsset)
+                .Select(id => (InstanceDataAsset)id).ToList();
+        }
+        
+        public void OnAfterDeserialize()
+        {
+            _instanceDatas.Clear();
+            _instanceDatas.AddRange(_serializedInstanceDatas);
+            _instanceDatas.AddRange(_serializedInstanceDataAssets);
+        }
+
+        
         public void OnEnable()
         {
+            InstanceDatas.ForEach(id => id.InitializeSerializedData());
+            
+#if UNITY_EDITOR
             if (!Application.isPlaying)
             {
                 Invalidate();
                 UnityEditor.SceneView.duringSceneGui += OnSceneGUI;
             }
+#endif
         }
-        
+
+#if UNITY_EDITOR
         private void OnDisable()
         {
             if (!Application.isPlaying)

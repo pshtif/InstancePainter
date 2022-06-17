@@ -23,6 +23,11 @@ namespace InstancePainter
             collection.Invalidate(p_fallback);
         }
 
+        public void RenderIndirect(Camera p_camera)
+        {
+            collection.RenderIndirect(p_camera);
+        }
+        
         public void Dispose()
         {
             collection.Dispose();
@@ -63,6 +68,11 @@ namespace InstancePainter
             collection.SetInstanceColor(p_index, p_color);
         }
 
+        public void InitializeSerializedData()
+        {
+            collection.InitializeSerializedData();
+        }
+        
         public void UpdateSerializedData()
         {
             collection.UpdateSerializedData();
