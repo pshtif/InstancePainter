@@ -11,7 +11,7 @@ using UnityEngine.Rendering;
 
 namespace InstancePainter
 {
-    public class InstanceDataRenderer
+    public class InstanceClusterRenderer
     {
         [NonSerialized]
         private ComputeBuffer _colorBuffer;
@@ -48,6 +48,8 @@ namespace InstancePainter
 
         private bool _isBoundsDirty = true;
 
+        private Mesh _lastRenderedMesh = null;
+
         public void SetGPUDirty()
         {
             _isGPUDirty = true;
@@ -58,12 +60,12 @@ namespace InstancePainter
             _isBoundsDirty = true;
         }
         
-        public void Invalidate(bool p_fallback, NativeList<Matrix4x4> p_matrixData, NativeList<Vector4> p_colorData, Mesh p_mesh)
+        public bool Invalidate(bool p_fallback, NativeList<Matrix4x4> p_matrixData, NativeList<Vector4> p_colorData, Mesh p_mesh)
         {
             int count = p_matrixData.IsCreated ? p_matrixData.Length : 0;
             
             if (count == 0)
-                return;
+                return false;
 
             if (!p_fallback)
             {
@@ -100,6 +102,8 @@ namespace InstancePainter
                     _drawIndirectBuffers[i] = drawIndirectBuffer;
                 }
             }
+
+            return true;
         }
 
         public void Dispose()
@@ -108,6 +112,8 @@ namespace InstancePainter
             _colorBuffer = null;
             _matrixBuffer?.Release();
             _matrixBuffer = null;
+
+            _lastRenderedMesh = null;
 
             if (_drawIndirectBuffers != null)
             {
@@ -126,12 +132,16 @@ namespace InstancePainter
                 InvalidateBounds(p_matrixData);
             }
             
-            if (_isGPUDirty)
+            // If someone switched the mesh in cluster for some reason we need to force invalidation
+            if (_isGPUDirty || (_lastRenderedMesh != null && _lastRenderedMesh != p_mesh))
             {
-                Invalidate(false, p_matrixData, p_colorData, p_mesh);
+                if (!Invalidate(false, p_matrixData, p_colorData, p_mesh))
+                    return;
+
+                _lastRenderedMesh = p_mesh;
                 _isGPUDirty = false;
             }
-            
+
             for (int i = 0; i < p_mesh.subMeshCount; i++)
             {
                 Graphics.DrawMeshInstancedIndirect(p_mesh, i, p_material, _bounds, _drawIndirectBuffers[i], 0,
@@ -188,7 +198,11 @@ namespace InstancePainter
 
             _bounds = new Bounds();
             _bounds.SetMinMax(new Vector3(minX, minY, minZ), new Vector3(maxX, maxY, maxZ));
-
+            
+            // GPU doesn't like zero sized bounds ;)
+            if (_bounds.size.magnitude == 0)
+                _bounds.size = Vector3.one;
+            
             _isBoundsDirty = false;
         }
         

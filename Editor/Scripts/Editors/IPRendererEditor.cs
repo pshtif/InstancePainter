@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using InstancePainter;
 using UnityEditor;
+using UnityEditorInternal;
 using UnityEngine;
 
 namespace InstancePainter.Editor
@@ -27,87 +28,201 @@ namespace InstancePainter.Editor
             EditorGUI.BeginChangeCheck();
 
             Renderer.forceFallback = EditorGUILayout.Toggle("Force Fallback", Renderer.forceFallback);
-            Renderer.enableModifiers = EditorGUILayout.Toggle("Enable Modifiers", Renderer.enableModifiers);
-            Renderer.autoApplyModifiers = EditorGUILayout.Toggle("Auto Apply Modifiers", Renderer.autoApplyModifiers);
             Renderer.binSize = EditorGUILayout.FloatField("Bin Size", Renderer.binSize);
 
-            GUILayout.Label("INSTANCE CLUSTERS: "+Renderer.InstanceDatas.Count, StyleUtils.TitleStyle);
+            DrawInstanceClusters();
             
-            var rect = GUILayoutUtility.GetLastRect();
-            if (GUI.Button(new Rect(rect.x+rect.width-14, rect.y, 16, 16), Renderer.instanceDataMinimized ? "+" : "-", Skin.GetStyle("minimizebutton")))
-            {
-                Renderer.instanceDataMinimized = !Renderer.instanceDataMinimized;
-            }
+            GUILayout.Space(8);
 
-            if (!Renderer.instanceDataMinimized)
-            {
-                Renderer.InstanceDatas.ForEach(d => DrawIData(d));
-            }
+            DrawModifiers();
 
-            GUILayout.Label("INSTANCE MODIFIERS: "+Renderer.modifiers.Count, StyleUtils.TitleStyle);
-            
-            rect = GUILayoutUtility.GetLastRect();
-            if (GUI.Button(new Rect(rect.x+rect.width-14, rect.y, 16, 16), Renderer.modifiersMinimized ? "+" : "-", Skin.GetStyle("minimizebutton")))
-            {
-                Renderer.modifiersMinimized = !Renderer.modifiersMinimized;
-            }
-            
-            if (!Renderer.modifiersMinimized)
-            {
-                SerializedProperty modifiers = serializedObject.FindProperty("modifiers");
-                EditorGUILayout.PropertyField(modifiers, new GUIContent("Modifiers"), true);
-
-                serializedObject.ApplyModifiedProperties();
-            }
-            
             // if (GUILayout.Button("Generate Game Objects"))
             // {
             //     GenerateGameObjects();
             // }
         }
 
-        void DrawIData(IData p_data)
+        void DrawModifiers()
         {
-            GUILayout.Label("Instance Cluster: "+p_data.GetCount(), StyleUtils.ClusterStyle, GUILayout.Height(20));
-            //
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("INSTANCE MODIFIERS: ", StyleUtils.TitleStyleRight, GUILayout.Height(28));
+            GUI.color = Color.white;
+            GUILayout.Label(Renderer.modifiers.Count.ToString(), StyleUtils.TitleStyleCount, GUILayout.Height(28));
+            GUILayout.EndHorizontal();
+            
             var rect = GUILayoutUtility.GetLastRect();
-            if (GUI.Button(new Rect(rect.x+rect.width-14, rect.y, 16, 16), p_data.minimized ? "+" : "-", Skin.GetStyle("minimizebutton")))
+            if (GUI.Button(new Rect(rect.x+rect.width- (Renderer.modifiersMinimized? 24 : 21), rect.y-2, 24, 24), Renderer.modifiersMinimized ? "+" : "-", Skin.GetStyle("minimizebuttonbig")))
             {
-                p_data.minimized = !p_data.minimized;
+                Renderer.modifiersMinimized = !Renderer.modifiersMinimized;
             }
-            GUI.Label(new Rect(rect.x+rect.width-220, rect.y+2, 200, 16), p_data.GetMeshName(), StyleUtils.ClusterMeshNameStyle);
 
-            if (p_data.minimized)
+            if (Renderer.modifiersMinimized)
                 return;
             
-            if (p_data is InstanceData) DrawInstanceData(p_data as InstanceData);
+            Renderer.enableModifiers = EditorGUILayout.Toggle("Enable Modifiers", Renderer.enableModifiers);
+            Renderer.autoApplyModifiers = EditorGUILayout.Toggle("Auto Apply Modifiers", Renderer.autoApplyModifiers);
+
             
-            if (p_data is InstanceDataAsset) DrawInstanceDataAsset(p_data as InstanceDataAsset);
+            SerializedProperty modifiers = serializedObject.FindProperty("modifiers");
+            EditorGUILayout.PropertyField(modifiers, new GUIContent("Modifiers"), true);
+
+            serializedObject.ApplyModifiedProperties();
         }
 
-        void DrawInstanceData(InstanceData p_data)
+        void DrawInstanceClusters()
         {
-            GUILayout.Label("Count: "+p_data.GetCount());
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("INSTANCE CLUSTERS: ", StyleUtils.TitleStyleRight, GUILayout.Height(28));
+            GUI.color = Color.white;
+            GUILayout.Label(Renderer.InstanceClusters.Count.ToString(), StyleUtils.TitleStyleCount, GUILayout.Height(28));
+            GUILayout.EndHorizontal();
+            
+            var rect = GUILayoutUtility.GetLastRect();
+            if (GUI.Button(new Rect(rect.x+rect.width- (Renderer.instanceClustersMinimized ? 24 : 21), rect.y-2, 24, 24), Renderer.instanceClustersMinimized ? "+" : "-", Skin.GetStyle("minimizebuttonbig")))
+            {
+                Renderer.instanceClustersMinimized = !Renderer.instanceClustersMinimized;
+            }
+
+            if (Renderer.instanceClustersMinimized)
+                return;
+            
+            for (int i = 0; i < Renderer.InstanceClusters.Count; i++)
+            {
+                if (DrawICluster(i))
+                    break;
+            }
+
+            GUI.color = new Color(0.9f, .5f, 0);
+            if (GUILayout.Button("ADD CLUSTER", GUILayout.Height(32)))
+            {
+                var cluster = new InstanceCluster();
+                cluster.material = MaterialUtils.DefaultIndirectMaterial;
+                cluster.fallbackMaterial = MaterialUtils.DefaultFallbackMaterial;
+                Renderer.InstanceClusters.Add(cluster);
+            }
+
+            GUI.color = Color.white;
+        }
+
+        bool DrawICluster(int p_index)
+        {
+            var cluster = Renderer.InstanceClusters[p_index];
+            GUILayout.Label("Instance Cluster: " + (cluster == null ? 0 : cluster.GetCount()), StyleUtils.ClusterStyle,
+                GUILayout.Height(20));
+
+            if (cluster != null) {
+                var rect = GUILayoutUtility.GetLastRect();
+                if (GUI.Button(new Rect(rect.x + rect.width - 14, rect.y, 16, 16), cluster.minimized ? "+" : "-",
+                        Skin.GetStyle("minimizebutton")))
+                {
+                    cluster.minimized = !cluster.minimized;
+                }
+
+                GUI.Label(new Rect(rect.x + rect.width - 220, rect.y + 2, 200, 16), cluster.GetMeshName(),
+                    StyleUtils.ClusterMeshNameStyle);
+                
+                if (cluster.minimized)
+                    return false;
+            }
+
+            bool modified = false;
+            if (cluster == null || cluster is InstanceClusterAsset)
+                modified = DrawInstanceClusterAsset(p_index);
+            
+            if (cluster is InstanceCluster) 
+                modified = DrawInstanceCluster(p_index);
+
+            if (IPRuntimeEditorCore.explicitCluster == cluster.GetCluster())
+            {
+                GUI.color =  new Color(0.9f, 0.5f, 0);
+                if (GUILayout.Button("Unset as Explicit Cluster"))
+                {
+                    IPRuntimeEditorCore.explicitCluster = null;
+                    SceneView.RepaintAll();
+                }
+                GUI.color = Color.white;
+            }
+            else
+            {
+                if (GUILayout.Button("Set as Explicit Cluster"))
+                {
+                    IPRuntimeEditorCore.explicitCluster = cluster.GetCluster();
+                    SceneView.RepaintAll();
+                }
+            }
+
+            if (GUILayout.Button("Delete"))
+            {
+                Renderer.InstanceClusters.RemoveAt(p_index);
+                cluster.Dispose();
+                SceneView.RepaintAll();
+                return true;
+            }
+            
+            GUILayout.Space(4);
+
+            return modified;
+        }
+
+        bool DrawInstanceCluster(int p_index)
+        {
+            var cluster = Renderer.InstanceClusters[p_index] as InstanceCluster;
+            
+            GUILayout.Label("Count: "+cluster.GetCount());
 
             EditorGUI.BeginChangeCheck();
             
-            p_data.enabled = EditorGUILayout.Toggle("Enabled", p_data.enabled);
+            cluster.enabled = EditorGUILayout.Toggle("Enabled", cluster.enabled);
 
-            p_data.mesh = (Mesh)EditorGUILayout.ObjectField(new GUIContent("Mesh"), p_data.mesh, typeof(Mesh), false);
+            cluster.mesh = (Mesh)EditorGUILayout.ObjectField(new GUIContent("Mesh"), cluster.mesh, typeof(Mesh), false);
             
-            p_data.material = (Material)EditorGUILayout.ObjectField(new GUIContent("Material"), p_data.material, typeof(Material), false);
+            cluster.material = (Material)EditorGUILayout.ObjectField(new GUIContent("Material"), cluster.material, typeof(Material), false);
             
-            p_data.fallbackMaterial = (Material)EditorGUILayout.ObjectField(new GUIContent("FallbackMaterial"), p_data.fallbackMaterial, typeof(Material), false);
+            cluster.fallbackMaterial = (Material)EditorGUILayout.ObjectField(new GUIContent("FallbackMaterial"), cluster.fallbackMaterial, typeof(Material), false);
 
             if (EditorGUI.EndChangeCheck())
             {
                 SceneView.RepaintAll();
             }
+
+            if (GUILayout.Button("Save to Asset"))
+            {
+                if (cluster.material == null || cluster.mesh == null)
+                {
+                    EditorUtility.DisplayDialog("Cannot create asset",
+                        "Mesh and material instance cluster cannot be null.", "Ok");
+                } else if (!AssetDatabase.Contains(cluster.material) || (cluster.fallbackMaterial != null && !AssetDatabase.Contains(cluster.material)))
+                {
+                    EditorUtility.DisplayDialog("Cannot create asset",
+                        "Materials in this instance cluster needs to be assets.", "Ok");
+                }
+                else
+                {
+                    var asset = InstanceClusterAsset.CreateAssetWithPanel(cluster);
+                    Renderer.InstanceClusters.RemoveAt(p_index);
+                    Renderer.InstanceClusters.Add(asset);
+                }
+
+                return true;
+            }
+
+            return false;
         }
 
-        void DrawInstanceDataAsset(InstanceDataAsset p_data)
+        bool DrawInstanceClusterAsset(int p_index)
         {
+            var asset = Renderer.InstanceClusters[p_index] as InstanceClusterAsset;
             
+            
+            var newAsset = (InstanceClusterAsset)EditorGUILayout.ObjectField(new GUIContent("Cluster Asset"), asset, typeof(InstanceClusterAsset), false);
+
+            if (newAsset != asset)
+            {
+                Renderer.InstanceClusters[p_index] = newAsset;
+                asset.Dispose();
+            }
+
+            return false;
         }
 
         // void GenerateGameObjects()

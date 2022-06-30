@@ -119,10 +119,10 @@ namespace InstancePainter.Editor
 
             var rect = new Rect(minX, minZ, maxX - minX, maxZ - minZ);
             
-            List<IData> invalidateDatas = new List<IData>();
+            List<ICluster> invalidateDatas = new List<ICluster>();
 
-            var datas = Core.Renderer.InstanceDatas;
-            foreach (IData data in datas)
+            var datas = Core.Renderer.InstanceClusters;
+            foreach (ICluster data in datas)
             {
                 for (int i = 0; i<data.GetCount(); i++)
                 {
@@ -163,7 +163,7 @@ namespace InstancePainter.Editor
             var minZ = Math.Min(p_startPoint.z, p_endPoint.z);
             var maxZ = Math.Max(p_startPoint.z, p_endPoint.z);
 
-            List<IData> invalidateDatas = new List<IData>();
+            List<ICluster> invalidateDatas = new List<ICluster>();
             
             EditorUtility.DisplayProgressBar("InstancePainter", "Filling painted instances...", .5f);
 

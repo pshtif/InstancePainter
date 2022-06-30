@@ -52,11 +52,11 @@ namespace InstancePainter.Editor
 
         public void Erase(RaycastHit p_hit)
         {
-            List<IData> invalidateDatas = new List<IData>();
+            List<ICluster> invalidateDatas = new List<ICluster>();
 
             var sizeSq = Core.Config.brushSize * Core.Config.brushSize;
-            var datas = Core.Renderer.InstanceDatas;
-            foreach (IData data in datas)
+            var datas = Core.Renderer.InstanceClusters;
+            foreach (ICluster data in datas)
             {
                 if (data.GetCount() == 0 || (!_validEraseMeshes.Any(m=>data.IsMesh(m)) && Core.Config.eraseActiveDefinition))
                     continue;

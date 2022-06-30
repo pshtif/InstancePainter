@@ -18,7 +18,7 @@ namespace InstancePainter.Editor
         public GUISkin Skin => (GUISkin)Resources.Load("Skins/InstancePainterSkin");
 
         public IPRenderer20 explicitRendererObject;
-        
+
         public bool enabled = false;
         
         [Range(1,100)]

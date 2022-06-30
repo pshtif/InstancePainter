@@ -4,11 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
-### Release 0.5.0 - 16.6.2022
+### Release 0.5.0 - 22.6.2022
 
 #### Added
 
-- Added scriptable object collection support, load save to asset
+- Completely refactored version if Instance Painter
+- Different renderer, clusters, handling...
 
 ### Release 0.4.11 - 14.6.2022
 

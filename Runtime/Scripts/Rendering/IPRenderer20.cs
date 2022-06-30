@@ -16,14 +16,14 @@ namespace InstancePainter
     public class IPRenderer20 : MonoBehaviour, ISerializationCallbackReceiver
     {
         [SerializeField]
-        private List<InstanceData> _serializedInstanceDatas;
+        private List<InstanceCluster> _serializedInstanceClusters;
         [SerializeField]
-        private List<InstanceDataAsset> _serializedInstanceDataAssets;
+        private List<InstanceClusterAsset> _serializedInstanceClusterAssets;
         
         [NonSerialized]
-        private List<IData> _instanceDatas = new List<IData>();
+        private List<ICluster> _instanceClusters = new List<ICluster>();
 
-        public List<IData> InstanceDatas => _instanceDatas;
+        public List<ICluster> InstanceClusters => _instanceClusters;
 
         private bool _initialized = false;
         public bool IsInitialized => _initialized;
@@ -41,7 +41,7 @@ namespace InstancePainter
 #if UNITY_EDITOR
         public bool enableEditorPreview = true;
 
-        public bool instanceDataMinimized = false;
+        public bool instanceClustersMinimized = false;
         
         public bool modifiersMinimized = false;
 #endif
@@ -54,7 +54,7 @@ namespace InstancePainter
 #endif
             if (autoApplyModifiers && Application.isPlaying)
             {
-                InstanceDatas.ForEach(id => id.ApplyModifiers(modifiers, binSize));
+                InstanceClusters.ForEach(id => id?.ApplyModifiers(modifiers, binSize));
             }
 
             Render();
@@ -64,9 +64,9 @@ namespace InstancePainter
         {
             if (IsFallback)
             {
-                InstanceDatas.ForEach(id => id.RenderFallback(p_camera));
+                InstanceClusters.ForEach(id => id?.RenderFallback(p_camera));
             } else {
-                InstanceDatas.ForEach(id => id.RenderIndirect(p_camera));
+                InstanceClusters.ForEach(id => id?.RenderIndirect(p_camera));
             }
         }
         
@@ -77,23 +77,23 @@ namespace InstancePainter
 
         private void Dispose()
         {
-            _instanceDatas.ForEach(id => id.Dispose());
+            _instanceClusters.ForEach(id => id?.Dispose());
         }
         
         public void OnBeforeSerialize()
         {
-            _serializedInstanceDatas = _instanceDatas.FindAll(id => id is InstanceData).Select(id => (InstanceData)id)
+            _serializedInstanceClusters = _instanceClusters.FindAll(id => id is InstanceCluster).Select(id => (InstanceCluster)id)
                 .ToList();
             
-            _serializedInstanceDataAssets = _instanceDatas.FindAll(id => id is InstanceDataAsset)
-                .Select(id => (InstanceDataAsset)id).ToList();
+            _serializedInstanceClusterAssets = _instanceClusters.FindAll(id => id is InstanceClusterAsset)
+                .Select(id => (InstanceClusterAsset)id).ToList();
         }
         
         public void OnAfterDeserialize()
         {
-            _instanceDatas.Clear();
-            _instanceDatas.AddRange(_serializedInstanceDatas);
-            _instanceDatas.AddRange(_serializedInstanceDataAssets);
+            _instanceClusters.Clear();
+            _instanceClusters.AddRange(_serializedInstanceClusters);
+            _instanceClusters.AddRange(_serializedInstanceClusterAssets);
         }
 
         
@@ -121,7 +121,7 @@ namespace InstancePainter
         {
             if (Application.isPlaying)
                 return;
-
+            
             Render(p_sceneView.camera);
         }
 #endif

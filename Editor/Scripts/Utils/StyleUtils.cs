@@ -8,23 +8,63 @@ namespace InstancePainter.Editor
 {
     public static class StyleUtils
     {
-        private static GUIStyle _titleStyle;
+        private static GUIStyle _titleStyleCenter;
         
-        public static GUIStyle TitleStyle
+        public static GUIStyle TitleStyleCenter
         {
             get
             {
-                if (_titleStyle == null)
+                if (_titleStyleCenter == null)
                 {
-                    _titleStyle = new GUIStyle();
-                    _titleStyle.normal.background = TextureUtils.GetColorTexture(new Color(.1f, .1f, .1f));
-                    _titleStyle.normal.textColor = new Color(1, 0.5f, 0);
-                    _titleStyle.fontStyle = FontStyle.Bold;
-                    _titleStyle.alignment = TextAnchor.MiddleCenter;
-                    _titleStyle.fontSize = 14;
+                    _titleStyleCenter = new GUIStyle();
+                    _titleStyleCenter.normal.background = TextureUtils.GetColorTexture(new Color(.1f, .1f, .1f));
+                    _titleStyleCenter.normal.textColor = Color.white;
+                    _titleStyleCenter.fontStyle = FontStyle.Bold;
+                    _titleStyleCenter.alignment = TextAnchor.MiddleCenter;
+                    _titleStyleCenter.fontSize = 14;
                 }
 
-                return _titleStyle;
+                return _titleStyleCenter;
+            }
+        }
+        
+        private static GUIStyle _titleStyleRight;
+        
+        public static GUIStyle TitleStyleRight
+        {
+            get
+            {
+                if (_titleStyleRight == null)
+                {
+                    _titleStyleRight = new GUIStyle();
+                    _titleStyleRight.normal.background = TextureUtils.GetColorTexture(new Color(.1f, .1f, .1f));
+                    _titleStyleRight.normal.textColor = Color.white;
+                    _titleStyleRight.fontStyle = FontStyle.Bold;
+                    _titleStyleRight.alignment = TextAnchor.MiddleRight;
+                    _titleStyleRight.fontSize = 14;
+                }
+
+                return _titleStyleRight;
+            }
+        }
+        
+        private static GUIStyle _titleStyleCount;
+        
+        public static GUIStyle TitleStyleCount
+        {
+            get
+            {
+                if (_titleStyleCount == null)
+                {
+                    _titleStyleCount = new GUIStyle();
+                    _titleStyleCount.normal.background = TextureUtils.GetColorTexture(new Color(.1f, .1f, .1f));
+                    _titleStyleCount.normal.textColor = new Color(0.9f, 0.5f, 0);
+                    _titleStyleCount.fontStyle = FontStyle.Bold;
+                    _titleStyleCount.alignment = TextAnchor.MiddleLeft;
+                    _titleStyleCount.fontSize = 14;
+                }
+
+                return _titleStyleCount;
             }
         }
         

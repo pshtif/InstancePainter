@@ -39,7 +39,7 @@ namespace InstancePainter.Editor
         {
             _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
 
-            EditorGUILayout.LabelField("Instance Painter Editor", StyleUtils.TitleStyle, GUILayout.Height(28));
+            EditorGUILayout.LabelField("Instance Painter Editor", StyleUtils.TitleStyleCenter, GUILayout.Height(28));
             GUILayout.Space(4);
 
             GUI.color = new Color(1, 0.5f, 0);

@@ -110,7 +110,7 @@ namespace InstancePainter.Editor
         {
             var offset = Event.current.mousePosition - _paintStartMousePosition;
 
-            List<IData> datas = new List<IData>();
+            List<ICluster> datas = new List<ICluster>();
             foreach (var instance in _paintedInstances)
             {
                 Quaternion originalRotation = Quaternion.LookRotation(
@@ -130,9 +130,9 @@ namespace InstancePainter.Editor
                 );
                 var scale = Vector3.one * offset.y / 10;
 
-                instance.data.SetInstanceMatrix(instance.index, Matrix4x4.TRS(_paintStartHit.point + position + instance.definition.positionOffset, rotation * originalRotation, originalScale + scale));
+                instance.cluster.SetInstanceMatrix(instance.index, Matrix4x4.TRS(_paintStartHit.point + position + instance.definition.positionOffset, rotation * originalRotation, originalScale + scale));
                 
-                datas.AddIfUnique(instance.data);
+                datas.AddIfUnique(instance.cluster);
             }
 
             datas.ForEach(data => data.UpdateSerializedData());
@@ -145,7 +145,7 @@ namespace InstancePainter.Editor
 
             _lastPaintPosition = p_hit.point;
 
-            List<IData> invalidateDatas = new List<IData>();
+            List<ICluster> invalidateDatas = new List<ICluster>();
             
             if (Core.Config.density == 1)
             {
@@ -169,10 +169,10 @@ namespace InstancePainter.Editor
 
         void Colorize(RaycastHit p_hit)
         {
-            List<IData> invalidateDatas = new List<IData>();
+            List<ICluster> invalidateDatas = new List<ICluster>();
 
-            var datas = Core.Renderer.InstanceDatas;
-            foreach (IData data in datas)
+            var datas = Core.Renderer.InstanceClusters;
+            foreach (ICluster data in datas)
             {
                 for (int i = 0; i<data.GetCount(); i++)
                 {

@@ -19,7 +19,7 @@ namespace InstancePainter.Editor
     [InitializeOnLoad]
     public class IPEditorCore
     {
-        const string VERSION = "0.5.0";
+        const string VERSION = "0.5.1";
         
         public static IPEditorCore Instance { get; private set; }
         
@@ -87,7 +87,7 @@ namespace InstancePainter.Editor
         {
             GameObject.FindObjectsOfType<IPRenderer20>().ToList().ForEach(r =>
             {
-                r.InstanceDatas.ForEach(id => id.UndoRedoPerformed());
+                r.InstanceClusters.ForEach(id => id.UndoRedoPerformed());
             });
             
             SceneView.RepaintAll();
@@ -117,6 +117,7 @@ namespace InstancePainter.Editor
         public void ChangeTool<T>(bool p_enable = false) where T : ToolBase
         {
             _currentTool = (_currentTool == null || _currentTool.GetType() != typeof(T)) ? Activator.CreateInstance<T>() : null;
+
             IPEditorWindow.Instance?.Repaint();
         }
 
@@ -125,19 +126,27 @@ namespace InstancePainter.Editor
             return p_object.transform.GetComponentsInChildren<MeshFilter>().Select(mf => mf.gameObject).ToArray();
         }
 
-        IData GetDataForDefinition(Mesh p_mesh, InstanceDefinition p_definition)
+        ICluster GetDataForDefinition(Mesh p_mesh, InstanceDefinition p_definition)
         {
-            var data = Renderer.InstanceDatas.Find(id => id.IsMesh(p_mesh));
-            if (data == null)
+            var cluster = IPRuntimeEditorCore.explicitCluster != null
+                ? IPRuntimeEditorCore.explicitCluster
+                : Renderer.InstanceClusters.Find(id => id.IsMesh(p_mesh));
+
+            if (cluster == null)
             {
-                data = new InstanceData(p_mesh, p_definition.material);
-                Renderer.InstanceDatas.Add(data);
+                cluster = new InstanceCluster(p_mesh, p_definition.material);
+                Renderer.InstanceClusters.Add(cluster);
+            }
+            
+            if (!cluster.IsMesh(p_mesh))
+            {
+                cluster.SetMesh(p_mesh);
             }
 
-            return data;
+            return cluster;
         }
         
-        public IData AddInstance(InstanceDefinition p_definition, Mesh p_mesh, Vector3 p_position, Quaternion p_rotation, Vector3 p_scale, Vector4 p_color)
+        public ICluster AddInstance(InstanceDefinition p_definition, Mesh p_mesh, Vector3 p_position, Quaternion p_rotation, Vector3 p_scale, Vector4 p_color)
         {
             var data = GetDataForDefinition(p_mesh, p_definition);
             
@@ -146,9 +155,9 @@ namespace InstancePainter.Editor
             return data;
         }
         
-        public IData[] PlaceInstance(Vector3 p_position, MeshFilter[] p_validMeshes, Collider[] p_validColliders, List<PaintedInstance> p_paintedInstances)
+        public ICluster[] PlaceInstance(Vector3 p_position, MeshFilter[] p_validMeshes, Collider[] p_validColliders, List<PaintedInstance> p_paintedInstances)
         {
-            List<IData> paintedDatas = new List<IData>();
+            List<ICluster> paintedDatas = new List<ICluster>();
             
             p_position += Vector3.up * 100;
             Ray ray = new Ray(p_position, -Vector3.up);
@@ -185,14 +194,17 @@ namespace InstancePainter.Editor
             // Do proximity check
             if (Config.minimalDistance > 0)
             {
-                foreach (var data in Renderer.InstanceDatas)
+                foreach (var cluster in Renderer.InstanceClusters)
                 {
-                   if (!meshes.Any(m => data.IsMesh(m)))
+                    if (cluster == null)
+                        continue;
+                    
+                   if (!meshes.Any(m => cluster.IsMesh(m)))
                      continue;
                  
-                   for (int i = 0; i < data.GetCount(); i++)
+                   for (int i = 0; i < cluster.GetCount(); i++)
                    {
-                       var matrix = data.GetInstanceMatrix(i);
+                       var matrix = cluster.GetInstanceMatrix(i);
                        if (Vector3.Distance(p_position, matrix.GetColumn(3)) < Config.minimalDistance)
                        {
                            return paintedDatas.ToArray();
@@ -225,6 +237,7 @@ namespace InstancePainter.Editor
                         scale, Config.color);
 
                     var instance = new PaintedInstance(data, data.GetInstanceMatrix(data.GetCount() - 1),
+                        data.GetInstanceColor(data.GetCount() - 1),
                         data.GetCount() - 1, instanceDefinition);
                     p_paintedInstances?.Add(instance);
 

@@ -34,7 +34,7 @@ namespace InstancePainter.Editor
         {
             if (Event.current.type == EventType.MouseDown)
                 AlreadyModified.Clear();
-            
+
             switch (_state)
             {
                 case ModifyToolState.NONE:
@@ -73,6 +73,11 @@ namespace InstancePainter.Editor
                     }
                 } else if (Event.current.shift)
                 {
+                    _state = ModifyToolState.MODIFY_PAINT;
+                    ModifyCluster(p_hit);
+                }
+                else
+                {
                     if (_state != ModifyToolState.MODIFY_POSITION) 
                     {
                         _state = ModifyToolState.MODIFY_POSITION;
@@ -85,13 +90,13 @@ namespace InstancePainter.Editor
                         ModifyPosition(p_hit);
                     }
                 }
-                else
-                {
-                    _state = ModifyToolState.MODIFY_PAINT;
-                    Modify(p_hit);
-                }
             }
-            
+
+            IPRuntimeEditorCore.renderingAsUtil = Event.current.shift;
+
+            // If we do it in check it will not repaint correctly
+            SceneView.RepaintAll();
+
             if (Event.current.button == 0 && !Event.current.alt && Event.current.type == EventType.MouseUp)
             {
                 _state = ModifyToolState.NONE;
@@ -99,26 +104,50 @@ namespace InstancePainter.Editor
             }
         }
 
-        public void Modify(RaycastHit p_hit)
+        // public void ModifyCluster(RaycastHit p_hit)
+        // {
+        //     GetHitInstances(p_hit);
+        //     
+        //     List<ICluster> datas = new List<ICluster>();
+        //     foreach (var instance in _modifyInstances)
+        //     {
+        //         if (AlreadyModified.Exists(a => a == instance))
+        //             continue;
+        //
+        //         instance.matrix *= Matrix4x4.Scale(Core.Config.modifyScale);
+        //         instance.matrix *= Matrix4x4.Translate(Core.Config.modifyPosition);
+        //         instance.cluster.SetInstanceMatrix(instance.index, instance.matrix);
+        //         
+        //         datas.AddIfUnique(instance.cluster);
+        //         
+        //         AlreadyModified.Add(instance);
+        //     }
+        //
+        //     datas.ForEach(d => d.UpdateSerializedData());
+        // }
+        
+        public void ModifyCluster(RaycastHit p_hit)
         {
+            if (IPRuntimeEditorCore.explicitCluster == null)
+                return;
+            
             GetHitInstances(p_hit);
             
-            List<IData> datas = new List<IData>();
+            List<ICluster> clusters = new List<ICluster>();
             foreach (var instance in _modifyInstances)
             {
-                if (AlreadyModified.Exists(a => a == instance))
+                if (instance.cluster == IPRuntimeEditorCore.explicitCluster)
                     continue;
-
-                instance.matrix *= Matrix4x4.Scale(Core.Config.modifyScale);
-                instance.matrix *= Matrix4x4.Translate(Core.Config.modifyPosition);
-                instance.data.SetInstanceMatrix(instance.index, instance.matrix);
                 
-                datas.AddIfUnique(instance.data);
+                clusters.AddIfUnique(instance.cluster);
                 
-                AlreadyModified.Add(instance);
+                instance.cluster.RemoveInstance(instance.index);
+                IPRuntimeEditorCore.explicitCluster.AddInstance(instance.matrix, instance.color);
+                instance.cluster = IPRuntimeEditorCore.explicitCluster;
             }
-
-            datas.ForEach(d => d.UpdateSerializedData());
+        
+            clusters.ForEach(d => d.UpdateSerializedData());
+            IPRuntimeEditorCore.explicitCluster.UpdateSerializedData();
         }
 
         public void GetHitInstances(RaycastHit p_hit)
@@ -126,14 +155,14 @@ namespace InstancePainter.Editor
             _modifyInstances.Clear();
 
             
-            Core.Renderer.InstanceDatas.ForEach(id =>
+            Core.Renderer.InstanceClusters.ForEach(c =>
             {
-                for (int i = 0; i<id.GetCount(); i++)
+                for (int i = 0; i<c.GetCount(); i++)
                 {
-                    var matrix = id.GetInstanceMatrix(i);
+                    var matrix = c.GetInstanceMatrix(i);
                     if (Vector3.Distance(p_hit.point, matrix.GetColumn(3)) < Core.Config.brushSize)
                     {
-                        var instance = new PaintedInstance(id, matrix, i, null);
+                        var instance = new PaintedInstance(c, matrix, c.GetInstanceColor(i), i, null);
                         _modifyInstances.Add(instance);
                     }
                 };
@@ -144,7 +173,7 @@ namespace InstancePainter.Editor
         {
             var offset = Event.current.mousePosition - _modifyStartMousePosition;
 
-            List<IData> datas = new List<IData>();
+            List<ICluster> datas = new List<ICluster>();
             
             foreach (var instance in _modifyInstances)
             {
@@ -165,9 +194,9 @@ namespace InstancePainter.Editor
                 );
                 var scale = Vector3.one * offset.y / 10;
 
-                instance.data.SetInstanceMatrix(instance.index, Matrix4x4.TRS(_modifyStartHit.point + position, rotation * originalRotation, originalScale + scale));
+                instance.cluster.SetInstanceMatrix(instance.index, Matrix4x4.TRS(_modifyStartHit.point + position, rotation * originalRotation, originalScale + scale));
                 
-                datas.AddIfUnique(instance.data);
+                datas.AddIfUnique(instance.cluster);
             }
 
             datas.ForEach(d => d.UpdateSerializedData());
@@ -177,7 +206,7 @@ namespace InstancePainter.Editor
         {
             var offset = p_hit.point - _modifyStartHit.point;
 
-            List<IData> datas = new List<IData>();
+            List<ICluster> datas = new List<ICluster>();
             foreach (var instance in _modifyInstances)
             {
                 Quaternion originalRotation = Quaternion.LookRotation(
@@ -193,9 +222,9 @@ namespace InstancePainter.Editor
                     instance.matrix.GetColumn(2).magnitude
                 );
 
-                instance.data.SetInstanceMatrix(instance.index, Matrix4x4.TRS(position, originalRotation, originalScale));
+                instance.cluster.SetInstanceMatrix(instance.index, Matrix4x4.TRS(position, originalRotation, originalScale));
                 
-                datas.AddIfUnique(instance.data);
+                datas.AddIfUnique(instance.cluster);
             }
 
             datas.ForEach(d => d.UpdateSerializedData());
@@ -232,7 +261,7 @@ namespace InstancePainter.Editor
             GUILayout.FlexibleSpace();
             
             GUILayout.Label(" Left Button: ", Core.Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
-            GUILayout.Label("Modify by Painting ", Core.Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
+            GUILayout.Label("Move ", Core.Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
             GUILayout.Space(8);
 
             GUILayout.Label(" Ctrl + Left Button(DRAG): ", Core.Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
@@ -240,7 +269,7 @@ namespace InstancePainter.Editor
             GUILayout.Space(8);
             
             GUILayout.Label(" Shift + Left Button(DRAG): ", Core.Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
-            GUILayout.Label("Move", Core.Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
+            GUILayout.Label("Change cluster", Core.Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
             GUILayout.Space(8);
             
             GUILayout.Label(" Ctrl + Mouse Wheel: ", Core.Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));

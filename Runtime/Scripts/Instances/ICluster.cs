@@ -8,8 +8,10 @@ using UnityEngine;
 
 namespace InstancePainter
 {
-    public interface IData
+    public interface ICluster
     {
+        InstanceCluster GetCluster();
+        
         int GetCount();
 
         Matrix4x4 GetInstanceMatrix(int p_index);
@@ -21,6 +23,8 @@ namespace InstancePainter
         void SetInstanceColor(int p_index, Vector4 p_matrix);
         
         bool IsMesh(Mesh p_mesh);
+
+        void SetMesh(Mesh p_mesh);
 
         //void Invalidate(bool p_fallback);
 

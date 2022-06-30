@@ -2,20 +2,21 @@
 %TAG !u! tag:unity3d.com,2011:
 --- !u!21 &2100000
 Material:
-  serializedVersion: 6
+  serializedVersion: 8
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: InstancedIndirectMaterial
-  m_Shader: {fileID: 4800000, guid: fd090f3b1d7b5df4f9c363d609cfa330, type: 3}
-  m_ShaderKeywords: CULLING
+  m_Name: IPDefaultIndirectPixelShadows
+  m_Shader: {fileID: 4800000, guid: 6d08877a5c374c408faf1485a6ffa796, type: 3}
+  m_ValidKeywords:
+  - CULLING
+  m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: 2000
-  stringTagMap:
-    RenderType: Opaque
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
   disabledShaderPasses: []
   m_SavedProperties:
     serializedVersion: 3
@@ -56,6 +57,7 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    m_Ints: []
     m_Floats:
     - _AlphaClip: 0
     - _Blend: 0
@@ -68,6 +70,9 @@ Material:
     - _Cutoff: 0.5
     - _DrawDistance: 125
     - _DstBlend: 0
+    - _EnableBillboard: 0
+    - _EnableReceiveShadows: 0
+    - _EnableWind: 0
     - _EnvironmentReflections: 1
     - _GlossMapScale: 0
     - _Glossiness: 0
@@ -93,9 +98,12 @@ Material:
     - _WindCIntensity: 0.125
     - _WindFrequency: 4
     - _WindIntensity: 1
+    - _WindTiling: 0
+    - _WindTimeScale: 1
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:
+    - _AmbientLight: {r: 0, g: 0, b: 0, a: 1}
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _BoundSize: {r: 1, g: 1, b: 0, a: 0}
     - _Color: {r: 1, g: 1, b: 1, a: 1}

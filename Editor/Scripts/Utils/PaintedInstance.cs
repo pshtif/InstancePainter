@@ -9,15 +9,17 @@ namespace InstancePainter.Editor
 {
     public class PaintedInstance
     {
-        public IData data;
+        public ICluster cluster;
         public Matrix4x4 matrix;
+        public Vector4 color;
         public int index;
         public InstanceDefinition definition;
 
-        public PaintedInstance(IData p_data, Matrix4x4 p_matrix, int p_index, InstanceDefinition p_definition)
+        public PaintedInstance(ICluster p_cluster, Matrix4x4 p_matrix, Vector4 p_color, int p_index, InstanceDefinition p_definition)
         {
-            data = p_data;
+            cluster = p_cluster;
             matrix = p_matrix;
+            color = p_color;
             index = p_index;
             definition = p_definition;
         }
@@ -32,17 +34,17 @@ namespace InstancePainter.Editor
             if (!(obj is PaintedInstance))
                 return false;
             
-            return data == ((PaintedInstance)obj).data && index == ((PaintedInstance)obj).index;
+            return cluster == ((PaintedInstance)obj).cluster && index == ((PaintedInstance)obj).index;
         }
 
         public static bool operator == (PaintedInstance p_instance1, PaintedInstance p_instance2)
         {
-            return p_instance1.data == p_instance2.data && p_instance1.index == p_instance2.index;
+            return p_instance1.cluster == p_instance2.cluster && p_instance1.index == p_instance2.index;
         }
  
         public static bool operator != (PaintedInstance p_instance1, PaintedInstance p_instance2)
         {
-            return p_instance1.data != p_instance2.data && p_instance1.index != p_instance2.index;
+            return p_instance1.cluster != p_instance2.cluster && p_instance1.index != p_instance2.index;
         }
     }
 }

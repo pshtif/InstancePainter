@@ -25,14 +25,14 @@ namespace InstancePainter
         private NativeList<Vector4> _modifiedColorData;
 
         
-        private InstanceData _collection;
+        private InstanceCluster _collection;
 
-        public InstanceData GetCollection()
+        public InstanceCluster GetCollection()
         {
             return _collection;
         }
         
-        public void SetCollection(InstanceData p_collection)
+        public void SetCollection(InstanceCluster p_collection)
         {
             _collection = p_collection;
             
@@ -159,13 +159,13 @@ namespace InstancePainter
 #if UNITY_EDITOR
         public void SaveToInstanceCollection()
         {
-            InstanceDataAsset asset = InstanceDataAsset.CreateAssetWithPanel();
-            asset.collection = new InstanceData(mesh, _material, fallbackMaterial, _matrixData, _colorData);
+            InstanceClusterAsset asset = InstanceClusterAsset.CreateAssetWithPanel();
+            asset.cluster = new InstanceCluster(mesh, _material, fallbackMaterial, _matrixData, _colorData);
             UnityEditor.EditorUtility.SetDirty(asset);
         }
 #endif
 
-        public void BindFromInstanceCollection(InstanceData p_collection)
+        public void BindFromInstanceCollection(InstanceCluster p_collection)
         {
             CheckNativeContainerInitialized();
                 
@@ -223,7 +223,7 @@ namespace InstancePainter
             {
                 if (_material == null)
                 {
-                    _material = MaterialUtils.DefaultInstanceMaterial;
+                    throw new ArgumentNullException("material", "Material cannot be null.");
                 }
 
                 _material.SetVector("_PivotPosWS", transform.position);

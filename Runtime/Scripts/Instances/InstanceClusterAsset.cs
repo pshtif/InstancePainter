@@ -3,132 +3,142 @@
  */
 
 using System.Collections.Generic;
-using UnityEditor;
 using UnityEngine;
 
 namespace InstancePainter
 {
-    public class InstanceDataAsset : ScriptableObject, IData
+    public class InstanceClusterAsset : ScriptableObject, ICluster
     {
-        public InstanceData collection;
+        public InstanceCluster cluster;
 
         #if UNITY_EDITOR
         public bool minimized
         {
             get
             {
-                return collection.minimized;
+                return cluster == null ? false : cluster.minimized;
             }
             set
             {
-                collection.minimized = value;
+                cluster.minimized = value;
             }
         }
 
         public string GetMeshName()
         {
-            return collection.GetMeshName();
+            return cluster == null ? "NA" : cluster.GetMeshName();
         }
         #endif
         
         public int GetCount()
         {
-            return collection.GetCount();
+            return cluster == null ? 0 : cluster.GetCount();
         }
 
-        public InstanceDataAsset()
+        public InstanceClusterAsset()
         {
-            collection = new InstanceData();
+            cluster = new InstanceCluster();
         }
         
         public void RenderIndirect(Camera p_camera)
         {
-            collection.RenderIndirect(p_camera);
+            cluster?.RenderIndirect(p_camera);
         }
         
         public void RenderFallback(Camera p_camera)
         {
-            collection.RenderFallback(p_camera);
+            cluster.RenderFallback(p_camera);
         }
         
         public void Dispose()
         {
-            collection.Dispose();
+            cluster.Dispose();
         }
 
         public bool IsMesh(Mesh p_mesh)
         {
-            return collection.mesh == p_mesh;
+            return cluster.mesh == p_mesh;
+        }
+        
+        public void SetMesh(Mesh p_mesh)
+        {
+            cluster.mesh = p_mesh;
         }
 
         public void AddInstance(Matrix4x4 p_matrix, Vector4 p_color)
         {
-            collection.AddInstance(p_matrix, p_color);
+            cluster.AddInstance(p_matrix, p_color);
         }
 
         public void RemoveInstance(int p_index)
         {
-            collection.RemoveInstance(p_index);
+            cluster.RemoveInstance(p_index);
         }
 
         public Matrix4x4 GetInstanceMatrix(int p_index)
         {
-            return collection.GetInstanceMatrix(p_index);
+            return cluster.GetInstanceMatrix(p_index);
         }
         
         public void SetInstanceMatrix(int p_index, Matrix4x4 p_matrix)
         {
-            collection.SetInstanceMatrix(p_index, p_matrix);
+            cluster.SetInstanceMatrix(p_index, p_matrix);
         }
         
         public Vector4 GetInstanceColor(int p_index)
         {
-            return collection.GetInstanceColor(p_index);
+            return cluster.GetInstanceColor(p_index);
         }
         
         public void SetInstanceColor(int p_index, Vector4 p_color)
         {
-            collection.SetInstanceColor(p_index, p_color);
+            cluster.SetInstanceColor(p_index, p_color);
         }
 
         public void ApplyModifiers(List<InstanceModifierBase> p_modifiers, float p_binSize)
         {
-            collection.ApplyModifiers(p_modifiers, p_binSize);
+            cluster.ApplyModifiers(p_modifiers, p_binSize);
+        }
+        
+        public InstanceCluster GetCluster()
+        {
+            return cluster;
         }
 
 #if UNITY_EDITOR
         
         public void UndoRedoPerformed()
         {
-            collection.UndoRedoPerformed();
+            cluster.UndoRedoPerformed();
         }
         
         public void UpdateSerializedData()
         {
-            collection.UpdateSerializedData();
+            cluster.UpdateSerializedData();
             
-            EditorUtility.SetDirty(this);
+            UnityEditor.EditorUtility.SetDirty(this);
         }
         
-        public static InstanceDataAsset CreateAssetWithPanel()
+        public static InstanceClusterAsset CreateAssetWithPanel(InstanceCluster p_cluster = null)
         {
             var path = UnityEditor.EditorUtility.SaveFilePanelInProject(
-                "Create Instance Collection",
-                "InstanceCollection",
+                "Create Instance Cluster Asset",
+                "InstanceCluster",
                 "asset",
-                "Enter name for new Instance Collection.");
+                "Enter name for new Instance Cluster Asset.");
             
             if (path.Length != 0)
             {
-                return CreateAsAssetFromPath(path);
+                return CreateAsAssetFromPath(path, p_cluster);
             }
             
             return null;
         }
         
-        public static InstanceDataAsset CreateAsAssetFromPath(string p_path)
+        public static InstanceClusterAsset CreateAsAssetFromPath(string p_path, InstanceCluster p_cluster = null)
         {
-            InstanceDataAsset asset = ScriptableObject.CreateInstance<InstanceDataAsset>();
+            InstanceClusterAsset asset = ScriptableObject.CreateInstance<InstanceClusterAsset>();
+            asset.cluster = p_cluster;
 
             UnityEditor.AssetDatabase.CreateAsset(asset, p_path);
             UnityEditor.AssetDatabase.SaveAssets();

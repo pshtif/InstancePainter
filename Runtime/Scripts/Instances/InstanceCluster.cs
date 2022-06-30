@@ -7,7 +7,7 @@ using UnityEngine;
 namespace InstancePainter
 {
     [Serializable]
-    public class InstanceData : IData
+    public class InstanceCluster : ICluster
     {
         public bool enabled = true;
         
@@ -35,7 +35,7 @@ namespace InstancePainter
         private NativeList<Vector4> _renderColorData;
 
         [NonSerialized]
-        private InstanceDataRenderer _renderer;
+        private InstanceClusterRenderer _renderer;
 
         [NonSerialized] 
         private bool _nativeSerializationInitialized = false;
@@ -46,17 +46,19 @@ namespace InstancePainter
                 InitializeSerializedData();
 
             return _originalColorData.Length;
-        }  
+        }
 
-        public InstanceData() { }
+        public InstanceCluster()
+        {
+        }
         
-        public InstanceData(Mesh p_mesh, Material p_material)
+        public InstanceCluster(Mesh p_mesh, Material p_material)
         {
             mesh = p_mesh;
             material = p_material;
         }
         
-        public InstanceData(Mesh p_mesh, Material p_material, Material p_fallbackMaterial, Matrix4x4[] p_matrixData, Vector4[] p_colorData)
+        public InstanceCluster(Mesh p_mesh, Material p_material, Material p_fallbackMaterial, Matrix4x4[] p_matrixData, Vector4[] p_colorData)
         {
             mesh = p_mesh;
             material = p_material;
@@ -68,6 +70,13 @@ namespace InstancePainter
         public bool IsMesh(Mesh p_mesh)
         {
             return mesh == p_mesh;
+        }
+        
+        public void SetMesh(Mesh p_mesh)
+        {
+            mesh = p_mesh;
+            
+            _renderer?.SetGPUDirty();
         }
 
         void CreateNativeContainers()
@@ -82,10 +91,13 @@ namespace InstancePainter
         void InitializeSerializedData()
         {
             CreateNativeContainers();
-            
-            _originalMatrixData.CopyFromNBC(_matrixData);
-            _originalColorData.CopyFromNBC(_colorData);
-            
+
+            if (_matrixData != null)
+            {
+                _originalMatrixData.CopyFromNBC(_matrixData);
+                _originalColorData.CopyFromNBC(_colorData);
+            }
+
             _renderMatrixData.CopyFrom(_originalMatrixData);
             _renderColorData.CopyFrom(_originalColorData);
             
@@ -101,6 +113,8 @@ namespace InstancePainter
             
             _originalMatrixData.Add(p_matrix);
             _originalColorData.Add(p_color);
+            
+            _renderer?.SetBoundsDirty();
         }
 
         public void RemoveInstance(int p_index)
@@ -110,6 +124,8 @@ namespace InstancePainter
             
             _originalMatrixData.RemoveAtSwapBack(p_index);
             _originalColorData.RemoveAtSwapBack(p_index);
+            
+            _renderer?.SetBoundsDirty();
         }
 
         public Matrix4x4 GetInstanceMatrix(int p_index)
@@ -126,6 +142,8 @@ namespace InstancePainter
                 InitializeSerializedData();
             
             _originalMatrixData[p_index] = p_matrix;
+            
+            _renderer?.SetBoundsDirty();
         }
         
         public Vector4 GetInstanceColor(int p_index)
@@ -168,32 +186,52 @@ namespace InstancePainter
 
         public void RenderIndirect(Camera p_camera)
         {
+            if (!enabled || GetCount() == 0)
+                return;
+
+            if (material == null || mesh == null)
+            {
+                Debug.Log(material+" : "+mesh);
+                Debug.LogWarning("Mesh or Material not set for this cluster.");
+                return;
+            }
+            
             if (!_nativeSerializationInitialized)
                 InitializeSerializedData();
-            
-            // Cannot use ??= due to Unity nullchecks
-            if (fallbackMaterial == null)
-            {
-                material ??= MaterialUtils.DefaultInstanceMaterial;
-            }
 
-            _renderer ??= new InstanceDataRenderer();
+            _renderer ??= new InstanceClusterRenderer();
+            
+            #if UNITY_EDITOR
+            var renderMaterial = IPRuntimeEditorCore.renderingAsUtil
+                ? this == IPRuntimeEditorCore.explicitCluster ? MaterialUtils.ExplicitClusterMaterial : MaterialUtils.NonExplicitClusterMaterial
+                : material;
+            _renderer.RenderIndirect(p_camera, mesh, renderMaterial , _renderMatrixData, _renderColorData);
+            #else
             _renderer.RenderIndirect(p_camera, mesh, material, _renderMatrixData, _renderColorData);
+            #endif
         }
         
         public void RenderFallback(Camera p_camera)
         {
+            if (!enabled || GetCount() == 0)
+                return;
+            
+            if (fallbackMaterial == null || mesh == null)
+            {
+                Debug.LogWarning("Mesh or fallback Material not set for this cluster.");
+                return;
+            }
+            
             if (!_nativeSerializationInitialized)
                 InitializeSerializedData();
-            
-            // Cannot use ??= due to Unity nullchecks
-            if (fallbackMaterial == null)
-            {
-                fallbackMaterial = MaterialUtils.DefaultFallbackMaterial;
-            }
 
-            _renderer ??= new InstanceDataRenderer();
+            _renderer ??= new InstanceClusterRenderer();
             _renderer.RenderFallback(p_camera, mesh, fallbackMaterial, _renderMatrixData, _renderColorData);
+        }
+
+        public InstanceCluster GetCluster()
+        {
+            return this;
         }
         
 #endregion
