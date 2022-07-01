@@ -4,7 +4,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using InstancePainter;
+using InstancePainter.Runtime;
 using UnityEditor;
 using UnityEngine;
 
@@ -55,26 +55,26 @@ namespace InstancePainter.Editor
             List<ICluster> invalidateDatas = new List<ICluster>();
 
             var sizeSq = Core.Config.brushSize * Core.Config.brushSize;
-            var datas = Core.Renderer.InstanceClusters;
-            foreach (ICluster data in datas)
+            var clusters = Core.Renderer.InstanceClusters;
+            foreach (ICluster cluster in clusters)
             {
-                if (data.GetCount() == 0 || (!_validEraseMeshes.Any(m=>data.IsMesh(m)) && Core.Config.eraseActiveDefinition))
+                if (cluster.GetCount() == 0 || (!_validEraseMeshes.Any(m=>cluster.IsMesh(m)) && Core.Config.eraseActiveDefinition))
                     continue;
 
                 var modified = false;
-                for (int i = data.GetCount() - 1; i>=0; i--)
+                for (int i = cluster.GetCount() - 1; i>=0; i--)
                 {
-                    var position = data.GetInstanceMatrix(i).GetColumn(3);
+                    var position = cluster.GetInstanceMatrix(i).GetColumn(3);
                     if (Vector3Utils.DistanceSq(position, p_hit.point) < sizeSq)
                     {
-                        data.RemoveInstance(i);
+                        cluster.RemoveInstance(i);
                         modified = true;
                     }
                 }
 
                 if (modified)
                 {
-                    invalidateDatas.AddIfUnique(data);
+                    invalidateDatas.AddIfUnique(cluster);
                 }
             }
             

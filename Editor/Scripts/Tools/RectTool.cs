@@ -5,7 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using InstancePainter;
+using InstancePainter.Runtime;
 using UnityEditor;
 using UnityEngine;
 using Random = UnityEngine.Random;

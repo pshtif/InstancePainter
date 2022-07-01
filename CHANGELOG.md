@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.5.2 - 1.7.2022
+
+#### Added
+
+- Added when adding clusters specify asset/bound type
+
+#### Fixed
+
+- Fixed undo/redo on cluster asset operations
+- Fixed dispose Unity crash on render disable/enable in editor
+- Fixed memory leaks on ScriptableObject dealocation on assembly reload
+
 ### Release 0.5.0 - 22.6.2022
 
 #### Added

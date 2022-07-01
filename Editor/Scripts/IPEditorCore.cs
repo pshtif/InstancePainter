@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using InstancePainter.Runtime;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -19,12 +20,12 @@ namespace InstancePainter.Editor
     [InitializeOnLoad]
     public class IPEditorCore
     {
-        const string VERSION = "0.5.1";
+        const string VERSION = "0.5.2";
         
         public static IPEditorCore Instance { get; private set; }
         
-        private IPRenderer20 _renderer;
-        public IPRenderer20 Renderer
+        private InstanceRenderer _renderer;
+        public InstanceRenderer Renderer
         {
             get
             {
@@ -41,19 +42,19 @@ namespace InstancePainter.Editor
                 {
                     if (prefabStage != null)
                     {
-                        _renderer = prefabStage.FindComponentOfType<IPRenderer20>();
+                        _renderer = prefabStage.FindComponentOfType<InstanceRenderer>();
                         if (_renderer == null)
                         {
-                            _renderer = new GameObject("InstanceRenderer").AddComponent<IPRenderer20>();
+                            _renderer = new GameObject("InstanceRenderer").AddComponent<InstanceRenderer>();
                             _renderer.transform.parent = prefabStage.prefabContentsRoot.transform;
                         }
                     }
                     else
                     {
-                        _renderer = GameObject.FindObjectOfType<IPRenderer20>();
+                        _renderer = GameObject.FindObjectOfType<InstanceRenderer>();
                         if (_renderer == null)
                         {
-                            _renderer = new GameObject("InstanceRenderer").AddComponent<IPRenderer20>();
+                            _renderer = new GameObject("InstanceRenderer").AddComponent<InstanceRenderer>();
                         }
                     }
                 }
@@ -85,7 +86,7 @@ namespace InstancePainter.Editor
 
         void UndoRedoCallback()
         {
-            GameObject.FindObjectsOfType<IPRenderer20>().ToList().ForEach(r =>
+            GameObject.FindObjectsOfType<InstanceRenderer>().ToList().ForEach(r =>
             {
                 r.InstanceClusters.ForEach(id => id.UndoRedoPerformed());
             });
@@ -126,7 +127,7 @@ namespace InstancePainter.Editor
             return p_object.transform.GetComponentsInChildren<MeshFilter>().Select(mf => mf.gameObject).ToArray();
         }
 
-        ICluster GetDataForDefinition(Mesh p_mesh, InstanceDefinition p_definition)
+        ICluster GetClusterForDefinition(Mesh p_mesh, InstanceDefinition p_definition)
         {
             var cluster = IPRuntimeEditorCore.explicitCluster != null
                 ? IPRuntimeEditorCore.explicitCluster
@@ -148,7 +149,7 @@ namespace InstancePainter.Editor
         
         public ICluster AddInstance(InstanceDefinition p_definition, Mesh p_mesh, Vector3 p_position, Quaternion p_rotation, Vector3 p_scale, Vector4 p_color)
         {
-            var data = GetDataForDefinition(p_mesh, p_definition);
+            var data = GetClusterForDefinition(p_mesh, p_definition);
             
             data.AddInstance(Matrix4x4.TRS(p_position, p_rotation, p_scale), p_color);
 
@@ -169,7 +170,7 @@ namespace InstancePainter.Editor
                 if (p_validColliders == null || !EditorRaycast.Raycast(ray, p_validColliders, out hit))
                     return paintedDatas.ToArray();
             }
-
+            
             p_position = hit.point;
             float slope = 0;
 

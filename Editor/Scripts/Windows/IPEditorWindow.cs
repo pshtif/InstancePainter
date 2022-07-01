@@ -2,17 +2,13 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using InstancePainter;
-using InstancePainter.Editor;
+using InstancePainter.Runtime;
 using UnityEditor;
 using UnityEngine;
 
 namespace InstancePainter.Editor
 {
-    public class IPEditorWindow : UnityEditor.EditorWindow
+    public class IPEditorWindow : EditorWindow
     {
         public IPEditorCore Core => IPEditorCore.Instance;
         
@@ -51,7 +47,7 @@ namespace InstancePainter.Editor
             GUILayout.Space(4);
             GUI.color = Color.white;
             
-            IPRenderer20 newRendererObject = (IPRenderer20)EditorGUILayout.ObjectField(new GUIContent("Renderer"), Core.Config.explicitRendererObject, typeof(IPRenderer20), true);
+            InstanceRenderer newRendererObject = (InstanceRenderer)EditorGUILayout.ObjectField(new GUIContent("Renderer"), Core.Config.explicitRendererObject, typeof(InstanceRenderer), true);
 
             if (newRendererObject != Core.Config.explicitRendererObject)
             {
@@ -185,7 +181,7 @@ namespace InstancePainter.Editor
 
         void DrawLayersGUI()
         {
-            SerializedObject serializedObject = new UnityEditor.SerializedObject(Core.Config);
+            SerializedObject serializedObject = new SerializedObject(Core.Config);
 
             SerializedProperty serializedIncludeLayers = serializedObject.FindProperty("includeLayers");
 

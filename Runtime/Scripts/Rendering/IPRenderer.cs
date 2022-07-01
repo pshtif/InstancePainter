@@ -10,8 +10,9 @@ using Unity.Collections.NotBurstCompatible;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace InstancePainter
+namespace InstancePainter.Runtime
 {
+    //[Obsolete]
     [ExecuteAlways]
     public class IPRenderer : MonoBehaviour
     {
@@ -24,30 +25,11 @@ namespace InstancePainter
         private NativeList<Matrix4x4> _modifiedMatrixData;
         private NativeList<Vector4> _modifiedColorData;
 
-        
-        private InstanceCluster _collection;
-
-        public InstanceCluster GetCollection()
-        {
-            return _collection;
-        }
-        
-        public void SetCollection(InstanceCluster p_collection)
-        {
-            _collection = p_collection;
-            
-            if (_collection != null)
-            {
-                _matrixData = _collection.MatrixData;
-                _colorData = _collection.ColorData;
-            }
-            
-            InvalidateNativeData();
-        }
-        
         [HideInInspector]
         [SerializeField]
         private Matrix4x4[] _matrixData;
+        public Matrix4x4[] MatrixData => _matrixData;
+        
         [HideInInspector]
         [SerializeField]
         private Vector4[] _colorData;
@@ -119,16 +101,9 @@ namespace InstancePainter
 
         public void OnEnable()
         {
-            if (_collection != null)
-            {
-                _matrixData = _collection.MatrixData;
-                _colorData = _collection.ColorData;
-            }
-            
             if (_matrixData == null || _matrixData.Length == 0)
                 return;
-
-
+            
             InvalidateNativeData();
 
             if (_nativeMatrixData.Length != _nativeColorData.Length)
@@ -160,8 +135,12 @@ namespace InstancePainter
         public void SaveToInstanceCollection()
         {
             InstanceClusterAsset asset = InstanceClusterAsset.CreateAssetWithPanel();
-            asset.cluster = new InstanceCluster(mesh, _material, fallbackMaterial, _matrixData, _colorData);
-            UnityEditor.EditorUtility.SetDirty(asset);
+
+            if (asset != null)
+            {
+                asset.cluster = new InstanceCluster(mesh, _material, fallbackMaterial, _matrixData, _colorData);
+                UnityEditor.EditorUtility.SetDirty(asset);
+            }
         }
 #endif
 

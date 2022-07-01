@@ -7,10 +7,10 @@ using System.Linq;
 using Unity.Collections;
 using UnityEngine;
 
-namespace InstancePainter
+namespace InstancePainter.Runtime
 {
     [RequireComponent(typeof(IPRenderer))]
-    public class IPUnityRenderer : MonoBehaviour
+    public class InstanceUnityRenderer : MonoBehaviour
     {
         public bool autoInitialize = true;
         

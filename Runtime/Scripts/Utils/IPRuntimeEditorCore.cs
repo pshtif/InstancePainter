@@ -3,6 +3,8 @@
  */
 
 #if UNITY_EDITOR
+using InstancePainter.Runtime;
+
 namespace InstancePainter
 {
     public class IPRuntimeEditorCore

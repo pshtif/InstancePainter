@@ -3,6 +3,7 @@
  */
 
 using System.Collections.Generic;
+using InstancePainter.Runtime;
 using UnityEditor;
 using UnityEngine;
 
@@ -145,12 +146,11 @@ namespace InstancePainter.Editor
 
             _lastPaintPosition = p_hit.point;
 
-            List<ICluster> invalidateDatas = new List<ICluster>();
-            
+            List<ICluster> invalidateClusters = new List<ICluster>();
             if (Core.Config.density == 1)
             {
                 var datas = Core.PlaceInstance(p_hit.point, _cachedValidMeshes, _cachedValidColliders, _paintedInstances);
-                invalidateDatas.AddRangeIfUnique(datas);
+                invalidateClusters.AddRangeIfUnique(datas);
             }
             else
             {
@@ -160,11 +160,11 @@ namespace InstancePainter.Editor
                     Vector3 position = direction * Random.Range(0, Core.Config.brushSize) + p_hit.point;
 
                     var datas = Core.PlaceInstance(position, _cachedValidMeshes, _cachedValidColliders, _paintedInstances);
-                    invalidateDatas.AddRangeIfUnique(datas);
+                    invalidateClusters.AddRangeIfUnique(datas);
                 }
             }
 
-            invalidateDatas.ForEach(d => d.UpdateSerializedData());
+            invalidateClusters.ForEach(d => d.UpdateSerializedData());
         }
 
         void Colorize(RaycastHit p_hit)

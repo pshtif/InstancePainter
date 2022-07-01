@@ -2,17 +2,13 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using InstancePainter;
-using InstancePainter.Editor;
+using InstancePainter.Runtime;
 using UnityEditor;
 using UnityEngine;
 
 namespace InstancePainter.Editor
 {
-    public class RendererWindow : UnityEditor.EditorWindow
+    public class RendererWindow : EditorWindow
     {
         public IPEditorCore Core => IPEditorCore.Instance;
         
@@ -95,7 +91,7 @@ namespace InstancePainter.Editor
                 GUILayout.Label(renderer.DrawCalls.ToString(), GUILayout.Width(70));
                 if (GUILayout.Button("Select"))
                 {
-                    Selection.objects = new UnityEngine.Object[] { renderer.gameObject };
+                    Selection.objects = new Object[] { renderer.gameObject };
                 }
                 
                 GUILayout.EndHorizontal();

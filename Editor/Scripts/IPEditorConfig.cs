@@ -4,6 +4,7 @@
 
 using System.Collections.Generic;
 using InstancePainter;
+using InstancePainter.Runtime;
 using UnityEditor;
 using UnityEngine.Serialization;
 
@@ -17,7 +18,7 @@ namespace InstancePainter.Editor
     {
         public GUISkin Skin => (GUISkin)Resources.Load("Skins/InstancePainterSkin");
 
-        public IPRenderer20 explicitRendererObject;
+        public InstanceRenderer explicitRendererObject;
 
         public bool enabled = false;
         

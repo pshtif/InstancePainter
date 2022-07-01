@@ -5,15 +5,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.Collections;
-using Unity.Collections.NotBurstCompatible;
+using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
-using UnityEngine.Rendering;
 
-namespace InstancePainter
+namespace InstancePainter.Runtime
 {
     [ExecuteAlways]
-    public class IPRenderer20 : MonoBehaviour, ISerializationCallbackReceiver
+    public class InstanceRenderer : MonoBehaviour, ISerializationCallbackReceiver
     {
         [SerializeField]
         private List<InstanceCluster> _serializedInstanceClusters;
@@ -102,7 +101,7 @@ namespace InstancePainter
 #if UNITY_EDITOR
             if (!Application.isPlaying)
             {
-                UnityEditor.SceneView.duringSceneGui += OnSceneGUI;
+                SceneView.duringSceneGui += OnSceneGUI;
             }
 #endif
         }
@@ -112,17 +111,21 @@ namespace InstancePainter
         {
             if (!Application.isPlaying)
             {
-                UnityEditor.SceneView.duringSceneGui -= OnSceneGUI;
+                SceneView.duringSceneGui -= OnSceneGUI;
                 Dispose();
             }
         }
 
-        void OnSceneGUI(UnityEditor.SceneView p_sceneView)
+        void OnSceneGUI(SceneView p_sceneView)
         {
-            if (Application.isPlaying)
+            if (Application.isPlaying || !enabled)
                 return;
-            
-            Render(p_sceneView.camera);
+
+            var prefabStage = PrefabStageUtility.GetCurrentPrefabStage();
+            if (prefabStage == null || prefabStage.IsPartOfPrefabContents(this.gameObject))
+            {
+                Render(p_sceneView.camera);    
+            }
         }
 #endif
     }

@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using Mono.Collections.Generic;
 using UnityEngine;
 
-namespace InstancePainter
+namespace InstancePainter.Runtime
 {
     public interface ICluster
     {

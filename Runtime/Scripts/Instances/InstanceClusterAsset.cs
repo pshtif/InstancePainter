@@ -2,10 +2,11 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace InstancePainter
+namespace InstancePainter.Runtime
 {
     public class InstanceClusterAsset : ScriptableObject, ICluster
     {
@@ -67,11 +68,19 @@ namespace InstancePainter
 
         public void AddInstance(Matrix4x4 p_matrix, Vector4 p_color)
         {
+#if UNITY_EDITOR
+            UnityEditor.Undo.RegisterCompleteObjectUndo(this, "Record Asset Change");
+#endif
+            
             cluster.AddInstance(p_matrix, p_color);
         }
 
         public void RemoveInstance(int p_index)
         {
+#if UNITY_EDITOR
+            UnityEditor.Undo.RegisterCompleteObjectUndo(this, "Record Asset Change");
+#endif
+            
             cluster.RemoveInstance(p_index);
         }
 
@@ -103,6 +112,11 @@ namespace InstancePainter
         public InstanceCluster GetCluster()
         {
             return cluster;
+        }
+
+        private void OnDisable()
+        {
+            Dispose();
         }
 
 #if UNITY_EDITOR

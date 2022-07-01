@@ -3,6 +3,7 @@
  */
 
 using InstancePainter;
+using InstancePainter.Runtime;
 using UnityEngine;
 
 namespace InstancePainter.Editor

@@ -4,7 +4,7 @@
 
 using System.Collections.Generic;
 
-namespace InstancePainter
+namespace InstancePainter.Runtime
 {
     public static class CollectionExtensions
     {

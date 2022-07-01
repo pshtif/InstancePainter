@@ -4,7 +4,7 @@ using Unity.Collections;
 using Unity.Collections.NotBurstCompatible;
 using UnityEngine;
 
-namespace InstancePainter
+namespace InstancePainter.Runtime
 {
     [Serializable]
     public class InstanceCluster : ICluster
@@ -110,10 +110,10 @@ namespace InstancePainter
         {
             if (!_nativeSerializationInitialized)
                 InitializeSerializedData();
-            
+
             _originalMatrixData.Add(p_matrix);
             _originalColorData.Add(p_color);
-            
+
             _renderer?.SetBoundsDirty();
         }
 
@@ -132,7 +132,7 @@ namespace InstancePainter
         {
             if (!_nativeSerializationInitialized)
                 InitializeSerializedData();
-            
+            //aaa
             return _originalMatrixData[p_index];
         }
         
@@ -180,6 +180,9 @@ namespace InstancePainter
             if (_renderColorData.IsCreated) _renderColorData.Dispose();
 
             _renderer?.Dispose();
+            _renderer = null;
+
+            _nativeSerializationInitialized = false;
         }
 
 #region RENDERING
@@ -191,7 +194,6 @@ namespace InstancePainter
 
             if (material == null || mesh == null)
             {
-                Debug.Log(material+" : "+mesh);
                 Debug.LogWarning("Mesh or Material not set for this cluster.");
                 return;
             }
