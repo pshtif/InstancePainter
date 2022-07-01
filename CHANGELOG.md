@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.5.3 - 2.7.2022
+
+#### Fixed
+
+- Fixed editor namespaces for prefab stage
+
 ### Release 0.5.2 - 1.7.2022
 
 #### Added
