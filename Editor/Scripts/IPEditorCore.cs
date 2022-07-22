@@ -156,7 +156,7 @@ namespace InstancePainter.Editor
             return data;
         }
         
-        public ICluster[] PlaceInstance(Vector3 p_position, MeshFilter[] p_validMeshes, Collider[] p_validColliders, List<PaintedInstance> p_paintedInstances)
+        public ICluster[] PlaceInstance(InstanceDefinition p_instanceDefinition, Vector3 p_position, MeshFilter[] p_validMeshes, Collider[] p_validColliders, List<PaintedInstance> p_paintedInstances)
         {
             List<ICluster> paintedDatas = new List<ICluster>();
             
@@ -182,18 +182,14 @@ namespace InstancePainter.Editor
                 slope = 90 - Vector3.Angle(project, hit.normal);
             }
 
-            if (slope > Config.maximumSlope)
-                 return paintedDatas.ToArray();
-
-            InstanceDefinition instanceDefinition = GetWeightedDefinition();
-            if (instanceDefinition == null || instanceDefinition.prefab == null)
+            if (slope > p_instanceDefinition.maximumSlope)
                 return paintedDatas.ToArray();
 
-            MeshFilter[] filters = instanceDefinition.prefab.GetComponentsInChildren<MeshFilter>();
+            MeshFilter[] filters = p_instanceDefinition.prefab.GetComponentsInChildren<MeshFilter>();
             
             Mesh[] meshes = filters.Select(f => f.sharedMesh).ToArray();
             // Do proximity check
-            if (Config.minimalDistance > 0)
+            if (p_instanceDefinition.minimalDistance > 0)
             {
                 foreach (var cluster in Renderer.InstanceClusters)
                 {
@@ -206,7 +202,7 @@ namespace InstancePainter.Editor
                    for (int i = 0; i < cluster.GetCount(); i++)
                    {
                        var matrix = cluster.GetInstanceMatrix(i);
-                       if (Vector3.Distance(p_position, matrix.GetColumn(3)) < Config.minimalDistance)
+                       if (Vector3.Distance(p_position, matrix.GetColumn(3)) < p_instanceDefinition.minimalDistance)
                        {
                            return paintedDatas.ToArray();
                        }
@@ -216,30 +212,30 @@ namespace InstancePainter.Editor
 
             foreach (var filter in filters)
             {
-                var position = p_position + instanceDefinition.positionOffset + filter.transform.position;
+                var position = p_position + p_instanceDefinition.positionOffset + filter.transform.position;
 
                 var rotation = filter.transform.rotation *
-                    (instanceDefinition.rotateToNormal
+                    (p_instanceDefinition.rotateToNormal
                         ? Quaternion.FromToRotation(Vector3.up, hit.normal)
                         : Quaternion.identity) *
-                    Quaternion.Euler(instanceDefinition.rotationOffset);
+                    Quaternion.Euler(p_instanceDefinition.rotationOffset);
 
                 rotation = rotation * Quaternion.Euler(
-                    Random.Range(instanceDefinition.minRotation.x, instanceDefinition.maxRotation.x),
-                    Random.Range(instanceDefinition.minRotation.y, instanceDefinition.maxRotation.y),
-                    Random.Range(instanceDefinition.minRotation.z, instanceDefinition.maxRotation.z));
+                    Random.Range(p_instanceDefinition.minRotation.x, p_instanceDefinition.maxRotation.x),
+                    Random.Range(p_instanceDefinition.minRotation.y, p_instanceDefinition.maxRotation.y),
+                    Random.Range(p_instanceDefinition.minRotation.z, p_instanceDefinition.maxRotation.z));
 
-                var scale = Vector3.Scale(filter.transform.localScale, instanceDefinition.scaleOffset) *
-                            Random.Range(instanceDefinition.minScale, instanceDefinition.maxScale);
+                var scale = Vector3.Scale(filter.transform.localScale, p_instanceDefinition.scaleOffset) *
+                            Random.Range(p_instanceDefinition.minScale, p_instanceDefinition.maxScale);
 
                 if (filter.sharedMesh != null)
                 {
-                    var data = AddInstance(instanceDefinition, filter.sharedMesh, position, rotation,
+                    var data = AddInstance(p_instanceDefinition, filter.sharedMesh, position, rotation,
                         scale, Config.color);
 
                     var instance = new PaintedInstance(data, data.GetInstanceMatrix(data.GetCount() - 1),
                         data.GetInstanceColor(data.GetCount() - 1),
-                        data.GetCount() - 1, instanceDefinition);
+                        data.GetCount() - 1, p_instanceDefinition);
                     p_paintedInstances?.Add(instance);
 
                     paintedDatas.Add(data);
@@ -249,7 +245,7 @@ namespace InstancePainter.Editor
             return paintedDatas.ToArray();
         }
 
-        private InstanceDefinition GetWeightedDefinition()
+        public InstanceDefinition GetWeightedDefinition()
         {
             if (Config.paintDefinitions.Count == 0)
                 return null;
