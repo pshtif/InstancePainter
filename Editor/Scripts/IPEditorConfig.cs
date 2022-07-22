@@ -33,10 +33,6 @@ namespace InstancePainter.Editor
         public int density = 1;
         public bool minimizePaintDefinitions = false;
         public List<InstanceDefinition> paintDefinitions = new List<InstanceDefinition>();
-
-        public float maximumSlope = 0;
-        public float minimalDistance = 1;
-        
         #endregion
         
         #region ERASE

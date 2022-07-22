@@ -147,19 +147,22 @@ namespace InstancePainter.Editor
             _lastPaintPosition = p_hit.point;
 
             List<ICluster> invalidateClusters = new List<ICluster>();
+
             if (Core.Config.density == 1)
             {
-                var datas = Core.PlaceInstance(p_hit.point, _cachedValidMeshes, _cachedValidColliders, _paintedInstances);
+                InstanceDefinition instanceDefinition = Core.GetWeightedDefinition();
+                var datas = Core.PlaceInstance(instanceDefinition, p_hit.point, _cachedValidMeshes, _cachedValidColliders, _paintedInstances);
                 invalidateClusters.AddRangeIfUnique(datas);
             }
             else
             {
                 for (int i = 0; i < Core.Config.density; i++)
                 {
+                    InstanceDefinition instanceDefinition = Core.GetWeightedDefinition();
                     Vector3 direction = Quaternion.AngleAxis(Random.Range(0, 360), Vector3.up) * Vector3.right;
                     Vector3 position = direction * Random.Range(0, Core.Config.brushSize) + p_hit.point;
 
-                    var datas = Core.PlaceInstance(position, _cachedValidMeshes, _cachedValidColliders, _paintedInstances);
+                    var datas = Core.PlaceInstance(instanceDefinition, position, _cachedValidMeshes, _cachedValidColliders, _paintedInstances);
                     invalidateClusters.AddRangeIfUnique(datas);
                 }
             }
@@ -250,10 +253,6 @@ namespace InstancePainter.Editor
             Core.Config.alpha = EditorGUILayout.Slider("Alpha", Core.Config.alpha, 0, 1);
 
             Core.Config.density = EditorGUILayout.IntField("Density", Core.Config.density);
-            
-            Core.Config.minimalDistance = EditorGUILayout.FloatField("Minimal Distance", Core.Config.minimalDistance);
-
-            Core.Config.maximumSlope = EditorGUILayout.Slider("Maximum Slope", Core.Config.maximumSlope, 0, 90);
             
             IPEditorWindow.Instance.Repaint();
         }

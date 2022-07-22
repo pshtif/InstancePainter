@@ -16,6 +16,9 @@ namespace InstancePainter.Runtime
         
         public GameObject prefab;
         public Material material;
+        
+        public float maximumSlope = 90;
+        public float minimalDistance = 1;
 
         public float minScale = 1;
         public float maxScale = 1;

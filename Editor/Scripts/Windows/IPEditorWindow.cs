@@ -154,6 +154,8 @@ namespace InstancePainter.Editor
 
                     p_instanceDefinition.weight =
                         EditorGUILayout.FloatField("Weight Probability", p_instanceDefinition.weight);
+                    
+                    p_instanceDefinition.density = EditorGUILayout.IntField("Density", p_instanceDefinition.density);
 
                     p_instanceDefinition.minScale = EditorGUILayout.FloatField("Min Scale", p_instanceDefinition.minScale);
                     p_instanceDefinition.maxScale = EditorGUILayout.FloatField("Max Scale", p_instanceDefinition.maxScale);

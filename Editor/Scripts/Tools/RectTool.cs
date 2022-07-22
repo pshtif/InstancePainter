@@ -169,7 +169,8 @@ namespace InstancePainter.Editor
 
             for (int i = 0; i < Core.Config.density; i++)
             {
-                var datas = Core.PlaceInstance(new Vector3(Random.Range(minX, maxX), p_startPoint.y, Random.Range(minZ, maxZ)), validMeshes, validColliders, _paintedInstances);
+                InstanceDefinition instanceDefinition = Core.GetWeightedDefinition();
+                var datas = Core.PlaceInstance(instanceDefinition, new Vector3(Random.Range(minX, maxX), p_startPoint.y, Random.Range(minZ, maxZ)), validMeshes, validColliders, _paintedInstances);
                 
                 foreach (var data in datas)
                 {
@@ -205,12 +206,6 @@ namespace InstancePainter.Editor
         public override void DrawInspectorGUI()
         {
             EditorGUILayout.LabelField("Rect Tool", Core.Config.Skin.GetStyle("tooltitle"), GUILayout.Height(24));
-            
-            Core.Config.density = EditorGUILayout.IntField("Density", Core.Config.density);
-            
-            Core.Config.minimalDistance = EditorGUILayout.FloatField("Minimal Distance", Core.Config.minimalDistance);
-
-            Core.Config.maximumSlope = EditorGUILayout.Slider("Maximum Slope", Core.Config.maximumSlope, 0, 90);
         }
     }
 }
