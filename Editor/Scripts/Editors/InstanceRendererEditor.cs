@@ -27,6 +27,11 @@ namespace InstancePainter.Editor
             Renderer.forceFallback = EditorGUILayout.Toggle("Force Fallback", Renderer.forceFallback);
             Renderer.binSize = EditorGUILayout.FloatField("Bin Size", Renderer.binSize);
 
+            if (EditorGUI.EndChangeCheck())
+            {
+                EditorUtility.SetDirty(Renderer);
+            }
+
             DrawInstanceClusters();
             
             GUILayout.Space(8);
