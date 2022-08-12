@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.5.4 - 12.8.2022
+
+#### Fixed
+
+- Fixed set dirty on renderer properties change
+
 ### Release 0.5.3 - 2.7.2022
 
 #### Fixed
