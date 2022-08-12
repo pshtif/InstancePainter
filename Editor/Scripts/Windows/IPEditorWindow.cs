@@ -156,6 +156,9 @@ namespace InstancePainter.Editor
                         EditorGUILayout.FloatField("Weight Probability", p_instanceDefinition.weight);
                     
                     Core.Config.density = EditorGUILayout.IntField("Density", Core.Config.density);
+                    
+                    p_instanceDefinition.maximumSlope = EditorGUILayout.Slider("Maximum Slope", p_instanceDefinition.maximumSlope, 0, 90);
+                    p_instanceDefinition.minimalDistance = EditorGUILayout.FloatField("Minimum Distance", p_instanceDefinition.minimalDistance);
 
                     p_instanceDefinition.minScale = EditorGUILayout.FloatField("Min Scale", p_instanceDefinition.minScale);
                     p_instanceDefinition.maxScale = EditorGUILayout.FloatField("Max Scale", p_instanceDefinition.maxScale);
