@@ -32,6 +32,7 @@ namespace InstancePainter.Editor
 
         public int density = 1;
         public bool minimizePaintDefinitions = false;
+        public bool minimizeOtherSettings = false;
         public List<InstanceDefinition> paintDefinitions = new List<InstanceDefinition>();
         #endregion
         
@@ -50,8 +51,8 @@ namespace InstancePainter.Editor
 
         public bool useMeshRaycasting = false;
         
-        public List<LayerMask> includeLayers;
-        public List<LayerMask> excludeLayers;
+        public List<LayerMask> includeLayers = new List<LayerMask>();
+        public List<LayerMask> excludeLayers = new List<LayerMask>();
         
         static public IPEditorConfig Create()
         {
