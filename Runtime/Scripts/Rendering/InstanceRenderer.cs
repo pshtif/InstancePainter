@@ -29,11 +29,10 @@ namespace InstancePainter.Runtime
         private bool _initialized = false;
         public bool IsInitialized => _initialized;
 
-        public float binSize = 1000;
-
         public bool enableModifiers = true;
         public List<InstanceModifierBase> modifiers = new List<InstanceModifierBase>();
         public bool autoApplyModifiers = false;
+        public float binSize = 1000;
 
         public bool forceFallback = false;
 
@@ -42,9 +41,51 @@ namespace InstancePainter.Runtime
 #if UNITY_EDITOR
         public bool enableEditorPreview = true;
 
-        public bool instanceClustersMinimized = false;
+        public bool settingsMinimized = false;
         
+        public bool instanceClustersMinimized = false;
+
         public bool modifiersMinimized = false;
+
+        public int GetNullClusters()
+        {
+            int count = 0;
+            foreach (var cluster in _instanceClusters)
+            {
+                if (cluster == null)
+                    count++;
+            }
+
+            return count;
+        }
+        
+        public int GetInvalidMeshClusters()
+        {
+            int count = 0;
+            foreach (var cluster in _instanceClusters)
+            {
+                if (cluster != null && cluster.GetMeshName() == "NONE")
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+        
+        public int GetInvalidFallbackMaterialClusters()
+        {
+            int count = 0;
+            foreach (var cluster in _instanceClusters)
+            {
+                if (cluster != null && !cluster.HasFallbackMaterial())
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
 #endif
 
         void Update()

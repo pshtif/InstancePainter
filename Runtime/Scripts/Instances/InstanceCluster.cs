@@ -220,7 +220,9 @@ namespace InstancePainter.Runtime
             
             if (fallbackMaterial == null || mesh == null)
             {
+#if !UNITY_EDITOR
                 Debug.LogWarning("Mesh or fallback Material not set for this cluster.");
+#endif
                 return;
             }
             
@@ -261,6 +263,16 @@ namespace InstancePainter.Runtime
         public string GetMeshName()
         {
             return mesh == null ? "NONE" : mesh.name;
+        }
+
+        public bool HasMaterial()
+        {
+            return material != null;
+        }
+
+        public bool HasFallbackMaterial()
+        {
+            return fallbackMaterial != null;
         }
 #endif
     }

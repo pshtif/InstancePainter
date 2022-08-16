@@ -48,6 +48,8 @@ namespace InstancePainter.Runtime
         void UndoRedoPerformed();
         
         void UpdateSerializedData();
+
+        bool HasFallbackMaterial();
 #endif
     }
 }

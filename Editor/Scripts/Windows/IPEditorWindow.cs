@@ -63,10 +63,7 @@ namespace InstancePainter.Editor
 
             DrawPaintDefinitionsGUI();
         
-            DrawLayersGUI();
-
-            Core.Config.useMeshRaycasting =
-                GUILayout.Toggle(Core.Config.useMeshRaycasting, "Use Mesh Raycasting");
+            DrawOthersGUI();
 
             if (EditorGUI.EndChangeCheck())
             {
@@ -99,7 +96,8 @@ namespace InstancePainter.Editor
 
                 }
 
-                if (GUILayout.Button("Add Paint Definition"))
+                GUILayout.Space(8);
+                if (GUILayout.Button("Add Paint Definition", GUILayout.Height(24)))
                 {
                     Core.Config.paintDefinitions.Add(null);
                 }
@@ -121,6 +119,8 @@ namespace InstancePainter.Editor
             if (GUI.Button(new Rect(rect.x+2, rect.y+2, 16, 16), IconManager.GetIcon("remove_icon"), Skin.GetStyle("removebutton")))
             {
                 Core.Config.paintDefinitions.Remove(p_instanceDefinition);
+                
+                GUILayout.EndHorizontal();
                 return true;
             }
 
@@ -184,8 +184,19 @@ namespace InstancePainter.Editor
             return false;
         }
 
-        void DrawLayersGUI()
+        void DrawOthersGUI()
         {
+            EditorGUILayout.LabelField("Other Settings", Skin.GetStyle("paintdefinitions"), GUILayout.Height(24));
+            
+            var rect = GUILayoutUtility.GetLastRect();
+            if (GUI.Button(new Rect(rect.x+rect.width-14, rect.y, 16, 16), Core.Config.minimizeOtherSettings ? "+" : "-", Skin.GetStyle("minimizebutton")))
+            {
+                Core.Config.minimizeOtherSettings = !Core.Config.minimizeOtherSettings;
+            }
+
+            if (Core.Config.minimizeOtherSettings)
+                return;
+            
             SerializedObject serializedObject = new SerializedObject(Core.Config);
 
             SerializedProperty serializedIncludeLayers = serializedObject.FindProperty("includeLayers");
@@ -194,6 +205,9 @@ namespace InstancePainter.Editor
             {
                 serializedObject.ApplyModifiedProperties();
             }
+            
+            Core.Config.useMeshRaycasting =
+                GUILayout.Toggle(Core.Config.useMeshRaycasting, "Use Mesh Raycasting");
         }
     }
 }

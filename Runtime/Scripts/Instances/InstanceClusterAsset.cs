@@ -12,25 +12,6 @@ namespace InstancePainter.Runtime
     {
         public InstanceCluster cluster;
 
-        #if UNITY_EDITOR
-        public bool minimized
-        {
-            get
-            {
-                return cluster == null ? false : cluster.minimized;
-            }
-            set
-            {
-                cluster.minimized = value;
-            }
-        }
-
-        public string GetMeshName()
-        {
-            return cluster == null ? "NA" : cluster.GetMeshName();
-        }
-        #endif
-        
         public int GetCount()
         {
             return cluster == null ? 0 : cluster.GetCount();
@@ -159,6 +140,33 @@ namespace InstancePainter.Runtime
             UnityEditor.AssetDatabase.Refresh();
 
             return asset;
+        }
+        
+        public bool minimized
+        {
+            get
+            {
+                return cluster == null ? false : cluster.minimized;
+            }
+            set
+            {
+                cluster.minimized = value;
+            }
+        }
+
+        public string GetMeshName()
+        {
+            return cluster == null ? "NA" : cluster.GetMeshName();
+        }
+        
+        public bool HasMaterial()
+        {
+            return cluster != null && cluster.HasMaterial();
+        }
+
+        public bool HasFallbackMaterial()
+        {
+            return cluster != null && cluster.HasFallbackMaterial();
         }
 #endif
     }

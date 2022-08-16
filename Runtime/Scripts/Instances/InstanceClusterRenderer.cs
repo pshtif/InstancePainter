@@ -172,6 +172,7 @@ namespace InstancePainter.Runtime
 
                 _fallbackPropertyBlock.SetVectorArray("_Color", _colorBatchFallbackArray);
 
+                Debug.Log(i+" : "+matrixBatchSubArray.Length+" : "+p_mesh.subMeshCount);
                 for (int j = 0; j < p_mesh.subMeshCount; j++)
                 {
                     Graphics.DrawMeshInstanced(p_mesh, j, p_material, _matrixBatchFallbackArray,
