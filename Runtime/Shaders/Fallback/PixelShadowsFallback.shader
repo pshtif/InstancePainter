@@ -30,6 +30,8 @@ Shader "Instance Painter/Fallback/PixelShadowsFallback"
 
             HLSLPROGRAM
             #pragma target 2.0
+            //#pragma instancing_options maxcount:1000
+            #pragma instancing_options assumeuniformscaling
             #pragma vertex vert
             #pragma fragment frag
             #pragma shader_feature CULLING
