@@ -94,6 +94,7 @@ namespace InstancePainter.Editor
             }
 
             GUI.color = new Color(0.9f, .5f, 0);
+            GUILayout.Space(8);
             if (GUILayout.Button("ADD CLUSTER", GUILayout.Height(32)))
             {
                 if (EditorUtility.DisplayDialog("Cluster type", "Add an asset cluster or bound cluster?", "Asset",
@@ -116,11 +117,20 @@ namespace InstancePainter.Editor
         bool DrawICluster(int p_index)
         {
             var cluster = Renderer.InstanceClusters[p_index];
-            GUILayout.Label("Instance Cluster: " + (cluster == null ? 0 : cluster.GetCount()), StyleUtils.ClusterStyle,
-                GUILayout.Height(20));
+            GUILayout.Label("      Instance Cluster: " + (cluster == null ? 0 : cluster.GetCount()), StyleUtils.ClusterStyle,
+                GUILayout.Height(24));
 
             if (cluster != null) {
                 var rect = GUILayoutUtility.GetLastRect();
+                
+                if (GUI.Button(new Rect(rect.x+2, rect.y+4, 16, 16), IconManager.GetIcon("remove_icon"), Skin.GetStyle("removebutton")))
+                {
+                    Renderer.InstanceClusters.RemoveAt(p_index);
+                    cluster?.Dispose();
+                    SceneView.RepaintAll();
+                    return true;
+                }
+                
                 if (GUI.Button(new Rect(rect.x + rect.width - 14, rect.y, 16, 16), cluster.minimized ? "+" : "-",
                         Skin.GetStyle("minimizebutton")))
                 {
@@ -129,24 +139,15 @@ namespace InstancePainter.Editor
 
                 GUI.Label(new Rect(rect.x + rect.width - 220, rect.y + 2, 200, 16), cluster.GetMeshName(),
                     StyleUtils.ClusterMeshNameStyle);
-                
-                if (cluster.minimized)
-                    return false;
             }
-
-            bool modified = false;
-            if (cluster == null || cluster is InstanceClusterAsset)
-                modified = DrawInstanceClusterAsset(p_index);
             
-            if (cluster is InstanceCluster) 
-                modified = DrawInstanceCluster(p_index);
-
+            GUILayout.BeginHorizontal();
             if (cluster != null)
             {
                 if (IPRuntimeEditorCore.explicitCluster == cluster.GetCluster())
                 {
                     GUI.color = new Color(0.9f, 0.5f, 0);
-                    if (GUILayout.Button("Unset as Explicit Cluster"))
+                    if (GUILayout.Button("Unset as Explicit Cluster", GUILayout.Width(EditorGUIUtility.currentViewWidth/2), GUILayout.Height(24)))
                     {
                         IPRuntimeEditorCore.explicitCluster = null;
                         SceneView.RepaintAll();
@@ -156,7 +157,7 @@ namespace InstancePainter.Editor
                 }
                 else
                 {
-                    if (GUILayout.Button("Set as Explicit Cluster"))
+                    if (GUILayout.Button("Set as Explicit Cluster", GUILayout.Width(EditorGUIUtility.currentViewWidth/2), GUILayout.Height(24)))
                     {
                         IPRuntimeEditorCore.explicitCluster = cluster.GetCluster();
                         SceneView.RepaintAll();
@@ -164,14 +165,28 @@ namespace InstancePainter.Editor
                 }
             }
 
-            if (GUILayout.Button("Delete"))
+            GUI.color = new Color(1f, .25f, .25f);
+            if (GUILayout.Button("Delete", GUILayout.Height(24)))
             {
                 Renderer.InstanceClusters.RemoveAt(p_index);
                 cluster?.Dispose();
+                GUILayout.EndHorizontal();
                 SceneView.RepaintAll();
                 return true;
             }
+            GUI.color = Color.white;
+            GUILayout.EndHorizontal();
             
+            if (cluster != null && cluster.minimized)
+                return false;
+
+            bool modified = false;
+            if (cluster == null || cluster is InstanceClusterAsset)
+                modified = DrawInstanceClusterAsset(p_index);
+            
+            if (cluster is InstanceCluster) 
+                modified = DrawInstanceCluster(p_index);
+
             GUILayout.Space(4);
 
             return modified;
