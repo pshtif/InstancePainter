@@ -135,7 +135,7 @@ namespace InstancePainter.Editor
             return data;
         }
         
-        public ICluster[] PlaceInstance(InstanceDefinition p_instanceDefinition, Vector3 p_position, MeshFilter[] p_validMeshes, Collider[] p_validColliders, List<PaintedInstance> p_paintedInstances)
+        public ICluster[] PlaceInstance(InstanceDefinition p_instanceDefinition, Vector3 p_position, MeshFilter[] p_validMeshes, Collider[] p_validColliders, List<PaintedInstance> p_paintedInstances, float p_minimumDistance, Color p_color)
         {
             List<ICluster> paintedDatas = new List<ICluster>();
             
@@ -167,25 +167,28 @@ namespace InstancePainter.Editor
             MeshFilter[] filters = p_instanceDefinition.prefab.GetComponentsInChildren<MeshFilter>();
             
             Mesh[] meshes = filters.Select(f => f.sharedMesh).ToArray();
-            // Do proximity check
-            if (p_instanceDefinition.minimalDistance > 0)
+            
+            if (p_instanceDefinition.minimumDistance > 0 || p_minimumDistance > 0)
             {
                 foreach (var cluster in Renderer.InstanceClusters)
                 {
                     if (cluster == null)
                         continue;
-                    
-                   if (!meshes.Any(m => cluster.IsMesh(m)))
-                     continue;
-                 
-                   for (int i = 0; i < cluster.GetCount(); i++)
-                   {
+
+                    bool sameMeshCluster = meshes.Any(m => cluster.IsMesh(m));
+                       
+                    if (!sameMeshCluster && p_minimumDistance == 0)
+                       continue;
+
+                    for (int i = 0; i < cluster.GetCount(); i++)
+                    {
                        var matrix = cluster.GetInstanceMatrix(i);
-                       if (Vector3.Distance(p_position, matrix.GetColumn(3)) < p_instanceDefinition.minimalDistance)
+                       var distance = Vector3.Distance(p_position, matrix.GetColumn(3));
+                       if ((sameMeshCluster && distance < p_instanceDefinition.minimumDistance) || distance < p_minimumDistance)
                        {
                            return paintedDatas.ToArray();
                        }
-                   }
+                    }
                }
             }
 
@@ -210,7 +213,7 @@ namespace InstancePainter.Editor
                 if (filter.sharedMesh != null)
                 {
                     var data = AddInstance(p_instanceDefinition, filter.sharedMesh, position, rotation,
-                        scale, Config.color);
+                        scale, p_color);
 
                     var instance = new PaintedInstance(data, data.GetInstanceMatrix(data.GetCount() - 1),
                         data.GetInstanceColor(data.GetCount() - 1),
