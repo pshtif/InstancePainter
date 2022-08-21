@@ -9,6 +9,14 @@ namespace InstancePainter.Runtime
     [Serializable]
     public class InstanceCluster : ICluster
     {
+        public static InstanceCluster CreateEmptyCluster()
+        {
+            var cluster = new InstanceCluster();
+            cluster.material = MaterialUtils.DefaultIndirectMaterial;
+            cluster.fallbackMaterial = MaterialUtils.DefaultFallbackMaterial;
+            return cluster;
+        }
+        
         public bool enabled = true;
         
         public Material material;
@@ -194,7 +202,12 @@ namespace InstancePainter.Runtime
 
             if (material == null || mesh == null)
             {
-                Debug.LogWarning("Mesh or Material not set for this cluster.");
+#if UNITY_EDITOR
+                if (Application.isPlaying)
+                {
+                    Debug.LogWarning("Mesh or Material not set for this cluster.");
+                }
+#endif
                 return;
             }
             
@@ -260,9 +273,14 @@ namespace InstancePainter.Runtime
         
         public bool minimized { get; set; } = false;
 
-        public string GetMeshName()
+        public string GetClusterName()
         {
-            return mesh == null ? "NONE" : mesh.name;
+            return mesh == null ? "<color=#FF0000>NO MESH</color>" : "<color=#FFFF00>"+mesh.name+"</color>";
+        }
+
+        public bool HasMesh()
+        {
+            return mesh != null;
         }
 
         public bool HasMaterial()

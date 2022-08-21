@@ -40,10 +40,10 @@ namespace InstancePainter.Editor
                 case ModifyToolState.NONE:
                 case ModifyToolState.MODIFY_PAINT:
                 case ModifyToolState.MODIFY_POSITION:                    
-                    DrawModifyHandle(p_hit.point, p_hit.normal, Core.Config.brushSize);
+                    DrawModifyHandle(p_hit.point, p_hit.normal, Core.Config.ModifyToolConfig.brushSize);
                     break;
                 case ModifyToolState.MODIFY_INPLACE:
-                    DrawModifyInPlaceHandle(_modifyStartHit.point, _modifyStartHit.normal, Core.Config.brushSize);
+                    DrawModifyInPlaceHandle(_modifyStartHit.point, _modifyStartHit.normal, Core.Config.ModifyToolConfig.brushSize);
                     break;
             }
             
@@ -160,7 +160,7 @@ namespace InstancePainter.Editor
                 for (int i = 0; i<c.GetCount(); i++)
                 {
                     var matrix = c.GetInstanceMatrix(i);
-                    if (Vector3.Distance(p_hit.point, matrix.GetColumn(3)) < Core.Config.brushSize)
+                    if (Vector3.Distance(p_hit.point, matrix.GetColumn(3)) < Core.Config.ModifyToolConfig.brushSize)
                     {
                         var instance = new PaintedInstance(c, matrix, c.GetInstanceColor(i), i, null);
                         _modifyInstances.Add(instance);
@@ -255,7 +255,20 @@ namespace InstancePainter.Editor
         
         public override void DrawSceneGUI(SceneView p_sceneView)
         {
+            if (Event.current.control && Event.current.isScrollWheel)
+            {
+                Core.Config.ModifyToolConfig.brushSize -= Event.current.delta.y;
+                Event.current.Use();
+                InstancePainterWindow.Instance.Repaint();
+            }
+
+            if (!Core.Config.showTooltips)
+                return;
+            
             var rect = p_sceneView.camera.GetScaledPixelRect();
+            
+            EditorGUI.LabelField(new Rect(rect.width / 2 - 60, 48, 120, 18), "MODIFY TOOL", Core.Config.Skin.GetStyle("scenegui_tool_tooltip_title"));
+            
             GUILayout.BeginArea(new Rect(rect.width / 2 - 500, 65, 1000, 85));
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
@@ -282,7 +295,7 @@ namespace InstancePainter.Editor
 
         public override void DrawInspectorGUI()
         {
-            EditorGUILayout.LabelField("Modify Tool", Core.Config.Skin.GetStyle("tooltitle"), GUILayout.Height(24));
+            GUIUtils.DrawSectionTitle("MODIFY TOOL");
         
             var style = new GUIStyle();
             style.normal.background = TextureUtils.GetColorTexture(new Color(.1f, .1f, .1f));
@@ -291,10 +304,12 @@ namespace InstancePainter.Editor
             style.alignment = TextAnchor.MiddleCenter;
             style.fontSize = 14;
         
-            Core.Config.brushSize = EditorGUILayout.Slider("Brush Size", Core.Config.brushSize, 0.1f, 100);
+            Core.Config.ModifyToolConfig.brushSize = EditorGUILayout.Slider("Brush Size", Core.Config.ModifyToolConfig.brushSize, 0.1f, 100);
 
             Core.Config.modifyPosition = EditorGUILayout.Vector3Field("Modify Position", Core.Config.modifyPosition);
             Core.Config.modifyScale = EditorGUILayout.Vector3Field("Modify Scale", Core.Config.modifyScale);
+            
+            GUILayout.Space(4);
         }
     }
 }

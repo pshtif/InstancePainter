@@ -37,10 +37,10 @@ namespace InstancePainter.Editor
             {
                 case PaintToolState.NONE:
                 case PaintToolState.PAINT:
-                    DrawPaintHandle(p_hit.point, p_hit.normal, Core.Config.brushSize);
+                    DrawPaintHandle(p_hit.point, p_hit.normal, Core.Config.PaintToolConfig.brushSize);
                     break;
                 case PaintToolState.UPDATE:
-                    DrawUpdateHandle(_paintStartHit.point, _paintStartHit.normal, Core.Config.brushSize);
+                    DrawUpdateHandle(_paintStartHit.point, _paintStartHit.normal, Core.Config.PaintToolConfig.brushSize);
                     break;
             }
 
@@ -148,22 +148,28 @@ namespace InstancePainter.Editor
 
             List<ICluster> invalidateClusters = new List<ICluster>();
 
-            if (Core.Config.density == 1)
+            if (Core.Config.PaintToolConfig.density == 1)
             {
-                InstanceDefinition instanceDefinition = Core.GetWeightedDefinition();
+                InstanceDefinition instanceDefinition = Core.Config.GetWeightedDefinition();
                 var datas = Core.PlaceInstance(instanceDefinition, p_hit.point, _cachedValidMeshes, _cachedValidColliders, _paintedInstances);
                 invalidateClusters.AddRangeIfUnique(datas);
             }
             else
             {
-                for (int i = 0; i < Core.Config.density; i++)
+                for (int i = 0; i < Core.Config.PaintToolConfig.density; i++)
                 {
-                    InstanceDefinition instanceDefinition = Core.GetWeightedDefinition();
-                    Vector3 direction = Quaternion.AngleAxis(Random.Range(0, 360), Vector3.up) * Vector3.right;
-                    Vector3 position = direction * Random.Range(0, Core.Config.brushSize) + p_hit.point;
+                    InstanceDefinition instanceDefinition = Core.Config.GetWeightedDefinition();
 
-                    var datas = Core.PlaceInstance(instanceDefinition, position, _cachedValidMeshes, _cachedValidColliders, _paintedInstances);
-                    invalidateClusters.AddRangeIfUnique(datas);
+                    if (instanceDefinition != null)
+                    {
+
+                        Vector3 direction = Quaternion.AngleAxis(Random.Range(0, 360), Vector3.up) * Vector3.right;
+                        Vector3 position = direction * Random.Range(0, Core.Config.PaintToolConfig.brushSize) + p_hit.point;
+
+                        var datas = Core.PlaceInstance(instanceDefinition, position, _cachedValidMeshes,
+                            _cachedValidColliders, _paintedInstances);
+                        invalidateClusters.AddRangeIfUnique(datas);
+                    }
                 }
             }
 
@@ -181,9 +187,9 @@ namespace InstancePainter.Editor
                 {
                     var position = data.GetInstanceMatrix(i).GetColumn(3);
                     var distance = Vector3.Distance(position, p_hit.point);
-                    if (distance < Core.Config.brushSize)
+                    if (distance < Core.Config.PaintToolConfig.brushSize)
                     {
-                        data.SetInstanceColor(i, Vector4.Lerp(data.GetInstanceColor(i),Core.Config.color, (1-distance/Core.Config.brushSize) * Core.Config.alpha));
+                        data.SetInstanceColor(i, Vector4.Lerp(data.GetInstanceColor(i),Core.Config.color, (1-distance/Core.Config.PaintToolConfig.brushSize) * Core.Config.alpha));
                         invalidateDatas.AddIfUnique(data);
                     }
                 }
@@ -217,7 +223,20 @@ namespace InstancePainter.Editor
         
         public override void DrawSceneGUI(SceneView p_sceneView)
         {
+            if (Event.current.control && Event.current.isScrollWheel)
+            {
+                Core.Config.PaintToolConfig.brushSize -= Event.current.delta.y;
+                Event.current.Use();
+                InstancePainterWindow.Instance.Repaint();
+            }
+
+            if (!Core.Config.showTooltips)
+                return;
+            
             var rect = p_sceneView.camera.GetScaledPixelRect();
+            
+            EditorGUI.LabelField(new Rect(rect.width / 2 - 60, 48, 120, 18), "PAINT TOOL", Core.Config.Skin.GetStyle("scenegui_tool_tooltip_title"));
+            
             GUILayout.BeginArea(new Rect(rect.width / 2 - 500, 65, 1000, 85));
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
@@ -244,17 +263,17 @@ namespace InstancePainter.Editor
 
         public override void DrawInspectorGUI()
         {
-            EditorGUILayout.LabelField("Paint Tool", Core.Config.Skin.GetStyle("tooltitle"), GUILayout.Height(24));
-        
-            Core.Config.brushSize = EditorGUILayout.Slider("Brush Size", Core.Config.brushSize, 0.1f, 100);
+            GUIUtils.DrawSectionTitle("PAINT TOOL");
+
+            Core.Config.PaintToolConfig.brushSize = EditorGUILayout.Slider("Brush Size", Core.Config.PaintToolConfig.brushSize, 0.1f, 100);
         
             Core.Config.color = EditorGUILayout.ColorField("Color", Core.Config.color);
             
             Core.Config.alpha = EditorGUILayout.Slider("Alpha", Core.Config.alpha, 0, 1);
 
-            Core.Config.density = EditorGUILayout.IntField("Density", Core.Config.density);
+            Core.Config.PaintToolConfig.density = EditorGUILayout.IntField("Density", Core.Config.PaintToolConfig.density);
             
-            IPEditorWindow.Instance.Repaint();
+            GUILayout.Space(4);
         }
     }
 }

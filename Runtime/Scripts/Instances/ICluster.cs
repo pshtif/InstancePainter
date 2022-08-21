@@ -43,12 +43,16 @@ namespace InstancePainter.Runtime
 #if UNITY_EDITOR
         bool minimized { get; set; }
 
-        string GetMeshName();
+        string GetClusterName();
 
         void UndoRedoPerformed();
         
         void UpdateSerializedData();
 
+        bool HasMesh();
+        
+        bool HasMaterial();
+        
         bool HasFallbackMaterial();
 #endif
     }

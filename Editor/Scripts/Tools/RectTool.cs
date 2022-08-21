@@ -167,15 +167,20 @@ namespace InstancePainter.Editor
             
             EditorUtility.DisplayProgressBar("InstancePainter", "Filling painted instances...", .5f);
 
-            for (int i = 0; i < Core.Config.density; i++)
+            for (int i = 0; i < Core.Config.RectToolConfig.density; i++)
             {
-                InstanceDefinition instanceDefinition = Core.GetWeightedDefinition();
-                var datas = Core.PlaceInstance(instanceDefinition, new Vector3(Random.Range(minX, maxX), p_startPoint.y, Random.Range(minZ, maxZ)), validMeshes, validColliders, _paintedInstances);
-                
-                foreach (var data in datas)
+                InstanceDefinition instanceDefinition = Core.Config.GetWeightedDefinition();
+                if (instanceDefinition != null)
                 {
-                    if (!invalidateDatas.Contains(data))
-                        invalidateDatas.Add(data);
+                    var datas = Core.PlaceInstance(instanceDefinition,
+                        new Vector3(Random.Range(minX, maxX), p_startPoint.y, Random.Range(minZ, maxZ)), validMeshes,
+                        validColliders, _paintedInstances);
+
+                    foreach (var data in datas)
+                    {
+                        if (!invalidateDatas.Contains(data))
+                            invalidateDatas.Add(data);
+                    }
                 }
             }
 
@@ -186,7 +191,13 @@ namespace InstancePainter.Editor
         
         public override void DrawSceneGUI(SceneView p_sceneView)
         {
+            if (!Core.Config.showTooltips)
+                return;
+            
             var rect = p_sceneView.camera.GetScaledPixelRect();
+            
+            EditorGUI.LabelField(new Rect(rect.width / 2 - 60, 48, 120, 18), "RECT TOOL", Core.Config.Skin.GetStyle("scenegui_tool_tooltip_title"));
+            
             GUILayout.BeginArea(new Rect(rect.width / 2 - 500, 65, 1000, 85));
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
@@ -205,7 +216,8 @@ namespace InstancePainter.Editor
         
         public override void DrawInspectorGUI()
         {
-            EditorGUILayout.LabelField("Rect Tool", Core.Config.Skin.GetStyle("tooltitle"), GUILayout.Height(24));
+            GUIUtils.DrawSectionTitle("RECT TOOL");
+            GUILayout.Space(4);
         }
     }
 }

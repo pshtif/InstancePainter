@@ -14,7 +14,7 @@ namespace InstancePainter.Runtime
 
         public int GetCount()
         {
-            return cluster == null ? 0 : cluster.GetCount();
+            return cluster.GetCount();
         }
 
         public InstanceClusterAsset()
@@ -114,7 +114,7 @@ namespace InstancePainter.Runtime
             UnityEditor.EditorUtility.SetDirty(this);
         }
         
-        public static InstanceClusterAsset CreateAssetWithPanel(InstanceCluster p_cluster = null)
+        public static InstanceClusterAsset CreateAssetWithPanel(InstanceCluster p_cluster)
         {
             var path = UnityEditor.EditorUtility.SaveFilePanelInProject(
                 "Create Instance Cluster Asset",
@@ -130,10 +130,10 @@ namespace InstancePainter.Runtime
             return null;
         }
         
-        public static InstanceClusterAsset CreateAsAssetFromPath(string p_path, InstanceCluster p_cluster = null)
+        public static InstanceClusterAsset CreateAsAssetFromPath(string p_path, InstanceCluster p_cluster)
         {
             InstanceClusterAsset asset = ScriptableObject.CreateInstance<InstanceClusterAsset>();
-            asset.cluster = p_cluster;
+            asset.cluster = p_cluster == null ? InstanceCluster.CreateEmptyCluster() : p_cluster;
 
             UnityEditor.AssetDatabase.CreateAsset(asset, p_path);
             UnityEditor.AssetDatabase.SaveAssets();
@@ -146,7 +146,7 @@ namespace InstancePainter.Runtime
         {
             get
             {
-                return cluster == null ? false : cluster.minimized;
+                return cluster.minimized;
             }
             set
             {
@@ -154,19 +154,24 @@ namespace InstancePainter.Runtime
             }
         }
 
-        public string GetMeshName()
+        public string GetClusterName()
         {
-            return cluster == null ? "NA" : cluster.GetMeshName();
+            return cluster.GetClusterName();
+        }
+
+        public bool HasMesh()
+        {
+            return cluster.HasMesh();
         }
         
         public bool HasMaterial()
         {
-            return cluster != null && cluster.HasMaterial();
+            return cluster.HasMaterial();
         }
 
         public bool HasFallbackMaterial()
         {
-            return cluster != null && cluster.HasFallbackMaterial();
+            return cluster.HasFallbackMaterial();
         }
 #endif
     }

@@ -49,7 +49,7 @@ namespace InstancePainter.Editor
 
             EditorGUILayout.LabelField("Scene Instance Renderers", Skin.GetStyle("paintdefinitions"), GUILayout.Height(24));
 
-            var renderers = FindObjectsOfType<IPRenderer>();
+            var renderers = FindObjectsOfType<InstanceRenderer>();
 
             horizontalStyle.normal.background = TextureUtils.GetColorTexture(new Color(.1f, .1f, .1f));
             GUILayout.BeginHorizontal(horizontalStyle, GUILayout.Height(24));
@@ -83,12 +83,12 @@ namespace InstancePainter.Editor
                 }
                 GUI.color = Color.white;
                 
-                GUILayout.Label(renderer.name, objectStyle, GUILayout.Width(120));
-                GUILayout.Space(20);
-                GUILayout.Label(renderer.MeshName);
-                GUILayout.FlexibleSpace();
-                GUILayout.Label(renderer.InstanceCount.ToString(), GUILayout.Width(90));
-                GUILayout.Label(renderer.DrawCalls.ToString(), GUILayout.Width(70));
+                // GUILayout.Label(renderer.name, objectStyle, GUILayout.Width(120));
+                // GUILayout.Space(20);
+                // GUILayout.Label(renderer.MeshName);
+                // GUILayout.FlexibleSpace();
+                // GUILayout.Label(renderer.InstanceCount.ToString(), GUILayout.Width(90));
+                // GUILayout.Label(renderer.DrawCalls.ToString(), GUILayout.Width(70));
                 if (GUILayout.Button("Select"))
                 {
                     Selection.objects = new Object[] { renderer.gameObject };

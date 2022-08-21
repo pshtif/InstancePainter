@@ -23,16 +23,15 @@ namespace InstancePainter.Runtime
         
         [NonSerialized]
         private List<ICluster> _instanceClusters = new List<ICluster>();
-
+        
         public List<ICluster> InstanceClusters => _instanceClusters;
-
-        private bool _initialized = false;
-        public bool IsInitialized => _initialized;
 
         public bool enableModifiers = true;
         public List<InstanceModifierBase> modifiers = new List<InstanceModifierBase>();
         public bool autoApplyModifiers = false;
         public float binSize = 1000;
+
+        public bool enableFallback = true;
 
         public bool forceFallback = false;
 
@@ -43,9 +42,31 @@ namespace InstancePainter.Runtime
 
         public bool settingsMinimized = false;
         
-        public bool instanceClustersMinimized = false;
+        public bool clusterSectionMinimized = false;
+
+        public List<bool> clustersMinimized = new List<bool>();
 
         public bool modifiersMinimized = false;
+
+        public bool IsClusterMinimized(int p_index)
+        {
+            while (p_index >= clustersMinimized.Count)
+            {
+                clustersMinimized.Add(false);
+            }
+
+            return clustersMinimized[p_index];
+        }
+
+        public void SetClusterMinimized(int p_index, bool p_minimzed)
+        {
+            while (p_index >= clustersMinimized.Count)
+            {
+                clustersMinimized.Add(false);
+            }
+
+            clustersMinimized[p_index] = p_minimzed;
+        }
 
         public int GetNullClusters()
         {
@@ -64,7 +85,7 @@ namespace InstancePainter.Runtime
             int count = 0;
             foreach (var cluster in _instanceClusters)
             {
-                if (cluster != null && cluster.GetMeshName() == "NONE")
+                if (cluster != null && !cluster.HasMesh())
                 {
                     count++;
                 }
@@ -79,6 +100,20 @@ namespace InstancePainter.Runtime
             foreach (var cluster in _instanceClusters)
             {
                 if (cluster != null && !cluster.HasFallbackMaterial())
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+        
+        public int GetInvalidMaterialClusters()
+        {
+            int count = 0;
+            foreach (var cluster in _instanceClusters)
+            {
+                if (cluster != null && !cluster.HasMaterial())
                 {
                     count++;
                 }
@@ -106,7 +141,10 @@ namespace InstancePainter.Runtime
         {
             if (IsFallback)
             {
-                InstanceClusters.ForEach(id => id?.RenderFallback(p_camera));
+                if (enableFallback || forceFallback)
+                {
+                    InstanceClusters.ForEach(id => id?.RenderFallback(p_camera));
+                }
             } else {
                 InstanceClusters.ForEach(id => id?.RenderIndirect(p_camera));
             }

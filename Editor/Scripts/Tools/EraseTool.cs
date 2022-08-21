@@ -17,7 +17,7 @@ namespace InstancePainter.Editor
 
         protected override void HandleMouseHitInternal(RaycastHit p_hit)
         {
-            DrawHandle(p_hit.point, p_hit.normal, Core.Config.brushSize);
+            DrawHandle(p_hit.point, p_hit.normal, Core.Config.EraseToolConfig.brushSize);
             
             if (Event.current.button == 0 && !Event.current.alt && Event.current.type == EventType.MouseDown)
             {
@@ -54,7 +54,7 @@ namespace InstancePainter.Editor
         {
             List<ICluster> invalidateDatas = new List<ICluster>();
 
-            var sizeSq = Core.Config.brushSize * Core.Config.brushSize;
+            var sizeSq = Core.Config.EraseToolConfig.brushSize * Core.Config.EraseToolConfig.brushSize;
             var clusters = Core.Renderer.InstanceClusters;
             foreach (ICluster cluster in clusters)
             {
@@ -83,10 +83,44 @@ namespace InstancePainter.Editor
                 r.UpdateSerializedData();
             });
         }
+        
+        void CacheValidEraseMeshes()
+        {
+            List<Mesh> meshes = new List<Mesh>();
+            foreach (var definition in Core.Config.paintDefinitions)
+            {
+                if (!definition.enabled || definition.prefab == null)
+                    continue;
+                
+                MeshFilter[] filters = definition.prefab.GetComponentsInChildren<MeshFilter>();
+                foreach (var filter in filters)
+                {
+                    if (!meshes.Contains(filter.sharedMesh))
+                    {
+                        meshes.Add(filter.sharedMesh);
+                    }
+                }
+            }
+
+            _validEraseMeshes = meshes.ToArray();
+        }
 
         public override void DrawSceneGUI(SceneView p_sceneView)
         {
+            if (Event.current.control && Event.current.isScrollWheel)
+            {
+                Core.Config.EraseToolConfig.brushSize -= Event.current.delta.y;
+                Event.current.Use();
+                InstancePainterWindow.Instance.Repaint();
+            }
+
+            if (!Core.Config.showTooltips)
+                return;
+
             var rect = p_sceneView.camera.GetScaledPixelRect();
+            
+            EditorGUI.LabelField(new Rect(rect.width / 2 - 60, 48, 120, 18), "ERASE TOOL", Core.Config.Skin.GetStyle("scenegui_tool_tooltip_title"));
+            
             GUILayout.BeginArea(new Rect(rect.width / 2 - 500, 65, 1000, 85));
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
@@ -101,32 +135,13 @@ namespace InstancePainter.Editor
 
         public override void DrawInspectorGUI()
         {
-            EditorGUILayout.LabelField("Erase Tool", Core.Config.Skin.GetStyle("tooltitle"), GUILayout.Height(24));
+            GUIUtils.DrawSectionTitle("ERASE TOOL");
             
-            Core.Config.brushSize = EditorGUILayout.Slider("Erase Size", Core.Config.brushSize, 0.1f, 100);
+            Core.Config.EraseToolConfig.brushSize = EditorGUILayout.Slider("Erase Size", Core.Config.EraseToolConfig.brushSize, 0.1f, 100);
             
             Core.Config.eraseActiveDefinition = EditorGUILayout.Toggle("Erase Only Active Definition", Core.Config.eraseActiveDefinition);
-        }
-
-        void CacheValidEraseMeshes()
-        {
-            List<Mesh> meshes = new List<Mesh>();
-            foreach (var definition in Core.Config.paintDefinitions)
-            {
-                if (!definition.enabled)
-                    continue;
-                
-                MeshFilter[] filters = definition.prefab.GetComponentsInChildren<MeshFilter>();
-                foreach (var filter in filters)
-                {
-                    if (!meshes.Contains(filter.sharedMesh))
-                    {
-                        meshes.Add(filter.sharedMesh);
-                    }
-                }
-            }
-
-            _validEraseMeshes = meshes.ToArray();
+            
+            GUILayout.Space(4);
         }
     }
 }

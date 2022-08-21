@@ -25,7 +25,7 @@ namespace InstancePainter.Editor
         [MenuItem("Tools/Instance Painter/Settings")]
         private static void ShowSettings()
         {
-            IPEditorWindow.InitEditorWindow();
+            InstancePainterWindow.InitEditorWindow();
         }
     }
 }

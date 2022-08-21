@@ -24,6 +24,8 @@ namespace InstancePainter.Editor
         
         public static IPEditorCore Instance { get; private set; }
         
+        public static GUISkin Skin => (GUISkin)Resources.Load("Skins/InstancePainterSkin");
+        
         private InstanceRenderer _renderer;
         public InstanceRenderer Renderer
         {
@@ -76,10 +78,8 @@ namespace InstancePainter.Editor
         public IPEditorCore() 
         {
             Config = IPEditorConfig.Create();
-            
-            SceneView.duringSceneGui -= OnSceneGUI;
-            SceneView.duringSceneGui += OnSceneGUI;
-            
+            IPSceneGUI.Initialize();
+
             Undo.undoRedoPerformed -= UndoRedoCallback;
             Undo.undoRedoPerformed += UndoRedoCallback;
         }
@@ -88,38 +88,17 @@ namespace InstancePainter.Editor
         {
             GameObject.FindObjectsOfType<InstanceRenderer>().ToList().ForEach(r =>
             {
-                r.InstanceClusters.ForEach(id => id.UndoRedoPerformed());
+                r.InstanceClusters.ForEach(cluster => cluster?.UndoRedoPerformed());
             });
             
             SceneView.RepaintAll();
-        }
-
-        private void OnSceneGUI(SceneView p_sceneView)
-        {
-            if (EditorApplication.isCompiling || BuildPipeline.isBuildingPlayer || !Config.enabled)
-                return;
-
-            if (Event.current.control && Event.current.isScrollWheel)
-            {
-                Config.brushSize -= Event.current.delta.y;
-                Event.current.Use();
-            }
-
-            // Not going over UI
-            if (!new Rect(p_sceneView.camera.GetScaledPixelRect().width / 2 - 130, 5, 340, 55).Contains(Event.current
-                .mousePosition))
-            {
-                _currentTool?.Handle();
-            }
-
-            IPSceneGUI.DrawGUI(p_sceneView);
         }
 
         public void ChangeTool<T>(bool p_enable = false) where T : ToolBase
         {
             _currentTool = (_currentTool == null || _currentTool.GetType() != typeof(T)) ? Activator.CreateInstance<T>() : null;
 
-            IPEditorWindow.Instance?.Repaint();
+            InstancePainterWindow.Instance?.Repaint();
         }
 
         public GameObject[] GetMeshGameObjects(GameObject p_object)
@@ -243,38 +222,6 @@ namespace InstancePainter.Editor
             }
 
             return paintedDatas.ToArray();
-        }
-
-        public InstanceDefinition GetWeightedDefinition()
-        {
-            if (Config.paintDefinitions.Count == 0)
-                return null;
-            
-            InstanceDefinition instanceDefinition = null;
-            
-            float sum = 0;
-            foreach (var def in Config.paintDefinitions)
-            {
-                if (def == null || !def.enabled)
-                    continue;
-                
-                sum += def.weight;
-            }
-            var random = Random.Range(0, sum);
-            foreach (var def in Config.paintDefinitions)
-            {
-                if (def == null || !def.enabled)
-                    continue;
-                
-                random -= def.weight;
-                if (random < 0)
-                {
-                    instanceDefinition = def;
-                    break;
-                }
-            }
-
-            return instanceDefinition;
         }
     }
 }
