@@ -164,6 +164,16 @@ namespace InstancePainter.Runtime
             return cluster.HasMesh();
         }
         
+        public Mesh GetMesh()
+        {
+            return cluster.GetMesh();
+        }
+
+        public bool IsEnabled()
+        {
+            return cluster.IsEnabled();
+        }
+        
         public bool HasMaterial()
         {
             return cluster.HasMaterial();

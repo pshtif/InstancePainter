@@ -18,7 +18,7 @@ namespace InstancePainter.Runtime
         public Material material;
         
         public float maximumSlope = 90;
-        public float minimalDistance = 1;
+        public float minimumDistance = 0;
 
         public float minScale = 1;
         public float maxScale = 1;

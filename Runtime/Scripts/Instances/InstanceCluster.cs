@@ -283,6 +283,16 @@ namespace InstancePainter.Runtime
             return mesh != null;
         }
 
+        public Mesh GetMesh()
+        {
+            return mesh;
+        }
+
+        public bool IsEnabled()
+        {
+            return enabled;
+        }
+
         public bool HasMaterial()
         {
             return material != null;
