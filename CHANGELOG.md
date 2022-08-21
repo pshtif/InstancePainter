@@ -11,6 +11,11 @@ All notable changes to this project will be documented in this file.
 - Added completely reworked UI editors and inspectors to have better user experience
 - Added warnings about no mesh, material, etc states
 
+#### Changed
+
+- Changed every tool has now its own standalone settings
+- Changed disabled clusters are uneffected by painting
+
 #### Fixed
 
 - Fixed a lot of lock states
