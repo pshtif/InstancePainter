@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.6.0 - 21.8.2022 RELEASE CANDIDATE
+
+#### Added
+
+- Added completely reworked UI editors and inspectors to have better user experience
+- Added warnings about no mesh, material, etc states
+
+#### Fixed
+
+- Fixed a lot of lock states
+- Fixed not possible to add same cluster twice to renderer
+- Fixed not possible to add same paint definiton twice to painter
+
 ### Release 0.5.4 - 12.8.2022
 
 #### Fixed
