@@ -60,10 +60,10 @@ namespace InstancePainter.Editor
             
             GUILayout.Space(4);
             
-            IPEditorCore.Instance.CurrentTool?.DrawInspectorGUI();
-            
             EditorGUI.BeginChangeCheck();
             
+            IPEditorCore.Instance.CurrentTool?.DrawInspectorGUI();
+
             DrawSettingsGUI();
             
             GUILayout.Space(4);
@@ -149,7 +149,9 @@ namespace InstancePainter.Editor
             style.fontSize = 12;
             
             GUILayout.BeginHorizontal();
+            GUI.color = p_instanceDefinition.enabled ? Color.white : new Color(.5f, .5f, .5f);
             GUILayout.Label("                  Paint Definition: <color='#FFFF00'>"+p_instanceDefinition.name+"</color>", style, GUILayout.Height(24));
+            GUI.color = Color.white;
             var rect = GUILayoutUtility.GetLastRect();
             if (GUI.Button(new Rect(rect.x+4, rect.y+4, 16, 16), IconManager.GetIcon("remove_icon"), Skin.GetStyle("removebutton")))
             {
@@ -182,7 +184,6 @@ namespace InstancePainter.Editor
                     p_instanceDefinition.enabled = true;
                     EditorUtility.SetDirty(p_instanceDefinition);
                 }
-                GUI.color = Color.white;
             }
 
             if (p_instanceDefinition.enabled)
@@ -252,7 +253,7 @@ namespace InstancePainter.Editor
                     Core.Config.PaintToolConfig.density = EditorGUILayout.IntField("Density", Core.Config.PaintToolConfig.density);
                     
                     p_instanceDefinition.maximumSlope = EditorGUILayout.Slider("Maximum Slope", p_instanceDefinition.maximumSlope, 0, 90);
-                    p_instanceDefinition.minimalDistance = EditorGUILayout.FloatField("Minimum Distance", p_instanceDefinition.minimalDistance);
+                    p_instanceDefinition.minimumDistance = EditorGUILayout.FloatField("Minimum Distance", p_instanceDefinition.minimumDistance);
 
                     p_instanceDefinition.minScale = EditorGUILayout.FloatField("Min Scale", p_instanceDefinition.minScale);
                     p_instanceDefinition.maxScale = EditorGUILayout.FloatField("Max Scale", p_instanceDefinition.maxScale);

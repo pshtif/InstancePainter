@@ -151,7 +151,9 @@ namespace InstancePainter.Editor
             if (Core.Config.PaintToolConfig.density == 1)
             {
                 InstanceDefinition instanceDefinition = Core.Config.GetWeightedDefinition();
-                var datas = Core.PlaceInstance(instanceDefinition, p_hit.point, _cachedValidMeshes, _cachedValidColliders, _paintedInstances);
+                var datas = Core.PlaceInstance(instanceDefinition, p_hit.point, _cachedValidMeshes,
+                    _cachedValidColliders, _paintedInstances, Core.Config.PaintToolConfig.minimumDistance,
+                    Core.Config.PaintToolConfig.color);
                 invalidateClusters.AddRangeIfUnique(datas);
             }
             else
@@ -167,7 +169,8 @@ namespace InstancePainter.Editor
                         Vector3 position = direction * Random.Range(0, Core.Config.PaintToolConfig.brushSize) + p_hit.point;
 
                         var datas = Core.PlaceInstance(instanceDefinition, position, _cachedValidMeshes,
-                            _cachedValidColliders, _paintedInstances);
+                            _cachedValidColliders, _paintedInstances, Core.Config.PaintToolConfig.minimumDistance,
+                            Core.Config.PaintToolConfig.color);
                         invalidateClusters.AddRangeIfUnique(datas);
                     }
                 }
@@ -189,7 +192,10 @@ namespace InstancePainter.Editor
                     var distance = Vector3.Distance(position, p_hit.point);
                     if (distance < Core.Config.PaintToolConfig.brushSize)
                     {
-                        data.SetInstanceColor(i, Vector4.Lerp(data.GetInstanceColor(i),Core.Config.color, (1-distance/Core.Config.PaintToolConfig.brushSize) * Core.Config.alpha));
+                        data.SetInstanceColor(i,
+                            Vector4.Lerp(data.GetInstanceColor(i), Core.Config.PaintToolConfig.color,
+                                (1 - distance / Core.Config.PaintToolConfig.brushSize) *
+                                Core.Config.PaintToolConfig.alpha));
                         invalidateDatas.AddIfUnique(data);
                     }
                 }
@@ -267,11 +273,13 @@ namespace InstancePainter.Editor
 
             Core.Config.PaintToolConfig.brushSize = EditorGUILayout.Slider("Brush Size", Core.Config.PaintToolConfig.brushSize, 0.1f, 100);
         
-            Core.Config.color = EditorGUILayout.ColorField("Color", Core.Config.color);
+            Core.Config.PaintToolConfig.color = EditorGUILayout.ColorField("Color", Core.Config.PaintToolConfig.color);
             
-            Core.Config.alpha = EditorGUILayout.Slider("Alpha", Core.Config.alpha, 0, 1);
+            Core.Config.PaintToolConfig.alpha = EditorGUILayout.Slider("Alpha", Core.Config.PaintToolConfig.alpha, 0, 1);
 
             Core.Config.PaintToolConfig.density = EditorGUILayout.IntField("Density", Core.Config.PaintToolConfig.density);
+            
+            Core.Config.PaintToolConfig.minimumDistance = EditorGUILayout.FloatField("Minimum Distance", Core.Config.PaintToolConfig.minimumDistance);
             
             GUILayout.Space(4);
         }

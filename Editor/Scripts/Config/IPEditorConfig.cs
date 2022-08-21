@@ -20,9 +20,6 @@ namespace InstancePainter.Editor
 
         public bool enabled = false;
 
-        public Color color = Color.white;
-        public float alpha = 1;
-
         public PaintToolConfig PaintToolConfig { get; } = new PaintToolConfig();
         public EraseToolConfig EraseToolConfig { get; } = new EraseToolConfig();
         public ModifyToolConfig ModifyToolConfig { get; } = new ModifyToolConfig();

@@ -174,7 +174,7 @@ namespace InstancePainter.Editor
                 {
                     var datas = Core.PlaceInstance(instanceDefinition,
                         new Vector3(Random.Range(minX, maxX), p_startPoint.y, Random.Range(minZ, maxZ)), validMeshes,
-                        validColliders, _paintedInstances);
+                        validColliders, _paintedInstances, Core.Config.RectToolConfig.minimumDistance, Core.Config.RectToolConfig.color);
 
                     foreach (var data in datas)
                     {
@@ -217,6 +217,15 @@ namespace InstancePainter.Editor
         public override void DrawInspectorGUI()
         {
             GUIUtils.DrawSectionTitle("RECT TOOL");
+            
+            Core.Config.RectToolConfig.color = EditorGUILayout.ColorField("Color", Core.Config.PaintToolConfig.color);
+            
+            Core.Config.RectToolConfig.alpha = EditorGUILayout.Slider("Alpha", Core.Config.PaintToolConfig.alpha, 0, 1);
+
+            Core.Config.RectToolConfig.density = EditorGUILayout.IntField("Density", Core.Config.PaintToolConfig.density);
+            
+            Core.Config.RectToolConfig.minimumDistance = EditorGUILayout.FloatField("Minimum Distance", Core.Config.PaintToolConfig.minimumDistance);
+            
             GUILayout.Space(4);
         }
     }

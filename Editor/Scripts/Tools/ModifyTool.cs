@@ -4,6 +4,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using InstancePainter.Runtime;
 using UnityEditor;
 using UnityEngine;
@@ -65,7 +66,7 @@ namespace InstancePainter.Editor
                         _state = ModifyToolState.MODIFY_INPLACE;
                         _modifyStartHit = p_hit;
                         _modifyStartMousePosition = Event.current.mousePosition;
-                        GetHitInstances(p_hit);
+                        GetModifiedInstances(p_hit);
                     }
                     else
                     {
@@ -83,7 +84,7 @@ namespace InstancePainter.Editor
                         _state = ModifyToolState.MODIFY_POSITION;
                         _modifyStartHit = p_hit;
                         _modifyStartMousePosition = Event.current.mousePosition;
-                        GetHitInstances(p_hit);
+                        GetModifiedInstances(p_hit);
                     }
                     else
                     {
@@ -131,7 +132,25 @@ namespace InstancePainter.Editor
             if (IPRuntimeEditorCore.explicitCluster == null)
                 return;
             
-            GetHitInstances(p_hit);
+            GetModifiedInstances(p_hit);
+
+            if (_modifyInstances.Count > 0)
+            {
+                var currentMesh = _modifyInstances[0].cluster.GetMesh();
+                var targetMesh = IPRuntimeEditorCore.explicitCluster.GetMesh();
+                
+                if (currentMesh != targetMesh)
+                {
+                    if (EditorUtility.DisplayDialog("Mesh mismatch",
+                            "You moving this instance to cluster with different mesh, change mesh of target cluster?\n\n" +
+                            "Current cluster mesh: "+(currentMesh != null ? currentMesh.name : "NO MESH")+"\n"+
+                            "Target cluster mesh: "+(targetMesh != null ? targetMesh.name : "NO MESH"),
+                            "Yes", "No"))
+                    {
+                        IPRuntimeEditorCore.explicitCluster.SetMesh(_modifyInstances[0].cluster.GetMesh());
+                    }
+                }
+            }
             
             List<ICluster> clusters = new List<ICluster>();
             foreach (var instance in _modifyInstances)
@@ -150,22 +169,24 @@ namespace InstancePainter.Editor
             IPRuntimeEditorCore.explicitCluster.UpdateSerializedData();
         }
 
-        public void GetHitInstances(RaycastHit p_hit)
+        public void GetModifiedInstances(RaycastHit p_hit)
         {
             _modifyInstances.Clear();
-
             
             Core.Renderer.InstanceClusters.ForEach(c =>
             {
-                for (int i = 0; i<c.GetCount(); i++)
+                if (c.IsEnabled())
                 {
-                    var matrix = c.GetInstanceMatrix(i);
-                    if (Vector3.Distance(p_hit.point, matrix.GetColumn(3)) < Core.Config.ModifyToolConfig.brushSize)
+                    for (int i = 0; i < c.GetCount(); i++)
                     {
-                        var instance = new PaintedInstance(c, matrix, c.GetInstanceColor(i), i, null);
-                        _modifyInstances.Add(instance);
+                        var matrix = c.GetInstanceMatrix(i);
+                        if (Vector3.Distance(p_hit.point, matrix.GetColumn(3)) < Core.Config.ModifyToolConfig.brushSize)
+                        {
+                            var instance = new PaintedInstance(c, matrix, c.GetInstanceColor(i), i, null);
+                            _modifyInstances.Add(instance);
+                        }
                     }
-                };
+                }
             });
         } 
         
