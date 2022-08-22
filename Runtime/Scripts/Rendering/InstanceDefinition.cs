@@ -6,12 +6,31 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
 namespace InstancePainter.Runtime
 {
     [CreateAssetMenu(fileName = "PaintDefinition", menuName = "Instance Painter/Create Paint Definition", order = 0)]
     [Serializable]
     public class InstanceDefinition : ScriptableObject
     {
+        #if UNITY_EDITOR
+        [MenuItem("Tools/Instance Painter/Create Paint Definition")]
+        public static void CreateEmpty()
+        {
+            InstanceDefinition example = ScriptableObject.CreateInstance<InstanceDefinition>();
+            var path = EditorUtility.SaveFilePanelInProject("Paint Definition", "Paint Definition", "asset",
+                "Create a new paint definition");
+            AssetDatabase.CreateAsset(example, path);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            EditorUtility.FocusProjectWindow();
+            Selection.activeObject = example;
+        }
+        #endif
+        
         public bool enabled = true;
         
         public GameObject prefab;
