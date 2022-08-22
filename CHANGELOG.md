@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.6.1 - 22.8.2022 RELEASE CANDIDATE
+
+#### Fixed
+
+- Fixed tool properties editing
+
 ### Release 0.6.0 - 21.8.2022 RELEASE CANDIDATE
 
 #### Added
