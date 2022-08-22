@@ -2,42 +2,34 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
+using System;
 using System.Collections.Generic;
-using InstancePainter;
+using InstancePainter.Runtime;
 using UnityEditor;
-using UnityEngine.Serialization;
+using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace InstancePainter.Editor
 {
-    using System;
-    using UnityEngine;
-
     [Serializable]
     public class IPEditorConfig : ScriptableObject
     {
         public GUISkin Skin => (GUISkin)Resources.Load("Skins/InstancePainterSkin");
 
-        public GameObject explicitRendererObject;
-        
+        public InstanceRenderer explicitRendererObject;
+
         public bool enabled = false;
+
+        public PaintToolConfig PaintToolConfig { get; } = new PaintToolConfig();
+        public EraseToolConfig EraseToolConfig { get; } = new EraseToolConfig();
+        public ModifyToolConfig ModifyToolConfig { get; } = new ModifyToolConfig();
+        public RectToolConfig RectToolConfig { get; } = new RectToolConfig();
         
-        [Range(1,100)]
-        public float brushSize = 1;
-
-        public Color color = Color.white;
-        public float alpha = 1;
-
-        #region PAINT
-
-        public int density = 1;
+        
         public bool minimizePaintDefinitions = false;
+        public bool minimizeSettings = false;
         public List<InstanceDefinition> paintDefinitions = new List<InstanceDefinition>();
 
-        public float maximumSlope = 0;
-        public float minimalDistance = 1;
-        
-        #endregion
-        
         #region ERASE
         
         public bool eraseActiveDefinition = true;
@@ -52,9 +44,11 @@ namespace InstancePainter.Editor
         #endregion
 
         public bool useMeshRaycasting = false;
+
+        public bool showTooltips = true;
         
-        public List<LayerMask> includeLayers;
-        public List<LayerMask> excludeLayers;
+        public List<LayerMask> includeLayers = new List<LayerMask>();
+        public List<LayerMask> excludeLayers = new List<LayerMask>();
         
         static public IPEditorConfig Create()
         {
@@ -64,7 +58,7 @@ namespace InstancePainter.Editor
 
             if (config == null)
             {
-                config = ScriptableObject.CreateInstance<IPEditorConfig>();
+                config = CreateInstance<IPEditorConfig>();
                 if (config != null)
                 {
                     if (!AssetDatabase.IsValidFolder("Assets/Resources"))
@@ -84,6 +78,38 @@ namespace InstancePainter.Editor
             }
 
             return config;
+        }
+        
+        public InstanceDefinition GetWeightedDefinition()
+        {
+            if (paintDefinitions.Count == 0)
+                return null;
+            
+            InstanceDefinition instanceDefinition = null;
+            
+            float sum = 0;
+            foreach (var def in paintDefinitions)
+            {
+                if (def == null || !def.enabled)
+                    continue;
+                
+                sum += def.weight;
+            }
+            var random = Random.Range(0, sum);
+            foreach (var def in paintDefinitions)
+            {
+                if (def == null || !def.enabled)
+                    continue;
+                
+                random -= def.weight;
+                if (random < 0)
+                {
+                    instanceDefinition = def;
+                    break;
+                }
+            }
+
+            return instanceDefinition;
         }
     }
 }

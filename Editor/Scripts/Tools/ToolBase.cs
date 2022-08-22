@@ -38,6 +38,7 @@ namespace InstancePainter.Editor
             
             // if (Event.current.type != EventType.Layout && Event.current.type != EventType.Repaint) 
             //      Event.current.Use();
+            EditorUtility.SetDirty(Core.Renderer);
         }
 
         bool HandleMouseHit()

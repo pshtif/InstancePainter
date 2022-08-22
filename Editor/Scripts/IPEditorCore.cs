@@ -5,11 +5,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using InstancePainter;
+using InstancePainter.Runtime;
 using UnityEditor;
-using UnityEngine;
 using UnityEditor.SceneManagement;
-using UnityEngine.Profiling;
+using UnityEngine;
 using Random = UnityEngine.Random;
 
 #if UNITY_2020
@@ -21,12 +20,14 @@ namespace InstancePainter.Editor
     [InitializeOnLoad]
     public class IPEditorCore
     {
-        const string VERSION = "0.5.0";
+        const string VERSION = "0.5.3";
         
         public static IPEditorCore Instance { get; private set; }
         
-        private GameObject _rendererObject;
-        public GameObject RendererObject
+        public static GUISkin Skin => (GUISkin)Resources.Load("Skins/InstancePainterSkin");
+        
+        private InstanceRenderer _renderer;
+        public InstanceRenderer Renderer
         {
             get
             {
@@ -37,30 +38,30 @@ namespace InstancePainter.Editor
                 
                 PrefabStage prefabStage = PrefabStageUtility.GetCurrentPrefabStage();
 
-                if (_rendererObject == null ||
-                    (prefabStage != null && !prefabStage.IsPartOfPrefabContents(_rendererObject)) ||
-                    (PrefabUtility.IsPartOfAnyPrefab(_rendererObject) && prefabStage == null)) 
+                if (_renderer == null ||
+                    (prefabStage != null && !prefabStage.IsPartOfPrefabContents(_renderer.gameObject)) ||
+                    (PrefabUtility.IsPartOfAnyPrefab(_renderer) && prefabStage == null)) 
                 {
                     if (prefabStage != null)
                     {
-                        _rendererObject = prefabStage.FindComponentOfType<IPRenderer>()?.gameObject;
-                        if (_rendererObject == null)
+                        _renderer = prefabStage.FindComponentOfType<InstanceRenderer>();
+                        if (_renderer == null)
                         {
-                            _rendererObject = new GameObject("InstanceRenderer");
-                            _rendererObject.transform.parent = prefabStage.prefabContentsRoot.transform;
+                            _renderer = new GameObject("InstanceRenderer").AddComponent<InstanceRenderer>();
+                            _renderer.transform.parent = prefabStage.prefabContentsRoot.transform;
                         }
                     }
                     else
                     {
-                        _rendererObject = GameObject.FindObjectOfType<IPRenderer>()?.gameObject;
-                        if (_rendererObject == null)
+                        _renderer = GameObject.FindObjectOfType<InstanceRenderer>();
+                        if (_renderer == null)
                         {
-                            _rendererObject = new GameObject("InstanceRenderer");
+                            _renderer = new GameObject("InstanceRenderer").AddComponent<InstanceRenderer>();
                         }
                     }
                 }
 
-                return _rendererObject;
+                return _renderer;
             }
         }
 
@@ -77,50 +78,27 @@ namespace InstancePainter.Editor
         public IPEditorCore() 
         {
             Config = IPEditorConfig.Create();
-            
-            SceneView.duringSceneGui -= OnSceneGUI;
-            SceneView.duringSceneGui += OnSceneGUI;
-            
+            IPSceneGUI.Initialize();
+
             Undo.undoRedoPerformed -= UndoRedoCallback;
             Undo.undoRedoPerformed += UndoRedoCallback;
         }
 
         void UndoRedoCallback()
         {
-            GameObject.FindObjectsOfType<IPRenderer>().ToList().ForEach(r =>
+            GameObject.FindObjectsOfType<InstanceRenderer>().ToList().ForEach(r =>
             {
-                r.OnEnable();
-                r.Invalidate();
+                r.InstanceClusters.ForEach(cluster => cluster?.UndoRedoPerformed());
             });
             
             SceneView.RepaintAll();
         }
 
-        private void OnSceneGUI(SceneView p_sceneView)
-        {
-            if (EditorApplication.isCompiling || BuildPipeline.isBuildingPlayer || !Config.enabled)
-                return;
-
-            if (Event.current.control && Event.current.isScrollWheel)
-            {
-                Config.brushSize -= Event.current.delta.y;
-                Event.current.Use();
-            }
-
-            // Not going over UI
-            if (!new Rect(p_sceneView.camera.GetScaledPixelRect().width / 2 - 130, 5, 340, 55).Contains(Event.current
-                .mousePosition))
-            {
-                _currentTool?.Handle();
-            }
-
-            IPSceneGUI.DrawGUI(p_sceneView);
-        }
-
         public void ChangeTool<T>(bool p_enable = false) where T : ToolBase
         {
             _currentTool = (_currentTool == null || _currentTool.GetType() != typeof(T)) ? Activator.CreateInstance<T>() : null;
-            IPEditorWindow.Instance?.Repaint();
+
+            InstancePainterWindow.Instance?.Repaint();
         }
 
         public GameObject[] GetMeshGameObjects(GameObject p_object)
@@ -128,32 +106,38 @@ namespace InstancePainter.Editor
             return p_object.transform.GetComponentsInChildren<MeshFilter>().Select(mf => mf.gameObject).ToArray();
         }
 
-        IPRenderer GetRendererForDefinition(Mesh p_mesh, InstanceDefinition p_definition)
+        ICluster GetClusterForDefinition(Mesh p_mesh, InstanceDefinition p_definition)
         {
-            var renderers = RendererObject.GetComponents<IPRenderer>().ToList();
-            var renderer = renderers.Find(r => r.mesh == p_mesh);
-            if (renderer == null)
+            var cluster = IPRuntimeEditorCore.explicitCluster != null
+                ? IPRuntimeEditorCore.explicitCluster
+                : Renderer.InstanceClusters.Find(id => id.IsMesh(p_mesh));
+
+            if (cluster == null)
             {
-                renderer = RendererObject.gameObject.AddComponent<IPRenderer>();
-                renderer.mesh = p_mesh;
-                renderer._material = p_definition.material;
+                cluster = new InstanceCluster(p_mesh, p_definition.material);
+                Renderer.InstanceClusters.Add(cluster);
+            }
+            
+            if (!cluster.IsMesh(p_mesh))
+            {
+                cluster.SetMesh(p_mesh);
             }
 
-            return renderer;
+            return cluster;
         }
         
-        public IPRenderer AddInstance(InstanceDefinition p_definition, Mesh p_mesh, Vector3 p_position, Quaternion p_rotation, Vector3 p_scale, Vector4 p_color)
+        public ICluster AddInstance(InstanceDefinition p_definition, Mesh p_mesh, Vector3 p_position, Quaternion p_rotation, Vector3 p_scale, Vector4 p_color)
         {
-            var renderer = GetRendererForDefinition(p_mesh, p_definition);
+            var data = GetClusterForDefinition(p_mesh, p_definition);
+            
+            data.AddInstance(Matrix4x4.TRS(p_position, p_rotation, p_scale), p_color);
 
-            renderer.AddInstance(Matrix4x4.TRS(p_position, p_rotation, p_scale), p_color);
-
-            return renderer;
+            return data;
         }
         
-        public IPRenderer[] PlaceInstance(Vector3 p_position, MeshFilter[] p_validMeshes, Collider[] p_validColliders, List<PaintedInstance> p_paintedInstances)
+        public ICluster[] PlaceInstance(InstanceDefinition p_instanceDefinition, Vector3 p_position, MeshFilter[] p_validMeshes, Collider[] p_validColliders, List<PaintedInstance> p_paintedInstances, float p_minimumDistance, Color p_color)
         {
-            List<IPRenderer> paintedRenderers = new List<IPRenderer>();
+            List<ICluster> paintedDatas = new List<ICluster>();
             
             p_position += Vector3.up * 100;
             Ray ray = new Ray(p_position, -Vector3.up);
@@ -163,9 +147,9 @@ namespace InstancePainter.Editor
             if (p_validMeshes == null || !EditorRaycast.Raycast(ray, p_validMeshes, out hit))
             {
                 if (p_validColliders == null || !EditorRaycast.Raycast(ray, p_validColliders, out hit))
-                    return paintedRenderers.ToArray();
+                    return paintedDatas.ToArray();
             }
-
+            
             p_position = hit.point;
             float slope = 0;
 
@@ -177,100 +161,70 @@ namespace InstancePainter.Editor
                 slope = 90 - Vector3.Angle(project, hit.normal);
             }
 
-            if (slope > Config.maximumSlope)
-                 return paintedRenderers.ToArray();
+            if (slope > p_instanceDefinition.maximumSlope)
+                return paintedDatas.ToArray();
 
-            InstanceDefinition instanceDefinition = GetWeightedDefinition();
-            if (instanceDefinition == null || instanceDefinition.prefab == null)
-                return paintedRenderers.ToArray();
-
-            MeshFilter[] filters = instanceDefinition.prefab.GetComponentsInChildren<MeshFilter>();
+            MeshFilter[] filters = p_instanceDefinition.prefab.GetComponentsInChildren<MeshFilter>();
+            
             Mesh[] meshes = filters.Select(f => f.sharedMesh).ToArray();
             
-            // Do proximity check
-            if (Config.minimalDistance > 0)
+            if (p_instanceDefinition.minimumDistance > 0 || p_minimumDistance > 0)
             {
-                var checkRenderers = RendererObject.GetComponents<IPRenderer>();
-                foreach (var renderer in checkRenderers)
+                foreach (var cluster in Renderer.InstanceClusters)
                 {
-                    if (!meshes.Contains(renderer.mesh))
+                    if (cluster == null)
                         continue;
-                    
-                    for (int i = 0; i < renderer.InstanceCount; i++)
+
+                    bool sameMeshCluster = meshes.Any(m => cluster.IsMesh(m));
+                       
+                    if (!sameMeshCluster && p_minimumDistance == 0)
+                       continue;
+
+                    for (int i = 0; i < cluster.GetCount(); i++)
                     {
-                        var matrix = renderer.GetInstanceMatrix(i);
-                        if (Vector3.Distance(p_position, matrix.GetColumn(3)) < Config.minimalDistance)
-                        {
-                            return paintedRenderers.ToArray();
-                        }
+                       var matrix = cluster.GetInstanceMatrix(i);
+                       var distance = Vector3.Distance(p_position, matrix.GetColumn(3));
+                       if ((sameMeshCluster && distance < p_instanceDefinition.minimumDistance) || distance < p_minimumDistance)
+                       {
+                           return paintedDatas.ToArray();
+                       }
                     }
-                }
+               }
             }
 
             foreach (var filter in filters)
             {
-                var position = p_position + instanceDefinition.positionOffset + filter.transform.position;
+                var position = p_position + p_instanceDefinition.positionOffset + filter.transform.position;
 
                 var rotation = filter.transform.rotation *
-                    (instanceDefinition.rotateToNormal
+                    (p_instanceDefinition.rotateToNormal
                         ? Quaternion.FromToRotation(Vector3.up, hit.normal)
                         : Quaternion.identity) *
-                    Quaternion.Euler(instanceDefinition.rotationOffset);
+                    Quaternion.Euler(p_instanceDefinition.rotationOffset);
 
                 rotation = rotation * Quaternion.Euler(
-                    Random.Range(instanceDefinition.minRotation.x, instanceDefinition.maxRotation.x),
-                    Random.Range(instanceDefinition.minRotation.y, instanceDefinition.maxRotation.y),
-                    Random.Range(instanceDefinition.minRotation.z, instanceDefinition.maxRotation.z));
+                    Random.Range(p_instanceDefinition.minRotation.x, p_instanceDefinition.maxRotation.x),
+                    Random.Range(p_instanceDefinition.minRotation.y, p_instanceDefinition.maxRotation.y),
+                    Random.Range(p_instanceDefinition.minRotation.z, p_instanceDefinition.maxRotation.z));
 
-                var scale = Vector3.Scale(filter.transform.localScale, instanceDefinition.scaleOffset) *
-                            Random.Range(instanceDefinition.minScale, instanceDefinition.maxScale);
+                var scale = Vector3.Scale(filter.transform.localScale, p_instanceDefinition.scaleOffset) *
+                            Random.Range(p_instanceDefinition.minScale, p_instanceDefinition.maxScale);
 
                 if (filter.sharedMesh != null)
                 {
-                    var renderer = AddInstance(instanceDefinition, filter.sharedMesh, position, rotation,
-                        scale, Config.color);
+                    var data = AddInstance(p_instanceDefinition, filter.sharedMesh, position, rotation,
+                        scale, p_color);
 
-                    var instance = new PaintedInstance(renderer, renderer.GetInstanceMatrix(renderer.InstanceCount - 1),
-                        renderer.InstanceCount - 1, instanceDefinition);
+                    var instance = new PaintedInstance(data, data.GetInstanceMatrix(data.GetCount() - 1),
+                        data.GetInstanceColor(data.GetCount() - 1),
+                        data.GetCount() - 1, p_instanceDefinition);
                     p_paintedInstances?.Add(instance);
 
-                    paintedRenderers.Add(renderer);
+                    paintedDatas.Add(data);
                 }
             }
 
-            return paintedRenderers.ToArray();
-        }
-
-        private InstanceDefinition GetWeightedDefinition()
-        {
-            if (Config.paintDefinitions.Count == 0)
-                return null;
-            
-            InstanceDefinition instanceDefinition = null;
-            
-            float sum = 0;
-            foreach (var def in Config.paintDefinitions)
-            {
-                if (def == null || !def.enabled)
-                    continue;
-                
-                sum += def.weight;
-            }
-            var random = Random.Range(0, sum);
-            foreach (var def in Config.paintDefinitions)
-            {
-                if (def == null || !def.enabled)
-                    continue;
-                
-                random -= def.weight;
-                if (random < 0)
-                {
-                    instanceDefinition = def;
-                    break;
-                }
-            }
-
-            return instanceDefinition;
+            return paintedDatas.ToArray();
         }
     }
 }

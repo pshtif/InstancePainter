@@ -4,7 +4,54 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
-### Release
+### Release 0.6.0 - 21.8.2022 RELEASE CANDIDATE
+
+#### Added
+
+- Added completely reworked UI editors and inspectors to have better user experience
+- Added warnings about no mesh, material, etc states
+
+#### Changed
+
+- Changed every tool has now its own standalone settings
+- Changed disabled clusters are uneffected by painting
+
+#### Fixed
+
+- Fixed a lot of lock states
+- Fixed not possible to add same cluster twice to renderer
+- Fixed not possible to add same paint definiton twice to painter
+
+### Release 0.5.4 - 12.8.2022
+
+#### Fixed
+
+- Fixed set dirty on renderer properties change
+
+### Release 0.5.3 - 2.7.2022
+
+#### Fixed
+
+- Fixed editor namespaces for prefab stage
+
+### Release 0.5.2 - 1.7.2022
+
+#### Added
+
+- Added when adding clusters specify asset/bound type
+
+#### Fixed
+
+- Fixed undo/redo on cluster asset operations
+- Fixed dispose Unity crash on render disable/enable in editor
+- Fixed memory leaks on ScriptableObject dealocation on assembly reload
+
+### Release 0.5.0 - 22.6.2022
+
+#### Added
+
+- Completely refactored version if Instance Painter
+- Different renderer, clusters, handling...
 
 ### Release 0.4.11 - 14.6.2022
 

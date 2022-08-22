@@ -2,17 +2,13 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using InstancePainter;
-using InstancePainter.Editor;
+using InstancePainter.Runtime;
 using UnityEditor;
 using UnityEngine;
 
 namespace InstancePainter.Editor
 {
-    public class RendererWindow : UnityEditor.EditorWindow
+    public class RendererWindow : EditorWindow
     {
         public IPEditorCore Core => IPEditorCore.Instance;
         
@@ -22,15 +18,15 @@ namespace InstancePainter.Editor
 
         public static RendererWindow Instance { get; private set; } 
         
-        [MenuItem ("Tools/Instance Painter/Renderers")]
-        public static RendererWindow InitRendererWindow()
-        {
-            Instance = GetWindow<RendererWindow>();
-            Instance.titleContent = new GUIContent("Instance Renderers");
-            Instance.minSize = new Vector2(200, 400);
-
-            return Instance;
-        }
+        // [MenuItem ("Tools/Instance Painter/Renderers")]
+        // public static RendererWindow InitRendererWindow()
+        // {
+        //     Instance = GetWindow<RendererWindow>();
+        //     Instance.titleContent = new GUIContent("Instance Renderers");
+        //     Instance.minSize = new Vector2(200, 400);
+        //
+        //     return Instance;
+        // }
 
         void OnEnable() {
             Instance = this;
@@ -53,7 +49,7 @@ namespace InstancePainter.Editor
 
             EditorGUILayout.LabelField("Scene Instance Renderers", Skin.GetStyle("paintdefinitions"), GUILayout.Height(24));
 
-            var renderers = FindObjectsOfType<IPRenderer>();
+            var renderers = FindObjectsOfType<InstanceRenderer>();
 
             horizontalStyle.normal.background = TextureUtils.GetColorTexture(new Color(.1f, .1f, .1f));
             GUILayout.BeginHorizontal(horizontalStyle, GUILayout.Height(24));
@@ -87,15 +83,15 @@ namespace InstancePainter.Editor
                 }
                 GUI.color = Color.white;
                 
-                GUILayout.Label(renderer.name, objectStyle, GUILayout.Width(120));
-                GUILayout.Space(20);
-                GUILayout.Label(renderer.MeshName);
-                GUILayout.FlexibleSpace();
-                GUILayout.Label(renderer.InstanceCount.ToString(), GUILayout.Width(90));
-                GUILayout.Label(renderer.DrawCalls.ToString(), GUILayout.Width(70));
+                // GUILayout.Label(renderer.name, objectStyle, GUILayout.Width(120));
+                // GUILayout.Space(20);
+                // GUILayout.Label(renderer.MeshName);
+                // GUILayout.FlexibleSpace();
+                // GUILayout.Label(renderer.InstanceCount.ToString(), GUILayout.Width(90));
+                // GUILayout.Label(renderer.DrawCalls.ToString(), GUILayout.Width(70));
                 if (GUILayout.Button("Select"))
                 {
-                    Selection.objects = new UnityEngine.Object[] { renderer.gameObject };
+                    Selection.objects = new Object[] { renderer.gameObject };
                 }
                 
                 GUILayout.EndHorizontal();
