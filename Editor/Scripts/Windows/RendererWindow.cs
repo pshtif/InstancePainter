@@ -18,15 +18,15 @@ namespace InstancePainter.Editor
 
         public static RendererWindow Instance { get; private set; } 
         
-        [MenuItem ("Tools/Instance Painter/Renderers")]
-        public static RendererWindow InitRendererWindow()
-        {
-            Instance = GetWindow<RendererWindow>();
-            Instance.titleContent = new GUIContent("Instance Renderers");
-            Instance.minSize = new Vector2(200, 400);
-
-            return Instance;
-        }
+        // [MenuItem ("Tools/Instance Painter/Renderers")]
+        // public static RendererWindow InitRendererWindow()
+        // {
+        //     Instance = GetWindow<RendererWindow>();
+        //     Instance.titleContent = new GUIContent("Instance Renderers");
+        //     Instance.minSize = new Vector2(200, 400);
+        //
+        //     return Instance;
+        // }
 
         void OnEnable() {
             Instance = this;
