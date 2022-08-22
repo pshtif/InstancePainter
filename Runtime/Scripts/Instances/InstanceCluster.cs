@@ -9,6 +9,7 @@ namespace InstancePainter.Runtime
     [Serializable]
     public class InstanceCluster : ICluster
     {
+        #if UNITY_EDITOR
         public static InstanceCluster CreateEmptyCluster()
         {
             var cluster = new InstanceCluster();
@@ -16,6 +17,7 @@ namespace InstancePainter.Runtime
             cluster.fallbackMaterial = MaterialUtils.DefaultFallbackMaterial;
             return cluster;
         }
+        #endif
         
         public bool enabled = true;
         
