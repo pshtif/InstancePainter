@@ -149,9 +149,7 @@ namespace InstancePainter.Editor
             style.fontSize = 12;
             
             GUILayout.BeginHorizontal();
-            GUI.color = p_instanceDefinition.enabled ? Color.white : new Color(.5f, .5f, .5f);
             GUILayout.Label("                  Paint Definition: <color='#FFFF00'>"+p_instanceDefinition.name+"</color>", style, GUILayout.Height(24));
-            GUI.color = Color.white;
             var rect = GUILayoutUtility.GetLastRect();
             if (GUI.Button(new Rect(rect.x+4, rect.y+4, 16, 16), IconManager.GetIcon("remove_icon"), Skin.GetStyle("removebutton")))
             {
@@ -178,12 +176,15 @@ namespace InstancePainter.Editor
             else
             {
                 GUI.color = new Color(.5f, .5f, .5f);
+                
                 if (GUI.Button(new Rect(rect.x + 20, rect.y + 4, 40, 18), IconManager.GetIcon("toggle_left"),
                         Skin.GetStyle("removebutton")))
                 {
                     p_instanceDefinition.enabled = true;
                     EditorUtility.SetDirty(p_instanceDefinition);
                 }
+
+                GUI.color = Color.white;
             }
 
             if (p_instanceDefinition.enabled)
