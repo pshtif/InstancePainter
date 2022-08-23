@@ -218,14 +218,14 @@ namespace InstancePainter.Runtime
 
             _renderer ??= new InstanceClusterRenderer();
             
-            #if UNITY_EDITOR
+#if UNITY_EDITOR
             var renderMaterial = IPRuntimeEditorCore.renderingAsUtil
                 ? this == IPRuntimeEditorCore.explicitCluster ? MaterialUtils.ExplicitClusterMaterial : MaterialUtils.NonExplicitClusterMaterial
                 : material;
             _renderer.RenderIndirect(p_camera, mesh, renderMaterial , _renderMatrixData, _renderColorData);
-            #else
+#else
             _renderer.RenderIndirect(p_camera, mesh, material, _renderMatrixData, _renderColorData);
-            #endif
+#endif
         }
         
         public void RenderFallback(Camera p_camera)
@@ -293,6 +293,11 @@ namespace InstancePainter.Runtime
         public bool IsEnabled()
         {
             return enabled;
+        }
+        
+        public void SetEnabled(bool p_enabled)
+        {
+            enabled = p_enabled;
         }
 
         public bool HasMaterial()

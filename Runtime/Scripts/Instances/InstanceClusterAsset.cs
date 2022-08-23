@@ -174,6 +174,11 @@ namespace InstancePainter.Runtime
             return cluster.IsEnabled();
         }
         
+        public void SetEnabled(bool p_enabled)
+        {
+            cluster.SetEnabled(p_enabled);
+        }
+        
         public bool HasMaterial()
         {
             return cluster.HasMaterial();
