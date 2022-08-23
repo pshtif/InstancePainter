@@ -8,6 +8,9 @@
     "name": "Peter @sHTiF Stefcek",
     "email": "psthif@gmail.com"
   },
+  "documentationUrl": "https://github.com/pshtif/InstancePainter",
+  "changelogUrl": "https://github.com/pshtif/InstancePainter/blob/main/CHANGELOG.md",
+  "licensesUrl": "https://github.com/pshtif/InstancePainter/blob/main/LICENSE",
   "keywords": [
     "package",
     "unity",
