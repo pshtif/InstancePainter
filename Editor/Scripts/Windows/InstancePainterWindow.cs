@@ -34,6 +34,9 @@ namespace InstancePainter.Editor
 
         public void OnGUI()
         {
+            if (EditorApplication.isCompiling || BuildPipeline.isBuildingPlayer)
+                return;
+            
             _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
 
             EditorGUILayout.LabelField("Instance Painter Editor", StyleUtils.TitleStyleCenter, GUILayout.Height(28));
