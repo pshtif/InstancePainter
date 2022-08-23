@@ -43,7 +43,9 @@ namespace InstancePainter.Runtime
 #if UNITY_EDITOR
         bool minimized { get; set; }
 
-        bool IsEnabled(); 
+        bool IsEnabled();
+
+        void SetEnabled(bool p_enabled);
 
         string GetClusterName();
 
