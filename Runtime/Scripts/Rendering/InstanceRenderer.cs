@@ -176,7 +176,6 @@ namespace InstancePainter.Runtime
             _instanceClusters.AddRange(_serializedInstanceClusterAssets);
         }
 
-        
         public void OnEnable()
         {
 #if UNITY_EDITOR
@@ -207,6 +206,12 @@ namespace InstancePainter.Runtime
             {
                 Render(p_sceneView.camera);    
             }
+        }
+
+        public void ForceReserialize()
+        {
+            OnBeforeSerialize();
+            OnAfterDeserialize();
         }
 #endif
     }
