@@ -2,7 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+#### Known Issues
+
+- Indirect rendering has a glitch in editor scene view where it sometimes doesn't change even on forced scene repaint and needs user to go over the sceneview
+
 ## RELEASES
+
+### Release 0.6.2 - 23.8.2022 RELEASE CANDIDATE
+
+#### Added
+
+- Added new UI changes for instance renderer editor
+
+#### Fixed
+
+- Fixed reserialization on internal data when adding clusters happen immediately
+- Fixed minor ui response issues
+
+### Release 0.6.1 - 22.8.2022 RELEASE CANDIDATE
+
+#### Fixed
+
+- Fixed tool properties editing
 
 ### Release 0.6.0 - 21.8.2022 RELEASE CANDIDATE
 

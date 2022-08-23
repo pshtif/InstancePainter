@@ -12,6 +12,8 @@ namespace InstancePainter.Editor
     public class InstanceRendererEditor : UnityEditor.Editor
     {
         public InstanceRenderer Renderer => target as InstanceRenderer;
+        
+        public GUISkin Skin => (GUISkin)Resources.Load("Skins/InstancePainterSkin");
 
         private void OnEnable()
         {
@@ -71,7 +73,6 @@ namespace InstancePainter.Editor
             GUI.color = new Color(0.9f, .5f, 0);
             GUILayout.Space(8);
             
-            int controlId = EditorGUIUtility.GetControlID (FocusType.Passive);
             if (GUILayout.Button("ADD CLUSTER", GUILayout.Height(32)))
             {
                 if (EditorUtility.DisplayDialog("Cluster type", "Add an asset cluster or bound cluster?", "Asset",
@@ -83,6 +84,8 @@ namespace InstancePainter.Editor
                 {
                     Renderer.InstanceClusters.Add(InstanceCluster.CreateEmptyCluster());
                 }
+                
+                Renderer.ForceReserialize();
             }
 
             GUI.color = Color.white;
@@ -92,8 +95,12 @@ namespace InstancePainter.Editor
         {
             var cluster = Renderer.InstanceClusters[p_index];
             GUILayout.Label(
-                "      " + (cluster is InstanceClusterAsset ? "<color=#0088FF>[ASSET]</color>" : "<color=#FF8800>[INSTANCE]</color>") + " Cluster: " +
-                (cluster == null ? "<color=#FF0000>NULL</color>" : cluster.GetClusterName()), StyleUtils.ClusterStyle, GUILayout.Height(24));
+                "               " +
+                (cluster is InstanceClusterAsset
+                    ? "<color=#0088FF>[ASSET]</color>"
+                    : "<color=#FF8800>[INSTANCE]</color>") + " Cluster: " +
+                (cluster == null ? "<color=#FF0000>NULL</color>" : cluster.GetClusterName()), StyleUtils.ClusterStyle,
+                GUILayout.Height(24));
 
 
             var rect = GUILayoutUtility.GetLastRect();
@@ -110,24 +117,55 @@ namespace InstancePainter.Editor
                 }
             }
             
-            if (GUI.Button(new Rect(rect.x + rect.width - 14, rect.y, 16, 16), Renderer.IsClusterMinimized(p_index) ? "+" : "-",
-                    IPEditorCore.Skin.GetStyle("minimizebutton")))
-            {
-                Renderer.SetClusterMinimized(p_index, !Renderer.IsClusterMinimized(p_index));
-            }
-
-            if (Renderer.IsClusterMinimized(p_index))
-                return false;
-
             GUI.Label(new Rect(rect.x + rect.width - 220, rect.y + 2, 200, 16),  (cluster == null ? 0 : cluster.GetCount()).ToString(),
                 StyleUtils.ClusterMeshNameStyle);
 
+            if (cluster == null)
+                return false;
+            
+            if (cluster.IsEnabled())
+            {
+                if (GUI.Button(new Rect(rect.x + 20, rect.y + 4, 40, 18), IconManager.GetIcon("toggle_right"),
+                        Skin.GetStyle("removebutton")))
+                {
+                    cluster.SetEnabled(false);
+                    EditorUtility.SetDirty(cluster is InstanceCluster ? Renderer : cluster as InstanceClusterAsset);
+                    SceneView.RepaintAll();
+                    return false;
+                }
+                
+                if (GUI.Button(new Rect(rect.x + rect.width - 14, rect.y, 16, 16), Renderer.IsClusterMinimized(p_index) ? "+" : "-",
+                        IPEditorCore.Skin.GetStyle("minimizebutton")))
+                {
+                    Renderer.SetClusterMinimized(p_index, !Renderer.IsClusterMinimized(p_index));
+                }
+            }
+            else
+            {
+                GUI.color = new Color(.5f, .5f, .5f);
+                    
+                if (GUI.Button(new Rect(rect.x + 20, rect.y + 4, 40, 18), IconManager.GetIcon("toggle_left"),
+                        Skin.GetStyle("removebutton")))
+                {
+                    cluster.SetEnabled(true);
+                    EditorUtility.SetDirty(cluster is InstanceCluster ? Renderer : cluster as InstanceClusterAsset);
+                    SceneView.RepaintAll();
+                }
+                    
+                GUI.color = Color.white;
+            }
+
+            if (Renderer.IsClusterMinimized(p_index) || !cluster.IsEnabled())
+                return false;
+
             GUILayout.BeginHorizontal();
+            
             if (cluster != null)
             {
                 if (IPRuntimeEditorCore.explicitCluster == cluster.GetCluster())
                 {
                     GUI.color = new Color(0.9f, 0.5f, 0);
+                    
                     if (GUILayout.Button("Unset as Explicit Cluster", GUILayout.Height(24)))
                     {
                         IPRuntimeEditorCore.explicitCluster = null;
@@ -147,9 +185,6 @@ namespace InstancePainter.Editor
             }
             
             GUILayout.EndHorizontal();
-            
-            if (cluster != null && cluster.minimized)
-                return false;
 
             bool modified = false;
             if (cluster == null || cluster is InstanceClusterAsset)
@@ -170,8 +205,6 @@ namespace InstancePainter.Editor
             GUILayout.Label("Count: "+cluster.GetCount());
 
             EditorGUI.BeginChangeCheck();
-            
-            cluster.enabled = EditorGUILayout.Toggle("Enabled", cluster.enabled);
 
             cluster.mesh = (Mesh)EditorGUILayout.ObjectField(new GUIContent("Mesh"), cluster.mesh, typeof(Mesh), false);
             
@@ -233,14 +266,18 @@ namespace InstancePainter.Editor
                 return true;
             
             EditorGUI.BeginChangeCheck();
-            
-            asset.cluster.enabled = EditorGUILayout.Toggle("Enabled", asset.cluster.enabled);
 
             asset.cluster.mesh = (Mesh)EditorGUILayout.ObjectField(new GUIContent("Mesh"), asset.cluster.mesh, typeof(Mesh), false);
             
             asset.cluster.material = (Material)EditorGUILayout.ObjectField(new GUIContent("Material"), asset.cluster.material, typeof(Material), false);
             
             asset.cluster.fallbackMaterial = (Material)EditorGUILayout.ObjectField(new GUIContent("FallbackMaterial"), asset.cluster.fallbackMaterial, typeof(Material), false);
+
+            if (EditorGUI.EndChangeCheck())
+            {
+                EditorUtility.SetDirty(asset);
+                SceneView.RepaintAll();
+            }
 
             return false;
         }

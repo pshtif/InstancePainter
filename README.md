@@ -2,6 +2,19 @@
 
 Tool to paint prefabs that will be rendered using GPU instancing.
 
+## Prerequisities
+
+* Unity 2020.3 LTS + (It may work on older versions but there are no guarantees and support.)
+
+## Licensing
+
+For license information read here [LICENSE](LICENSE.md)
+
+## TUTORIALS / DEVLOG
+* Tutorials and devlog videos for Dash framework can be found on YouTube
+
+[![IMAGE ALT TEXT](http://img.youtube.com/vi/93Tkwig5MyM/0.jpg)](https://www.youtube.com/watch?v=93Tkwig5MyM&list=PLI2aUZL_-RsWHc48PzRco9udB2FZLYUoZ&index=3 "Instance Painter Playlist")
+
 ## Installation
 
 #### Install Unity Package Manager 
@@ -22,7 +35,8 @@ Scopes:
 com.shtif
 ```
 
+![Package Settings](https://i.imgur.com/mmLJLeh.png)
 
-> #### WARNING
-> If you have com.teamsirenix.odinserializer scope defined in your registries already just use com.shtif to avoid scope duplication.
-> Also if you are using OdinSerializer in your project already you don't need to install it Dash should link it using the Assembly Definition reference. If Dash can't find the OdinSerialializer you can also modify the Dash Assembly Definition files in Dash folders Runtime and Editor to correctly include your OdinSerializer reference.
+After this you can find Instance PAinter in My Registries inside Package Manager.
+
+![Package Manager](https://i.imgur.com/rWYdQVR.png)

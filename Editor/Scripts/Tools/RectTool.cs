@@ -218,13 +218,13 @@ namespace InstancePainter.Editor
         {
             GUIUtils.DrawSectionTitle("RECT TOOL");
             
-            Core.Config.RectToolConfig.color = EditorGUILayout.ColorField("Color", Core.Config.PaintToolConfig.color);
+            Core.Config.RectToolConfig.color = EditorGUILayout.ColorField("Color", Core.Config.RectToolConfig.color);
             
-            Core.Config.RectToolConfig.alpha = EditorGUILayout.Slider("Alpha", Core.Config.PaintToolConfig.alpha, 0, 1);
+            Core.Config.RectToolConfig.alpha = EditorGUILayout.Slider("Alpha", Core.Config.RectToolConfig.alpha, 0, 1);
 
-            Core.Config.RectToolConfig.density = EditorGUILayout.IntField("Density", Core.Config.PaintToolConfig.density);
+            Core.Config.RectToolConfig.density = EditorGUILayout.IntField("Density", Core.Config.RectToolConfig.density);
             
-            Core.Config.RectToolConfig.minimumDistance = EditorGUILayout.FloatField("Minimum Distance", Core.Config.PaintToolConfig.minimumDistance);
+            Core.Config.RectToolConfig.minimumDistance = EditorGUILayout.FloatField("Minimum Distance", Core.Config.RectToolConfig.minimumDistance);
             
             GUILayout.Space(4);
         }

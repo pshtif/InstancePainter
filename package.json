@@ -1,13 +1,16 @@
 {
   "name": "com.shtif.instancepainter",
   "displayName": "Instance Painter",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "unity": "2020.3",
   "description": "Tool for paiting instances based on prefabs onto meshes and render them using instancing.",
   "author": {
     "name": "Peter @sHTiF Stefcek",
     "email": "psthif@gmail.com"
   },
+  "documentationUrl": "https://github.com/pshtif/InstancePainter",
+  "changelogUrl": "https://github.com/pshtif/InstancePainter/blob/main/CHANGELOG.md",
+  "licensesUrl": "https://github.com/pshtif/InstancePainter/blob/main/LICENSE",
   "keywords": [
     "package",
     "unity",
