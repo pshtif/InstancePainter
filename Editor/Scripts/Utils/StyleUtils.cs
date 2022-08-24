@@ -8,23 +8,23 @@ namespace InstancePainter.Editor
 {
     public static class StyleUtils
     {
-        private static GUIStyle _titleStyleCenter;
-        
-        public static GUIStyle TitleStyleCenter
+        private static GUIStyle _sectionStyleCenter;
+
+        public static GUIStyle SectionStyleCenter
         {
             get
             {
-                if (_titleStyleCenter == null)
+                if (_sectionStyleCenter == null)
                 {
-                    _titleStyleCenter = new GUIStyle();
-                    _titleStyleCenter.normal.background = TextureUtils.GetColorTexture(new Color(.1f, .1f, .1f));
-                    _titleStyleCenter.normal.textColor = Color.white;
-                    _titleStyleCenter.fontStyle = FontStyle.Bold;
-                    _titleStyleCenter.alignment = TextAnchor.MiddleCenter;
-                    _titleStyleCenter.fontSize = 14;
+                    _sectionStyleCenter = new GUIStyle();
+                    _sectionStyleCenter.normal.background = TextureUtils.GetColorTexture(new Color(.1f, .1f, .1f));
+                    _sectionStyleCenter.normal.textColor = Color.white;
+                    _sectionStyleCenter.fontStyle = FontStyle.Bold;
+                    _sectionStyleCenter.alignment = TextAnchor.MiddleCenter;
+                    _sectionStyleCenter.fontSize = 14;
                 }
 
-                return _titleStyleCenter;
+                return _sectionStyleCenter;
             }
         }
         

@@ -11,14 +11,14 @@ namespace InstancePainter.Editor
         public static void DrawSectionTitle(string p_title)
         {
             GUILayout.BeginHorizontal();
-            GUILayout.Label(p_title, StyleUtils.TitleStyleCenter, GUILayout.Height(28));
+            GUILayout.Label(p_title, StyleUtils.SectionStyleCenter, GUILayout.Height(28));
             GUILayout.EndHorizontal();
         }
         
         public static bool DrawSectionTitle(string p_title, ref bool p_minimized)
         {
             GUILayout.BeginHorizontal();
-            GUILayout.Label(p_title, StyleUtils.TitleStyleCenter, GUILayout.Height(28));
+            GUILayout.Label(p_title, StyleUtils.SectionStyleCenter, GUILayout.Height(28));
             GUILayout.EndHorizontal();
             
             var rect = GUILayoutUtility.GetLastRect();
