@@ -20,7 +20,7 @@ namespace InstancePainter.Editor
     [InitializeOnLoad]
     public class IPEditorCore
     {
-        const string VERSION = "0.5.3";
+        public const string VERSION = "0.6.3";
         
         public static IPEditorCore Instance { get; private set; }
         
@@ -86,7 +86,7 @@ namespace InstancePainter.Editor
 
         void UndoRedoCallback()
         {
-            GameObject.FindObjectsOfType<InstanceRenderer>().ToList().ForEach(r =>
+            StageUtility.GetCurrentStageHandle().FindComponentsOfType<InstanceRenderer>().ForEach(r =>
             {
                 r.InstanceClusters.ForEach(cluster => cluster?.UndoRedoPerformed());
             });

@@ -5,6 +5,7 @@
 using System.Collections.Generic;
 using InstancePainter.Runtime;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 
 namespace InstancePainter.Editor
@@ -54,7 +55,7 @@ namespace InstancePainter.Editor
                 if (Core.Config.useMeshRaycasting)
                 {
                     _cachedValidMeshes = Core.Config.includeLayers.Count == 0
-                        ? GameObject.FindObjectsOfType<MeshFilter>()
+                        ? StageUtility.GetCurrentStageHandle().FindComponentsOfType<MeshFilter>()
                         : LayerUtils.GetAllComponentsInLayers<MeshFilter>(Core.Config.includeLayers.ToArray());
                 }
                 else
@@ -63,7 +64,7 @@ namespace InstancePainter.Editor
                 }
 
                 _cachedValidColliders = Core.Config.includeLayers.Count == 0
-                    ? GameObject.FindObjectsOfType<Collider>()
+                    ? StageUtility.GetCurrentStageHandle().FindComponentsOfType<Collider>()
                     : LayerUtils.GetAllComponentsInLayers<Collider>(Core.Config.includeLayers.ToArray());
             }
             

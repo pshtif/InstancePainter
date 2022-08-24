@@ -3,6 +3,7 @@
  */
 
 using System.Collections.Generic;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 
 namespace InstancePainter.Editor
@@ -13,7 +14,7 @@ namespace InstancePainter.Editor
         
         public static GameObject[] GetAllGameObjectsInLayer(LayerMask p_layer)
         {
-            var filters = GameObject.FindObjectsOfType<GameObject>();
+            var filters = StageUtility.GetCurrentStageHandle().FindComponentsOfType<Transform>();
             var result = new List<GameObject>();
             
             foreach (var filter in filters)
@@ -29,7 +30,7 @@ namespace InstancePainter.Editor
         
         public static GameObject[] GetAllGameObjectsInLayers(LayerMask[] p_layers)
         {
-            var filters = GameObject.FindObjectsOfType<GameObject>();
+            var filters = StageUtility.GetCurrentStageHandle().FindComponentsOfType<Transform>();
             var result = new List<GameObject>();
             
             foreach (var filter in filters)
@@ -49,7 +50,7 @@ namespace InstancePainter.Editor
         
         public static T[] GetAllComponentsInLayers<T>(LayerMask[] p_layers) where T : Component
         {
-            var filters = GameObject.FindObjectsOfType<T>();
+            var filters = StageUtility.GetCurrentStageHandle().FindComponentsOfType<T>();
             var result = new List<T>();
             
             foreach (var filter in filters)

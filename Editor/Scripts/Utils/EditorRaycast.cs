@@ -2,6 +2,7 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
+using UnityEditor.SceneManagement;
 using UnityEngine.Profiling;
 
 namespace InstancePainter.Editor
@@ -252,7 +253,7 @@ namespace InstancePainter.Editor
             }
             else
             {
-                meshes = GameObject.FindObjectsOfType<MeshFilter>();
+                meshes = StageUtility.GetCurrentStageHandle().FindComponentsOfType<MeshFilter>();
             }
 
             Ray mouseRay = HandleUtility.GUIPointToWorldRay(p_position);
@@ -277,7 +278,7 @@ namespace InstancePainter.Editor
                 }
             }
             
-            SkinnedMeshRenderer[] skinnedMeshes = GameObject.FindObjectsOfType<SkinnedMeshRenderer>();
+            SkinnedMeshRenderer[] skinnedMeshes = StageUtility.GetCurrentStageHandle().FindComponentsOfType<SkinnedMeshRenderer>();
             foreach (SkinnedMeshRenderer sm in skinnedMeshes)
             {
                 Mesh mesh = sm.sharedMesh;
@@ -299,7 +300,7 @@ namespace InstancePainter.Editor
             
             if (minT == Mathf.Infinity)
             {
-                Collider[] colliders = GameObject.FindObjectsOfType<Collider>();
+                Collider[] colliders = StageUtility.GetCurrentStageHandle().FindComponentsOfType<Collider>();
                 foreach (Collider col in colliders)
                 {
                     RaycastHit localHit;

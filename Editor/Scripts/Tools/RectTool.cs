@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using InstancePainter.Runtime;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -149,12 +150,12 @@ namespace InstancePainter.Editor
             if (Core.Config.useMeshRaycasting)
             {
                 validMeshes = Core.Config.includeLayers.Count == 0
-                    ? GameObject.FindObjectsOfType<MeshFilter>()
+                    ? StageUtility.GetCurrentStageHandle().FindComponentsOfType<MeshFilter>()
                     : LayerUtils.GetAllComponentsInLayers<MeshFilter>(Core.Config.includeLayers.ToArray());
             }
 
             var validColliders = Core.Config.includeLayers.Count == 0
-                ? GameObject.FindObjectsOfType<Collider>()
+                ? StageUtility.GetCurrentStageHandle().FindComponentsOfType<Collider>()
                 : LayerUtils.GetAllComponentsInLayers<Collider>(Core.Config.includeLayers.ToArray());
 
             var minX = Math.Min(p_startPoint.x, p_endPoint.x);
