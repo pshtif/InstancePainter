@@ -23,6 +23,7 @@ namespace InstancePainter.Editor
         public override void OnInspectorGUI()
         {
             EditorGUILayout.LabelField("<color=#FF8800>Instance Renderer </color><i><size=10>v"+IPEditorCore.VERSION+"</size></i>", Skin.GetStyle("editor_title"), GUILayout.Height(30));
+            GUILayout.Space(2);
 
             EditorGUI.BeginChangeCheck();
 
@@ -49,7 +50,7 @@ namespace InstancePainter.Editor
             if (!Renderer.enableModifiers)
                 return;
             
-            if (!GUIUtils.DrawSectionTitleWCount("MODIFIERS: ", Renderer.modifiers.Count, ref Renderer.modifiersMinimized))
+            if (!GUIUtils.DrawMinimizableSectionTitleWCount("MODIFIERS: ", Renderer.modifiers.Count, ref Renderer.modifiersMinimized))
                 return;
             
             Renderer.autoApplyModifiers = EditorGUILayout.Toggle("Auto Apply Modifiers", Renderer.autoApplyModifiers);
@@ -63,7 +64,7 @@ namespace InstancePainter.Editor
 
         void DrawClusters()
         {
-            if (!GUIUtils.DrawSectionTitleWCount("CLUSTERS: ", Renderer.InstanceClusters.Count, ref Renderer.clusterSectionMinimized))
+            if (!GUIUtils.DrawMinimizableSectionTitleWCount("CLUSTERS: ", Renderer.InstanceClusters.Count, ref Renderer.clusterSectionMinimized))
                 return;
 
             for (int i = 0; i < Renderer.InstanceClusters.Count; i++)
@@ -97,13 +98,11 @@ namespace InstancePainter.Editor
         {
             var cluster = Renderer.InstanceClusters[p_index];
             GUILayout.Label(
-                "               " +
                 (cluster is InstanceClusterAsset
                     ? "<color=#0088FF>[ASSET]</color>"
-                    : "<color=#FF8800>[INSTANCE]</color>") + " Cluster: " +
-                (cluster == null ? "<color=#FF0000>NULL</color>" : cluster.GetClusterName()), StyleUtils.ClusterStyle,
+                    : "<color=#00FF88>[INSTANCE]</color>") + " Cluster: " +
+                (cluster == null ? "<color=#FF0000>NULL</color>" : cluster.GetClusterName()), Skin.GetStyle("cluster_title"),
                 GUILayout.Height(24));
-
 
             var rect = GUILayoutUtility.GetLastRect();
             
@@ -119,9 +118,9 @@ namespace InstancePainter.Editor
                 }
             }
             
-            GUI.Label(new Rect(rect.x + rect.width - 220, rect.y + 2, 200, 16),  (cluster == null ? 0 : cluster.GetCount()).ToString(),
-                StyleUtils.ClusterMeshNameStyle);
-
+            GUI.Label(new Rect(rect.x + rect.width - 220, rect.y + 4, 200, 16),  (cluster == null ? 0 : cluster.GetCount()).ToString(),
+                Skin.GetStyle("cluster_count"));
+            
             if (cluster == null)
                 return false;
             
@@ -136,7 +135,7 @@ namespace InstancePainter.Editor
                     return false;
                 }
                 
-                if (GUI.Button(new Rect(rect.x + rect.width - 14, rect.y, 16, 16), Renderer.IsClusterMinimized(p_index) ? "+" : "-",
+                if (GUI.Button(new Rect(rect.x + rect.width - 14, rect.y + 2, 16, 16), Renderer.IsClusterMinimized(p_index) ? "+" : "-",
                         IPEditorCore.Skin.GetStyle("minimizebutton")))
                 {
                     Renderer.SetClusterMinimized(p_index, !Renderer.IsClusterMinimized(p_index));
@@ -318,7 +317,7 @@ namespace InstancePainter.Editor
 
         void DrawSettings()
         {
-            if (!GUIUtils.DrawSectionTitle("SETTINGS", ref Renderer.settingsMinimized))
+            if (!GUIUtils.DrawMinimizableSectionTitle("SETTINGS", ref Renderer.settingsMinimized))
                 return;
             
             Renderer.enableModifiers = EditorGUILayout.Toggle("Enable Modifiers", Renderer.enableModifiers);
