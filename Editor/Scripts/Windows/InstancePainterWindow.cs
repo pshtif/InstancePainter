@@ -34,30 +34,25 @@ namespace InstancePainter.Editor
 
         public void OnGUI()
         {
+            if (EditorApplication.isCompiling || BuildPipeline.isBuildingPlayer)
+                return;
+            
             _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
-
-            EditorGUILayout.LabelField("Instance Painter Editor", StyleUtils.TitleStyleCenter, GUILayout.Height(28));
+            
+            EditorGUILayout.LabelField("<color=#FF8800>Instance Painter </color><i><size=10>v"+IPEditorCore.VERSION+"</size></i>", Skin.GetStyle("editor_title"), GUILayout.Height(30));
             GUILayout.Space(4);
 
             DrawWarnings();
             
-            GUI.color = new Color(1, 0.5f, 0);
-            if (GUILayout.Button(Core.Config.enabled ? "DISABLE PAINTER" : "ENABLE PAINTER", GUILayout.Height(32)))
+            GUI.color = Core.Config.enabled ? new Color(1, 1f, 1) : new Color(.5f, .5f, .5f);
+            if (GUILayout.Button(Core.Config.enabled ? new GUIContent(" ENABLED", IconManager.GetIcon("toggle_right")) : new GUIContent(" DISABLED", IconManager.GetIcon("toggle_left")), Skin.GetStyle("painter_toggle_button"), GUILayout.Height(32)))
             {
                 Core.Config.enabled = !Core.Config.enabled;
                 EditorUtility.SetDirty(Core.Config);
             }
             GUILayout.Space(4);
             GUI.color = Color.white;
-            
-            InstanceRenderer newRendererObject = (InstanceRenderer)EditorGUILayout.ObjectField(new GUIContent("Renderer"), Core.Config.explicitRendererObject, typeof(InstanceRenderer), true);
 
-            if (newRendererObject != Core.Config.explicitRendererObject)
-            {
-                // TODO add check if it is valid scene/prefabstage object?
-                Core.Config.explicitRendererObject = newRendererObject;
-            }
-            
             GUILayout.Space(4);
             
             EditorGUI.BeginChangeCheck();
@@ -290,16 +285,15 @@ namespace InstancePainter.Editor
             if (!GUIUtils.DrawSectionTitle("SETTINGS", ref Core.Config.minimizeSettings))
                 return;
 
-            SerializedObject serializedObject = new SerializedObject(Core.Config);
-
-            SerializedProperty serializedIncludeLayers = serializedObject.FindProperty("includeLayers");
-
-            if (EditorGUILayout.PropertyField(serializedIncludeLayers))
-            {
-                serializedObject.ApplyModifiedProperties();
-            }
-            
             EditorGUI.BeginChangeCheck();
+            
+            InstanceRenderer newRendererObject = (InstanceRenderer)EditorGUILayout.ObjectField(new GUIContent("Explicit Renderer"), Core.Config.explicitRendererObject, typeof(InstanceRenderer), true);
+
+            if (newRendererObject != Core.Config.explicitRendererObject)
+            {
+                // TODO add check if it is valid scene/prefabstage object?
+                Core.Config.explicitRendererObject = newRendererObject;
+            }
 
             Core.Config.showTooltips = EditorGUILayout.Toggle("Show Tooltips", Core.Config.showTooltips, GUILayout.ExpandWidth(true));
             
@@ -309,6 +303,15 @@ namespace InstancePainter.Editor
             {
                 EditorUtility.SetDirty(Core.Config);
             }
+            
+            // SerializedObject serializedObject = new SerializedObject(Core.Config);
+            //
+            // SerializedProperty serializedIncludeLayers = serializedObject.FindProperty("includeLayers");
+            //
+            // if (EditorGUILayout.PropertyField(serializedIncludeLayers))
+            // {
+            //     serializedObject.ApplyModifiedProperties();
+            // }
         }
         
     }

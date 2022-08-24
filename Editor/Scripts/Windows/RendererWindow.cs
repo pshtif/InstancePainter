@@ -4,6 +4,7 @@
 
 using InstancePainter.Runtime;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 
 namespace InstancePainter.Editor
@@ -49,7 +50,7 @@ namespace InstancePainter.Editor
 
             EditorGUILayout.LabelField("Scene Instance Renderers", Skin.GetStyle("paintdefinitions"), GUILayout.Height(24));
 
-            var renderers = FindObjectsOfType<InstanceRenderer>();
+            var renderers = StageUtility.GetCurrentStageHandle().FindComponentsOfType<InstanceRenderer>();
 
             horizontalStyle.normal.background = TextureUtils.GetColorTexture(new Color(.1f, .1f, .1f));
             GUILayout.BeginHorizontal(horizontalStyle, GUILayout.Height(24));

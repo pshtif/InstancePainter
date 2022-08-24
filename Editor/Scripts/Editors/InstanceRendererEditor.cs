@@ -22,6 +22,8 @@ namespace InstancePainter.Editor
 
         public override void OnInspectorGUI()
         {
+            EditorGUILayout.LabelField("<color=#FF8800>Instance Renderer </color><i><size=10>v"+IPEditorCore.VERSION+"</size></i>", Skin.GetStyle("editor_title"), GUILayout.Height(30));
+
             EditorGUI.BeginChangeCheck();
 
             DrawWarnings();

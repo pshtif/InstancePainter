@@ -8,6 +8,17 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.6.3 - 24.8.2022 RELEASE CANDIDATE
+
+#### Changed
+
+- Changed additional UI visuals and styles
+- Changed include layers removed for now till they are working as intended
+
+#### Fixed
+
+- Fixed geometry fetching inside prefab stage for correct paint/raycast in prefab stage
+
 ### Release 0.6.2 - 23.8.2022 RELEASE CANDIDATE
 
 #### Added
