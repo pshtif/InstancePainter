@@ -93,7 +93,7 @@ namespace InstancePainter.Editor
 
         void DrawPaintDefinitionsGUI()
         {
-            if (!GUIUtils.DrawSectionTitle("ACTIVE PAINT DEFINITIONS", ref Core.Config.minimizePaintDefinitions))
+            if (!GUIUtils.DrawMinimizableSectionTitle("ACTIVE PAINT DEFINITIONS", ref Core.Config.minimizePaintDefinitions))
                 return;
 
             for (int i=0; i<Core.Config.paintDefinitions.Count; i++)
@@ -282,7 +282,7 @@ namespace InstancePainter.Editor
 
         void DrawSettingsGUI()
         {
-            if (!GUIUtils.DrawSectionTitle("SETTINGS", ref Core.Config.minimizeSettings))
+            if (!GUIUtils.DrawMinimizableSectionTitle("SETTINGS", ref Core.Config.minimizeSettings))
                 return;
 
             EditorGUI.BeginChangeCheck();
