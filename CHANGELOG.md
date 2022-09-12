@@ -8,6 +8,14 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.6.4 - 12.9.2022 RELEASE CANDIDATE
+
+#### Added
+
+- Added frustum and distance GPU culling for indirect rendering
+
+## RELEASES
+
 ### Release 0.6.3 - 24.8.2022 RELEASE CANDIDATE
 
 #### Changed
