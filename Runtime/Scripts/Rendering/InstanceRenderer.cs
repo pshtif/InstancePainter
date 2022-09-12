@@ -31,6 +31,8 @@ namespace InstancePainter.Runtime
         public bool autoApplyModifiers = false;
         public float binSize = 1000;
 
+        private Matrix4x4 customCullingMatrix = Matrix4x4.zero;
+
         public bool enableFallback = true;
 
         public bool forceFallback = false;
@@ -146,8 +148,28 @@ namespace InstancePainter.Runtime
                     InstanceClusters.ForEach(id => id?.RenderFallback(p_camera));
                 }
             } else {
-                InstanceClusters.ForEach(id => id?.RenderIndirect(p_camera));
+                InstanceClusters.ForEach(id => id?.RenderIndirect(p_camera, GetCullingMatrix()));
             }
+        }
+        
+        public void SetCustomCullingMatrix(Matrix4x4 p_matrix)
+        {
+            customCullingMatrix = p_matrix;
+        }
+
+        public Matrix4x4 GetCustomCullingMatrix()
+        {
+            return customCullingMatrix;
+        }
+
+        public Matrix4x4 GetCullingMatrix()
+        {
+            if (customCullingMatrix != Matrix4x4.zero)
+            {
+                return customCullingMatrix;
+            }
+            
+            return Camera.main.projectionMatrix * Camera.main.worldToCameraMatrix;
         }
         
         private void OnDestroy()

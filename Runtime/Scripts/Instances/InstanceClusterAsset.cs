@@ -22,9 +22,9 @@ namespace InstancePainter.Runtime
             cluster = new InstanceCluster();
         }
         
-        public void RenderIndirect(Camera p_camera)
+        public void RenderIndirect(Camera p_camera, Matrix4x4 p_cullingMatrix)
         {
-            cluster?.RenderIndirect(p_camera);
+            cluster?.RenderIndirect(p_camera, p_cullingMatrix);
         }
         
         public void RenderFallback(Camera p_camera)

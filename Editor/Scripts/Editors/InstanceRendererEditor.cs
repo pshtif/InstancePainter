@@ -213,8 +213,19 @@ namespace InstancePainter.Editor
             
             cluster.fallbackMaterial = (Material)EditorGUILayout.ObjectField(new GUIContent("FallbackMaterial"), cluster.fallbackMaterial, typeof(Material), false);
 
+            cluster.useCulling = EditorGUILayout.Toggle("Use Culling", cluster.useCulling);
+
+            if (cluster.useCulling)
+            {
+                cluster.cullingShader = (ComputeShader)EditorGUILayout.ObjectField(new GUIContent("CullingShader"),
+                    cluster.cullingShader, typeof(ComputeShader), false);
+
+                cluster.cullingDistance = EditorGUILayout.FloatField("Culling Distance", cluster.cullingDistance);
+            }
+
             if (EditorGUI.EndChangeCheck())
             {
+                EditorUtility.SetDirty(Renderer);
                 SceneView.RepaintAll();
             }
 
