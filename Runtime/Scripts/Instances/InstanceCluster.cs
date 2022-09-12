@@ -225,7 +225,9 @@ namespace InstancePainter.Runtime
             var renderMaterial = IPRuntimeEditorCore.renderingAsUtil
                 ? this == IPRuntimeEditorCore.explicitCluster ? MaterialUtils.ExplicitClusterMaterial : MaterialUtils.NonExplicitClusterMaterial
                 : material;
-
+#else
+            var renderMaterial = material;
+#endif
             bool activeCulling = useCulling && cullingShader != null;
             if (activeCulling && !renderMaterial.IsKeywordEnabled("ENABLE_CULLING"))
             {
@@ -236,12 +238,8 @@ namespace InstancePainter.Runtime
             {
                 renderMaterial.DisableKeyword("ENABLE_CULLING");
             }
-
-            _renderer.RenderIndirect(p_camera, mesh, renderMaterial, _renderMatrixData, _renderColorData, activeCulling,
-                cullingShader, p_cullingMatrix, cullingDistance);
-#else
-            _renderer.RenderIndirect(p_camera, mesh, material, _renderMatrixData, _renderColorData, activeCulling, cullingShader, p_cullingMatrix, cullingDistance);
-#endif
+            
+            _renderer.RenderIndirect(p_camera, mesh, renderMaterial, _renderMatrixData, _renderColorData, activeCulling, cullingShader, p_cullingMatrix, cullingDistance);
         }
         
         public void RenderFallback(Camera p_camera)

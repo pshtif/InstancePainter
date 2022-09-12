@@ -14,10 +14,10 @@ Shader "Instance Painter/InstancedIndirectPixelShadows"
         _WindTiling ("Wind Tiling", Float) = 0
         _WindTimeScale ("Wind Time Scale", Float) = 1
         
+        [Toggle(ENABLE_CULLING)]_Culling("Enable Culling", Float) = 0
         [Toggle(ENABLE_WIND)] _EnableWind ("Enable Wind", Float) = 0
         [Toggle(ENABLE_BILLBOARD)] _EnableBillboard ("Enable Billboard", Float) = 0
         [Toggle(ENABLE_RECEIVE_SHADOWS)] _EnableReceiveShadows ("Enable Receive Shadows", Float) = 0
-        [Toggle(ENABLE_CULLING)]_Culling("Enable Culling", Float) = 0
     }
 
     SubShader
