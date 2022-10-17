@@ -31,7 +31,7 @@ namespace InstancePainter.Editor
                 }
             }
             
-            if (_mouseHitTransform?.GetComponent<MeshFilter>() == null && _mouseHitTransform?.GetComponent<Collider>() == null)
+            if (_mouseHitTransform == null || (_mouseHitTransform?.GetComponent<MeshFilter>() == null && _mouseHitTransform?.GetComponent<Collider>() == null))
                 return;
             
             HandleMouseHitInternal(_mouseRaycastHit);

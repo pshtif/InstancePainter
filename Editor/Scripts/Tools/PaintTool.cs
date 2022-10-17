@@ -29,9 +29,6 @@ namespace InstancePainter.Editor
         private List<PaintedInstance> _paintedInstances = new List<PaintedInstance>();
         private PaintToolState _state = PaintToolState.NONE;
 
-        private static MeshFilter[] _cachedValidMeshes;
-        private static Collider[] _cachedValidColliders;
-        
         protected override void HandleMouseHitInternal(RaycastHit p_hit)
         {
             switch (_state)
@@ -52,20 +49,7 @@ namespace InstancePainter.Editor
                 Undo.RegisterCompleteObjectUndo(Core.Renderer, "Record Renderer");
                 _undoId = Undo.GetCurrentGroup();
 
-                if (Core.Config.useMeshRaycasting)
-                {
-                    _cachedValidMeshes = Core.Config.includeLayers.Count == 0
-                        ? StageUtility.GetCurrentStageHandle().FindComponentsOfType<MeshFilter>()
-                        : LayerUtils.GetAllComponentsInLayers<MeshFilter>(Core.Config.includeLayers.ToArray());
-                }
-                else
-                {
-                    _cachedValidMeshes = null;
-                }
-
-                _cachedValidColliders = Core.Config.includeLayers.Count == 0
-                    ? StageUtility.GetCurrentStageHandle().FindComponentsOfType<Collider>()
-                    : LayerUtils.GetAllComponentsInLayers<Collider>(Core.Config.includeLayers.ToArray());
+                Core.CacheRaycastMeshes();
             }
             
             if (Event.current.button == 0 && !Event.current.alt && (Event.current.type == EventType.MouseDrag ||
@@ -152,8 +136,7 @@ namespace InstancePainter.Editor
             if (Core.Config.PaintToolConfig.density == 1)
             {
                 InstanceDefinition instanceDefinition = Core.Config.GetWeightedDefinition();
-                var datas = Core.PlaceInstance(instanceDefinition, p_hit.point, _cachedValidMeshes,
-                    _cachedValidColliders, _paintedInstances, Core.Config.PaintToolConfig.minimumDistance,
+                var datas = Core.PlaceInstance(instanceDefinition, p_hit.point, _paintedInstances, Core.Config.PaintToolConfig.minimumDistance,
                     Core.Config.PaintToolConfig.color);
                 invalidateClusters.AddRangeIfUnique(datas);
             }
@@ -169,8 +152,7 @@ namespace InstancePainter.Editor
                         Vector3 direction = Quaternion.AngleAxis(Random.Range(0, 360), Vector3.up) * Vector3.right;
                         Vector3 position = direction * Random.Range(0, Core.Config.PaintToolConfig.brushSize) + p_hit.point;
 
-                        var datas = Core.PlaceInstance(instanceDefinition, position, _cachedValidMeshes,
-                            _cachedValidColliders, _paintedInstances, Core.Config.PaintToolConfig.minimumDistance,
+                        var datas = Core.PlaceInstance(instanceDefinition, position, _paintedInstances, Core.Config.PaintToolConfig.minimumDistance,
                             Core.Config.PaintToolConfig.color);
                         invalidateClusters.AddRangeIfUnique(datas);
                     }
@@ -271,6 +253,8 @@ namespace InstancePainter.Editor
         public override void DrawInspectorGUI()
         {
             GUIUtils.DrawSectionTitle("PAINT TOOL");
+            
+            EditorGUI.BeginChangeCheck();
 
             Core.Config.PaintToolConfig.brushSize = EditorGUILayout.Slider("Brush Size", Core.Config.PaintToolConfig.brushSize, 0.1f, 100);
         
@@ -281,7 +265,7 @@ namespace InstancePainter.Editor
             Core.Config.PaintToolConfig.density = EditorGUILayout.IntField("Density", Core.Config.PaintToolConfig.density);
             
             Core.Config.PaintToolConfig.minimumDistance = EditorGUILayout.FloatField("Minimum Distance", Core.Config.PaintToolConfig.minimumDistance);
-            
+
             GUILayout.Space(4);
         }
     }

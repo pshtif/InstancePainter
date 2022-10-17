@@ -81,14 +81,12 @@ namespace InstancePainter.Editor
                 if (EditorUtility.DisplayDialog("Cluster type", "Add an asset cluster or bound cluster?", "Asset",
                         "Bound"))
                 {
-                    Renderer.InstanceClusters.Add(null);   
+                    Renderer.AddCluster(null);
                 }
                 else
                 {
-                    Renderer.InstanceClusters.Add(InstanceCluster.CreateEmptyCluster());
+                    Renderer.AddCluster(InstanceCluster.CreateEmptyCluster());
                 }
-                
-                Renderer.ForceReserialize();
             }
 
             GUI.color = Color.white;
@@ -244,7 +242,7 @@ namespace InstancePainter.Editor
                 {
                     var asset = InstanceClusterAsset.CreateAssetWithPanel(cluster);
                     Renderer.InstanceClusters.RemoveAt(p_index);
-                    Renderer.InstanceClusters.Add(asset);
+                    Renderer.AddCluster(asset);
                 }
 
                 return true;

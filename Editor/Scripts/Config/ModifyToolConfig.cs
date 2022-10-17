@@ -14,5 +14,7 @@ namespace InstancePainter.Editor
     {
         [Range(1,100)]
         public float brushSize = 1;
+
+        public bool useRaycasting = true;
     }
 }

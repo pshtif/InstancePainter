@@ -20,7 +20,7 @@ namespace InstancePainter.Editor
     [InitializeOnLoad]
     public class IPEditorCore
     {
-        public const string VERSION = "0.6.3";
+        public const string VERSION = "0.6.6";
         
         public static IPEditorCore Instance { get; private set; }
         
@@ -67,6 +67,9 @@ namespace InstancePainter.Editor
 
         public ToolBase CurrentTool => _currentTool;
         private ToolBase _currentTool;
+        
+        private static MeshFilter[] _cachedValidMeshes;
+        private static Collider[] _cachedValidColliders;
 
         public IPEditorConfig Config { get; private set; }
 
@@ -83,7 +86,7 @@ namespace InstancePainter.Editor
             Undo.undoRedoPerformed -= UndoRedoCallback;
             Undo.undoRedoPerformed += UndoRedoCallback;
         }
-
+        
         void UndoRedoCallback()
         {
             StageUtility.GetCurrentStageHandle().FindComponentsOfType<InstanceRenderer>().ForEach(r =>
@@ -115,7 +118,7 @@ namespace InstancePainter.Editor
             if (cluster == null)
             {
                 cluster = new InstanceCluster(p_mesh, p_definition.material);
-                Renderer.InstanceClusters.Add(cluster);
+                Renderer.AddCluster(cluster);
             }
             
             if (!cluster.IsMesh(p_mesh))
@@ -134,21 +137,52 @@ namespace InstancePainter.Editor
 
             return data;
         }
-        
-        public ICluster[] PlaceInstance(InstanceDefinition p_instanceDefinition, Vector3 p_position, MeshFilter[] p_validMeshes, Collider[] p_validColliders, List<PaintedInstance> p_paintedInstances, float p_minimumDistance, Color p_color)
+
+        // TODO skip caching if no geo changed? Scene change hookup?
+        public void CacheRaycastMeshes()
         {
-            List<ICluster> paintedDatas = new List<ICluster>();
-            
+            if (Config.useMeshRaycasting)
+            {
+                _cachedValidMeshes = Config.includeLayers.Count == 0
+                    ? StageUtility.GetCurrentStageHandle().FindComponentsOfType<MeshFilter>()
+                    : LayerUtils.GetAllComponentsInLayers<MeshFilter>(Config.includeLayers.ToArray());
+            }
+            else
+            {
+                _cachedValidMeshes = null;
+            }
+
+            _cachedValidColliders = Config.includeLayers.Count == 0
+                ? StageUtility.GetCurrentStageHandle().FindComponentsOfType<Collider>()
+                : LayerUtils.GetAllComponentsInLayers<Collider>(Config.includeLayers.ToArray());
+        }
+
+        public bool RaycastValidGeo(Vector3 p_position, out RaycastHit p_hit)
+        {
             p_position += Vector3.up * 100;
             Ray ray = new Ray(p_position, -Vector3.up);
-
+            
             RaycastHit hit;
             
-            if (p_validMeshes == null || !EditorRaycast.Raycast(ray, p_validMeshes, out hit))
+            if (_cachedValidMeshes == null || !EditorRaycast.Raycast(ray, _cachedValidMeshes, out hit))
             {
-                if (p_validColliders == null || !EditorRaycast.Raycast(ray, p_validColliders, out hit))
-                    return paintedDatas.ToArray();
+                if (_cachedValidColliders == null || !EditorRaycast.Raycast(ray, _cachedValidColliders, out hit))
+                {
+                    p_hit = new RaycastHit();
+                    return false;
+                }
             }
+
+            p_hit = hit;
+            return true;
+        }
+        
+        public ICluster[] PlaceInstance(InstanceDefinition p_instanceDefinition, Vector3 p_position, List<PaintedInstance> p_paintedInstances, float p_minimumDistance, Color p_color)
+        {
+            List<ICluster> paintedDatas = new List<ICluster>();
+
+            RaycastHit hit;
+            RaycastValidGeo(p_position, out hit);
             
             p_position = hit.point;
             float slope = 0;

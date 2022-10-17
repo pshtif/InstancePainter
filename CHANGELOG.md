@@ -8,13 +8,32 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.6.6 - 18.10.2022 RELEASE CANDIDATE
+
+#### Added
+
+- Added optional raycasting for moving using modify tool
+
+#### Fixed
+
+- Fixed serialization issues on tool configurations
+
+### Release 0.6.5 - 12.9.2022 RELEASE CANDIDATE
+
+#### Changed
+
+- Changed scene view rendering now skipped in play mode to avoid multiple issues in various prefab stages and culling options
+
+#### Fixed
+
+- Fixed on accessing incorrect camera in prefab stage
+- Fixed edit mode execution for prefab stage exit
+
 ### Release 0.6.4 - 12.9.2022 RELEASE CANDIDATE
 
 #### Added
 
 - Added frustum and distance GPU culling for indirect rendering
-
-## RELEASES
 
 ### Release 0.6.3 - 24.8.2022 RELEASE CANDIDATE
 

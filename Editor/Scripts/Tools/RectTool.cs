@@ -146,17 +146,7 @@ namespace InstancePainter.Editor
 
         void Fill(Vector3 p_startPoint, Vector3 p_endPoint)
         {
-            MeshFilter[] validMeshes = null;
-            if (Core.Config.useMeshRaycasting)
-            {
-                validMeshes = Core.Config.includeLayers.Count == 0
-                    ? StageUtility.GetCurrentStageHandle().FindComponentsOfType<MeshFilter>()
-                    : LayerUtils.GetAllComponentsInLayers<MeshFilter>(Core.Config.includeLayers.ToArray());
-            }
-
-            var validColliders = Core.Config.includeLayers.Count == 0
-                ? StageUtility.GetCurrentStageHandle().FindComponentsOfType<Collider>()
-                : LayerUtils.GetAllComponentsInLayers<Collider>(Core.Config.includeLayers.ToArray());
+            Core.CacheRaycastMeshes();
 
             var minX = Math.Min(p_startPoint.x, p_endPoint.x);
             var maxX = Math.Max(p_startPoint.x, p_endPoint.x);
@@ -174,8 +164,7 @@ namespace InstancePainter.Editor
                 if (instanceDefinition != null)
                 {
                     var datas = Core.PlaceInstance(instanceDefinition,
-                        new Vector3(Random.Range(minX, maxX), p_startPoint.y, Random.Range(minZ, maxZ)), validMeshes,
-                        validColliders, _paintedInstances, Core.Config.RectToolConfig.minimumDistance, Core.Config.RectToolConfig.color);
+                        new Vector3(Random.Range(minX, maxX), p_startPoint.y, Random.Range(minZ, maxZ)), _paintedInstances, Core.Config.RectToolConfig.minimumDistance, Core.Config.RectToolConfig.color);
 
                     foreach (var data in datas)
                     {

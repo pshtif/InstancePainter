@@ -67,6 +67,7 @@ namespace InstancePainter.Editor
 
             if (EditorGUI.EndChangeCheck())
             {
+                Debug.Log("here");
                 EditorUtility.SetDirty(Core.Config);
             }
 
@@ -245,8 +246,9 @@ namespace InstancePainter.Editor
 
                     p_instanceDefinition.weight =
                         EditorGUILayout.FloatField("Weight Probability", p_instanceDefinition.weight);
-                    
-                    Core.Config.PaintToolConfig.density = EditorGUILayout.IntField("Density", Core.Config.PaintToolConfig.density);
+
+                    // TODO density per definition
+                    //Core.Config.PaintToolConfig.density = EditorGUILayout.IntField("Density", Core.Config.PaintToolConfig.density);
                     
                     p_instanceDefinition.maximumSlope = EditorGUILayout.Slider("Maximum Slope", p_instanceDefinition.maximumSlope, 0, 90);
                     p_instanceDefinition.minimumDistance = EditorGUILayout.FloatField("Minimum Distance", p_instanceDefinition.minimumDistance);

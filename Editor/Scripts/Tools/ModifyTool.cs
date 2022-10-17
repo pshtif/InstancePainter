@@ -54,6 +54,8 @@ namespace InstancePainter.Editor
                 Undo.SetCurrentGroupName("Modify");
                 Undo.RegisterCompleteObjectUndo(Core.Renderer, "Record Renderers");
                 _undoId = Undo.GetCurrentGroup();
+                
+                Core.CacheRaycastMeshes();
             }
             
             if (Event.current.button == 0 && !Event.current.alt && (Event.current.type == EventType.MouseDrag ||
@@ -226,7 +228,7 @@ namespace InstancePainter.Editor
         void ModifyPosition(RaycastHit p_hit)
         {
             var offset = p_hit.point - _modifyStartHit.point;
-
+            
             List<ICluster> datas = new List<ICluster>();
             foreach (var instance in _modifyInstances)
             {
@@ -242,6 +244,15 @@ namespace InstancePainter.Editor
                     instance.matrix.GetColumn(1).magnitude,
                     instance.matrix.GetColumn(2).magnitude
                 );
+
+                if (Core.Config.ModifyToolConfig.useRaycasting)
+                {
+                    RaycastHit hit;
+                    if (Core.RaycastValidGeo(position, out hit))
+                    {
+                        position = hit.point;
+                    }
+                }
 
                 instance.cluster.SetInstanceMatrix(instance.index, Matrix4x4.TRS(position, originalRotation, originalScale));
                 
@@ -326,6 +337,9 @@ namespace InstancePainter.Editor
             style.fontSize = 14;
         
             Core.Config.ModifyToolConfig.brushSize = EditorGUILayout.Slider("Brush Size", Core.Config.ModifyToolConfig.brushSize, 0.1f, 100);
+
+            Core.Config.ModifyToolConfig.useRaycasting =
+                EditorGUILayout.Toggle("Use Raycasting", Core.Config.ModifyToolConfig.useRaycasting);
 
             Core.Config.modifyPosition = EditorGUILayout.Vector3Field("Modify Position", Core.Config.modifyPosition);
             Core.Config.modifyScale = EditorGUILayout.Vector3Field("Modify Scale", Core.Config.modifyScale);
