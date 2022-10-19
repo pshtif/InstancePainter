@@ -8,11 +8,18 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
-### Release 0.6.6 - 18.10.2022 RELEASE CANDIDATE
+### Release 0.7.0 - 18.10.2022 RELEASE CANDIDATE
 
 #### Added
 
 - Added optional raycasting for moving using modify tool
+- Added cluster tool as separate tooling
+
+#### Changed
+
+- Changed color and minimum distance now part of paint definition and removed from tool config
+- Changed cluster changes moved from modify tool to cluster tool
+- Changed modifying instance colors moved from paint to modify tool
 
 #### Fixed
 
