@@ -34,6 +34,8 @@ namespace InstancePainter.Runtime
         
         public GameObject prefab;
         public Material material;
+
+        public Color color = Color.white;
         
         public float maximumSlope = 90;
         public float minimumDistance = 0;

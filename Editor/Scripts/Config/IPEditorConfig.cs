@@ -40,7 +40,7 @@ namespace InstancePainter.Editor
         
         public bool minimizePaintDefinitions = false;
         public bool minimizeSettings = false;
-        public List<InstanceDefinition> paintDefinitions = new List<InstanceDefinition>();
+        public List<PaintDefinition> paintDefinitions = new List<PaintDefinition>();
 
         #region ERASE
         
@@ -92,12 +92,12 @@ namespace InstancePainter.Editor
             return config;
         }
         
-        public InstanceDefinition GetWeightedDefinition()
+        public PaintDefinition GetWeightedDefinition()
         {
             if (paintDefinitions.Count == 0)
                 return null;
             
-            InstanceDefinition instanceDefinition = null;
+            PaintDefinition paintDefinition = null;
             
             float sum = 0;
             foreach (var def in paintDefinitions)
@@ -116,12 +116,12 @@ namespace InstancePainter.Editor
                 random -= def.weight;
                 if (random < 0)
                 {
-                    instanceDefinition = def;
+                    paintDefinition = def;
                     break;
                 }
             }
 
-            return instanceDefinition;
+            return paintDefinition;
         }
     }
 }
