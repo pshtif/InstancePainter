@@ -16,7 +16,12 @@ namespace InstancePainter.Editor
         public IPEditorCore Core => IPEditorCore.Instance;
         
         public abstract void DrawSceneGUI(SceneView p_sceneView);
-
+        
+        public virtual void Selected()
+        {
+            IPRuntimeEditorCore.renderingAsUtil = false;   
+        }
+        
         public void Handle()
         {
             Tools.current = Tool.None;

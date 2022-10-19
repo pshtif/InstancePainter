@@ -16,5 +16,9 @@ namespace InstancePainter.Editor
         public float brushSize = 1;
 
         public bool useRaycasting = true;
+
+        public Color color = Color.white;
+
+        public float falloff = 1;
     }
 }

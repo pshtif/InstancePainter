@@ -76,7 +76,6 @@ namespace InstancePainter.Editor
                     
                     if (Event.current.shift)
                     {
-                        Colorize(p_hit);
                     }
                     else
                     {
@@ -135,25 +134,23 @@ namespace InstancePainter.Editor
 
             if (Core.Config.PaintToolConfig.density == 1)
             {
-                InstanceDefinition instanceDefinition = Core.Config.GetWeightedDefinition();
-                var datas = Core.PlaceInstance(instanceDefinition, p_hit.point, _paintedInstances, Core.Config.PaintToolConfig.minimumDistance,
-                    Core.Config.PaintToolConfig.color);
+                PaintDefinition paintDefinition = Core.Config.GetWeightedDefinition();
+                var datas = Core.PlaceInstance(paintDefinition, p_hit.point, _paintedInstances);
                 invalidateClusters.AddRangeIfUnique(datas);
             }
             else
             {
                 for (int i = 0; i < Core.Config.PaintToolConfig.density; i++)
                 {
-                    InstanceDefinition instanceDefinition = Core.Config.GetWeightedDefinition();
+                    PaintDefinition paintDefinition = Core.Config.GetWeightedDefinition();
 
-                    if (instanceDefinition != null)
+                    if (paintDefinition != null)
                     {
 
                         Vector3 direction = Quaternion.AngleAxis(Random.Range(0, 360), Vector3.up) * Vector3.right;
                         Vector3 position = direction * Random.Range(0, Core.Config.PaintToolConfig.brushSize) + p_hit.point;
 
-                        var datas = Core.PlaceInstance(instanceDefinition, position, _paintedInstances, Core.Config.PaintToolConfig.minimumDistance,
-                            Core.Config.PaintToolConfig.color);
+                        var datas = Core.PlaceInstance(paintDefinition, position, _paintedInstances);
                         invalidateClusters.AddRangeIfUnique(datas);
                     }
                 }
@@ -162,31 +159,6 @@ namespace InstancePainter.Editor
             invalidateClusters.ForEach(d => d.UpdateSerializedData());
         }
 
-        void Colorize(RaycastHit p_hit)
-        {
-            List<ICluster> invalidateDatas = new List<ICluster>();
-
-            var datas = Core.Renderer.InstanceClusters;
-            foreach (ICluster data in datas)
-            {
-                for (int i = 0; i<data.GetCount(); i++)
-                {
-                    var position = data.GetInstanceMatrix(i).GetColumn(3);
-                    var distance = Vector3.Distance(position, p_hit.point);
-                    if (distance < Core.Config.PaintToolConfig.brushSize)
-                    {
-                        data.SetInstanceColor(i,
-                            Vector4.Lerp(data.GetInstanceColor(i), Core.Config.PaintToolConfig.color,
-                                (1 - distance / Core.Config.PaintToolConfig.brushSize) *
-                                Core.Config.PaintToolConfig.alpha));
-                        invalidateDatas.AddIfUnique(data);
-                    }
-                }
-            }
-
-            invalidateDatas.ForEach(d => d.UpdateSerializedData());
-        }
-        
         void DrawPaintHandle(Vector3 p_position, Vector3 p_normal, float p_size)
         {
             Handles.color = new Color(0,1,0,.2f);
@@ -257,9 +229,7 @@ namespace InstancePainter.Editor
             EditorGUI.BeginChangeCheck();
 
             Core.Config.PaintToolConfig.brushSize = EditorGUILayout.Slider("Brush Size", Core.Config.PaintToolConfig.brushSize, 0.1f, 100);
-        
-            Core.Config.PaintToolConfig.color = EditorGUILayout.ColorField("Color", Core.Config.PaintToolConfig.color);
-            
+
             Core.Config.PaintToolConfig.alpha = EditorGUILayout.Slider("Alpha", Core.Config.PaintToolConfig.alpha, 0, 1);
 
             Core.Config.PaintToolConfig.density = EditorGUILayout.IntField("Density", Core.Config.PaintToolConfig.density);
