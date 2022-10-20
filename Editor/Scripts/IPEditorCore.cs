@@ -245,10 +245,21 @@ namespace InstancePainter.Editor
                 var scale = Vector3.Scale(filter.transform.localScale, p_paintDefinition.scaleOffset) *
                             Random.Range(p_paintDefinition.minScale, p_paintDefinition.maxScale);
 
+                // Move this to paint definition?
+                Color color = Color.white;
+                switch (p_paintDefinition.colorDistribution)
+                {
+                    case ColorDistributionType.SINGLE:
+                        color = p_paintDefinition.color;
+                        break;
+                    case ColorDistributionType.GRADIENT:
+                        color = p_paintDefinition.gradient.Evaluate(Random.Range(0f, 1f));
+                        break;
+                }
+
                 if (filter.sharedMesh != null)
                 {
-                    var data = AddInstance(p_paintDefinition, filter.sharedMesh, position, rotation,
-                        scale, p_paintDefinition.color);
+                    var data = AddInstance(p_paintDefinition, filter.sharedMesh, position, rotation, scale, color);
 
                     var instance = new PaintedInstance(data, data.GetInstanceMatrix(data.GetCount() - 1),
                         data.GetInstanceColor(data.GetCount() - 1),

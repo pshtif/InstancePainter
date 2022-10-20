@@ -67,7 +67,6 @@ namespace InstancePainter.Editor
 
             if (EditorGUI.EndChangeCheck())
             {
-                Debug.Log("here");
                 EditorUtility.SetDirty(Core.Config);
             }
 
@@ -256,7 +255,18 @@ namespace InstancePainter.Editor
                     p_paintDefinition.weight =
                         EditorGUILayout.FloatField("Weight Probability", p_paintDefinition.weight);
 
-                    p_paintDefinition.color = EditorGUILayout.ColorField("Color", p_paintDefinition.color);
+                    p_paintDefinition.colorDistribution =
+                        (ColorDistributionType)EditorGUILayout.EnumPopup("Color Distribution", p_paintDefinition.colorDistribution);
+
+                    switch (p_paintDefinition.colorDistribution)
+                    {
+                        case ColorDistributionType.SINGLE:
+                            p_paintDefinition.color = EditorGUILayout.ColorField("Color", p_paintDefinition.color);
+                            break;
+                        case ColorDistributionType.GRADIENT:
+                            p_paintDefinition.gradient = EditorGUILayout.GradientField("Gradient", p_paintDefinition.gradient);
+                            break;
+                    }
 
                     // TODO density per definition
                     //Core.Config.PaintToolConfig.density = EditorGUILayout.IntField("Density", Core.Config.PaintToolConfig.density);
