@@ -22,6 +22,11 @@ namespace InstancePainter.Editor
             IPRuntimeEditorCore.renderingAsUtil = false;   
         }
         
+        public virtual void Unselected()
+        {
+            IPRuntimeEditorCore.renderingAsUtil = false;   
+        }
+        
         public void Handle()
         {
             Tools.current = Tool.None;

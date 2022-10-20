@@ -20,7 +20,7 @@ namespace InstancePainter.Editor
     [InitializeOnLoad]
     public class IPEditorCore
     {
-        public const string VERSION = "0.6.6";
+        public const string VERSION = "0.7.0";
         
         public static IPEditorCore Instance { get; private set; }
         
@@ -99,8 +99,17 @@ namespace InstancePainter.Editor
 
         public void ChangeTool<T>(bool p_enable = false) where T : ToolBase
         {
-            _currentTool = (_currentTool == null || _currentTool.GetType() != typeof(T)) ? Activator.CreateInstance<T>() : null;
-            _currentTool?.Selected();
+            _currentTool?.Unselected();
+            
+            if (_currentTool == null || _currentTool.GetType() != typeof(T))
+            {
+                _currentTool = Activator.CreateInstance<T>();
+                _currentTool.Selected();
+            }
+            else
+            {
+                _currentTool = null;
+            }
 
             InstancePainterWindow.Instance?.Repaint();
         }
