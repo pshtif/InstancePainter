@@ -289,9 +289,14 @@ namespace InstancePainter.Runtime
         
         public bool minimized { get; set; } = false;
 
-        public string GetClusterName()
+        public string GetClusterNameHTML()
         {
             return mesh == null ? "<color=#FF0000>NO MESH</color>" : "<color=#FFFF00>"+mesh.name+"</color>";
+        }
+        
+        public string GetClusterName()
+        {
+            return mesh == null ? "NO MESH" : mesh.name;
         }
 
         public bool HasMesh()

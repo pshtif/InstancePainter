@@ -154,6 +154,11 @@ namespace InstancePainter.Runtime
             }
         }
 
+        public string GetClusterNameHTML()
+        {
+            return cluster.GetClusterNameHTML();
+        }
+        
         public string GetClusterName()
         {
             return cluster.GetClusterName();

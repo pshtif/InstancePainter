@@ -47,6 +47,8 @@ namespace InstancePainter.Runtime
 
         void SetEnabled(bool p_enabled);
 
+        string GetClusterNameHTML();
+        
         string GetClusterName();
 
         void UndoRedoPerformed();
