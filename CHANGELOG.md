@@ -22,6 +22,8 @@ All notable changes to this project will be documented in this file.
 - Changed color and minimum distance now part of paint definition and removed from tool config
 - Changed cluster changes moved from modify tool to cluster tool
 - Changed modifying instance colors moved from paint to modify tool
+- Changed InstanceDefinition made obsolete and migration to PaintDefinition [BREAKING]
+- Changed refactoring on cluster methods
 
 #### Fixed
 
