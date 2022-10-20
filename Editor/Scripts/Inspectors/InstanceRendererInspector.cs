@@ -105,8 +105,7 @@ namespace InstancePainter.Editor
                 if (EditorUtility.DisplayDialog("Cluster Deletion", "Are you sure you want to delete this cluster?", "Yes",
                         "No"))
                 {
-                    Renderer.InstanceClusters.RemoveAt(p_index);
-                    cluster?.Dispose();
+                    Renderer.RemoveClusterAt(p_index);
                     SceneView.RepaintAll();
                     return true;
                 }
