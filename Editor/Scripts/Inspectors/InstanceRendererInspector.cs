@@ -2,6 +2,7 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
+using System.Linq;
 using InstancePainter.Runtime;
 using UnityEditor;
 using UnityEngine;
@@ -38,11 +39,6 @@ namespace InstancePainter.Editor
             GUILayout.Space(4);
 
             DrawModifiers();
-
-            // if (GUILayout.Button("Generate Game Objects"))
-            // {
-            //     GenerateGameObjects();
-            // }
         }
 
         void DrawModifiers()
@@ -99,7 +95,7 @@ namespace InstancePainter.Editor
                 (cluster is InstanceClusterAsset
                     ? "<color=#0088FF>[ASSET]</color>"
                     : "<color=#00FF88>[INSTANCE]</color>") + " Cluster: " +
-                (cluster == null ? "<color=#FF0000>NULL</color>" : cluster.GetClusterName()), Skin.GetStyle("cluster_title"),
+                (cluster == null ? "<color=#FF0000>NULL</color>" : cluster.GetClusterNameHTML()), Skin.GetStyle("cluster_title"),
                 GUILayout.Height(24));
 
             var rect = GUILayoutUtility.GetLastRect();
@@ -194,6 +190,11 @@ namespace InstancePainter.Editor
 
             GUILayout.Space(4);
 
+            if (GUILayout.Button("Generate Game Objects"))
+            {
+                GenerateGameObjectsFromCluster(cluster);
+            }
+            
             return modified;
         }
 
@@ -351,26 +352,28 @@ namespace InstancePainter.Editor
             }
         }
 
-        // void GenerateGameObjects()
-        // {
-        //     Transform container = new GameObject().transform;
-        //     container.name = Renderer.mesh.name;
-        //     container.SetParent(Renderer.transform);
-        //     
-        //     for (int i = 0; i<Renderer.Count; i++)
-        //     {
-        //         var matrix = Renderer.GetInstanceMatrix(i);
-        //         var filter = new GameObject().AddComponent<MeshFilter>();
-        //         var mr = filter.gameObject.AddComponent<MeshRenderer>();
-        //         mr.materials = new Material[Renderer.mesh.subMeshCount];
-        //         filter.sharedMesh = Renderer.mesh;
-        //         filter.name = Renderer.mesh.name + i;
-        //         filter.transform.localPosition = matrix.GetColumn(3);
-        //         filter.transform.rotation = ExtractRotation(matrix);
-        //         filter.transform.localScale = ExtractScaleFromMatrix(matrix);
-        //         filter.transform.SetParent(container);
-        //     }
-        // }
+        void GenerateGameObjectsFromCluster(ICluster p_cluster)
+        {
+            Transform container = new GameObject().transform;
+            container.name = p_cluster.GetClusterName();
+            container.SetParent(Renderer.transform);
+
+            Material material = new Material(Shader.Find("Universal Render Pipeline/Simple Lit"));
+            
+            for (int i = 0; i<p_cluster.GetCount(); i++)
+            {
+                var matrix = p_cluster.GetInstanceMatrix(i);
+                var filter = new GameObject().AddComponent<MeshFilter>();
+                var mr = filter.gameObject.AddComponent<MeshRenderer>();
+                mr.materials = Enumerable.Repeat(material, p_cluster.GetMesh().subMeshCount).ToArray();
+                filter.sharedMesh = p_cluster.GetMesh();
+                filter.name = p_cluster.GetMesh().name + i;
+                filter.transform.localPosition = matrix.GetColumn(3);
+                filter.transform.rotation = ExtractRotation(matrix);
+                filter.transform.localScale = ExtractScaleFromMatrix(matrix);
+                filter.transform.SetParent(container);
+            }
+        }
         
         public static Vector3 ExtractScaleFromMatrix(Matrix4x4 matrix)
         {
