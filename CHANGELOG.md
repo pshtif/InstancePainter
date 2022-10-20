@@ -14,6 +14,8 @@ All notable changes to this project will be documented in this file.
 
 - Added optional raycasting for moving using modify tool
 - Added cluster tool as separate tooling
+- Added generate game objects from instance cluster
+- Added gradient distribution option for color painting
 
 #### Changed
 
