@@ -190,6 +190,21 @@ namespace InstancePainter.Runtime
             _instanceClusters.Add(p_cluster);
             SerializeNative();
         }
+
+        public void RemoveCluster(ICluster p_cluster, bool p_dispose = true)
+        {
+            _instanceClusters.Remove(p_cluster);
+            p_cluster?.Dispose();
+            SerializeNative();
+        }
+        
+        public void RemoveClusterAt(int p_index, bool p_dispose = true)
+        {
+            var cluster = _instanceClusters[p_index];
+            cluster?.Dispose();
+            _instanceClusters.RemoveAt(p_index);
+            SerializeNative();
+        }
         
         private void SerializeNative()
         {
@@ -207,8 +222,6 @@ namespace InstancePainter.Runtime
 
         public void OnAfterDeserialize()
         {
-            Debug.Log("OnBeforeDeserialize");
-            
             _instanceClusters.Clear();
             _instanceClusters.AddRange(_serializedInstanceClusters);
             _instanceClusters.AddRange(_serializedInstanceClusterAssets);
