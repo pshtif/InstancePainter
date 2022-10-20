@@ -28,7 +28,7 @@ namespace InstancePainter.Runtime
 
         //void Invalidate(bool p_fallback);
 
-        void RenderIndirect(Camera p_camera);
+        void RenderIndirect(Camera p_camera, Matrix4x4 p_cullingMatrix);
         
         void RenderFallback(Camera p_camera);
 
@@ -47,6 +47,8 @@ namespace InstancePainter.Runtime
 
         void SetEnabled(bool p_enabled);
 
+        string GetClusterNameHTML();
+        
         string GetClusterName();
 
         void UndoRedoPerformed();

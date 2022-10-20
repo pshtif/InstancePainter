@@ -2,6 +2,7 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
+using System.Linq;
 using InstancePainter.Runtime;
 using UnityEditor;
 using UnityEngine;
@@ -9,7 +10,7 @@ using UnityEngine;
 namespace InstancePainter.Editor
 {
     [CustomEditor(typeof(InstanceRenderer))]
-    public class InstanceRendererEditor : UnityEditor.Editor
+    public class InstanceRendererInspector : UnityEditor.Editor
     {
         public InstanceRenderer Renderer => target as InstanceRenderer;
         
@@ -38,11 +39,6 @@ namespace InstancePainter.Editor
             GUILayout.Space(4);
 
             DrawModifiers();
-
-            // if (GUILayout.Button("Generate Game Objects"))
-            // {
-            //     GenerateGameObjects();
-            // }
         }
 
         void DrawModifiers()
@@ -81,14 +77,12 @@ namespace InstancePainter.Editor
                 if (EditorUtility.DisplayDialog("Cluster type", "Add an asset cluster or bound cluster?", "Asset",
                         "Bound"))
                 {
-                    Renderer.InstanceClusters.Add(null);   
+                    Renderer.AddCluster(null);
                 }
                 else
                 {
-                    Renderer.InstanceClusters.Add(InstanceCluster.CreateEmptyCluster());
+                    Renderer.AddCluster(InstanceCluster.CreateEmptyCluster());
                 }
-                
-                Renderer.ForceReserialize();
             }
 
             GUI.color = Color.white;
@@ -101,7 +95,7 @@ namespace InstancePainter.Editor
                 (cluster is InstanceClusterAsset
                     ? "<color=#0088FF>[ASSET]</color>"
                     : "<color=#00FF88>[INSTANCE]</color>") + " Cluster: " +
-                (cluster == null ? "<color=#FF0000>NULL</color>" : cluster.GetClusterName()), Skin.GetStyle("cluster_title"),
+                (cluster == null ? "<color=#FF0000>NULL</color>" : cluster.GetClusterNameHTML()), Skin.GetStyle("cluster_title"),
                 GUILayout.Height(24));
 
             var rect = GUILayoutUtility.GetLastRect();
@@ -111,8 +105,7 @@ namespace InstancePainter.Editor
                 if (EditorUtility.DisplayDialog("Cluster Deletion", "Are you sure you want to delete this cluster?", "Yes",
                         "No"))
                 {
-                    Renderer.InstanceClusters.RemoveAt(p_index);
-                    cluster?.Dispose();
+                    Renderer.RemoveClusterAt(p_index);
                     SceneView.RepaintAll();
                     return true;
                 }
@@ -196,6 +189,11 @@ namespace InstancePainter.Editor
 
             GUILayout.Space(4);
 
+            if (GUILayout.Button("Generate Game Objects"))
+            {
+                GenerateGameObjectsFromCluster(cluster);
+            }
+            
             return modified;
         }
 
@@ -213,8 +211,19 @@ namespace InstancePainter.Editor
             
             cluster.fallbackMaterial = (Material)EditorGUILayout.ObjectField(new GUIContent("FallbackMaterial"), cluster.fallbackMaterial, typeof(Material), false);
 
+            cluster.useCulling = EditorGUILayout.Toggle("Use Culling", cluster.useCulling);
+
+            if (cluster.useCulling)
+            {
+                cluster.cullingShader = (ComputeShader)EditorGUILayout.ObjectField(new GUIContent("CullingShader"),
+                    cluster.cullingShader, typeof(ComputeShader), false);
+
+                cluster.cullingDistance = EditorGUILayout.FloatField("Culling Distance", cluster.cullingDistance);
+            }
+
             if (EditorGUI.EndChangeCheck())
             {
+                EditorUtility.SetDirty(Renderer);
                 SceneView.RepaintAll();
             }
 
@@ -233,7 +242,7 @@ namespace InstancePainter.Editor
                 {
                     var asset = InstanceClusterAsset.CreateAssetWithPanel(cluster);
                     Renderer.InstanceClusters.RemoveAt(p_index);
-                    Renderer.InstanceClusters.Add(asset);
+                    Renderer.AddCluster(asset);
                 }
 
                 return true;
@@ -342,26 +351,28 @@ namespace InstancePainter.Editor
             }
         }
 
-        // void GenerateGameObjects()
-        // {
-        //     Transform container = new GameObject().transform;
-        //     container.name = Renderer.mesh.name;
-        //     container.SetParent(Renderer.transform);
-        //     
-        //     for (int i = 0; i<Renderer.Count; i++)
-        //     {
-        //         var matrix = Renderer.GetInstanceMatrix(i);
-        //         var filter = new GameObject().AddComponent<MeshFilter>();
-        //         var mr = filter.gameObject.AddComponent<MeshRenderer>();
-        //         mr.materials = new Material[Renderer.mesh.subMeshCount];
-        //         filter.sharedMesh = Renderer.mesh;
-        //         filter.name = Renderer.mesh.name + i;
-        //         filter.transform.localPosition = matrix.GetColumn(3);
-        //         filter.transform.rotation = ExtractRotation(matrix);
-        //         filter.transform.localScale = ExtractScaleFromMatrix(matrix);
-        //         filter.transform.SetParent(container);
-        //     }
-        // }
+        void GenerateGameObjectsFromCluster(ICluster p_cluster)
+        {
+            Transform container = new GameObject().transform;
+            container.name = p_cluster.GetClusterName();
+            container.SetParent(Renderer.transform);
+
+            Material material = new Material(Shader.Find("Universal Render Pipeline/Simple Lit"));
+            
+            for (int i = 0; i<p_cluster.GetCount(); i++)
+            {
+                var matrix = p_cluster.GetInstanceMatrix(i);
+                var filter = new GameObject().AddComponent<MeshFilter>();
+                var mr = filter.gameObject.AddComponent<MeshRenderer>();
+                mr.materials = Enumerable.Repeat(material, p_cluster.GetMesh().subMeshCount).ToArray();
+                filter.sharedMesh = p_cluster.GetMesh();
+                filter.name = p_cluster.GetMesh().name + i;
+                filter.transform.localPosition = matrix.GetColumn(3);
+                filter.transform.rotation = ExtractRotation(matrix);
+                filter.transform.localScale = ExtractScaleFromMatrix(matrix);
+                filter.transform.SetParent(container);
+            }
+        }
         
         public static Vector3 ExtractScaleFromMatrix(Matrix4x4 matrix)
         {

@@ -146,17 +146,7 @@ namespace InstancePainter.Editor
 
         void Fill(Vector3 p_startPoint, Vector3 p_endPoint)
         {
-            MeshFilter[] validMeshes = null;
-            if (Core.Config.useMeshRaycasting)
-            {
-                validMeshes = Core.Config.includeLayers.Count == 0
-                    ? StageUtility.GetCurrentStageHandle().FindComponentsOfType<MeshFilter>()
-                    : LayerUtils.GetAllComponentsInLayers<MeshFilter>(Core.Config.includeLayers.ToArray());
-            }
-
-            var validColliders = Core.Config.includeLayers.Count == 0
-                ? StageUtility.GetCurrentStageHandle().FindComponentsOfType<Collider>()
-                : LayerUtils.GetAllComponentsInLayers<Collider>(Core.Config.includeLayers.ToArray());
+            Core.CacheRaycastMeshes();
 
             var minX = Math.Min(p_startPoint.x, p_endPoint.x);
             var maxX = Math.Max(p_startPoint.x, p_endPoint.x);
@@ -170,12 +160,11 @@ namespace InstancePainter.Editor
 
             for (int i = 0; i < Core.Config.RectToolConfig.density; i++)
             {
-                InstanceDefinition instanceDefinition = Core.Config.GetWeightedDefinition();
-                if (instanceDefinition != null)
+                PaintDefinition paintDefinition = Core.Config.GetWeightedDefinition();
+                if (paintDefinition != null)
                 {
-                    var datas = Core.PlaceInstance(instanceDefinition,
-                        new Vector3(Random.Range(minX, maxX), p_startPoint.y, Random.Range(minZ, maxZ)), validMeshes,
-                        validColliders, _paintedInstances, Core.Config.RectToolConfig.minimumDistance, Core.Config.RectToolConfig.color);
+                    var datas = Core.PlaceInstance(paintDefinition,
+                        new Vector3(Random.Range(minX, maxX), p_startPoint.y, Random.Range(minZ, maxZ)), _paintedInstances);
 
                     foreach (var data in datas)
                     {
@@ -218,15 +207,11 @@ namespace InstancePainter.Editor
         public override void DrawInspectorGUI()
         {
             GUIUtils.DrawSectionTitle("RECT TOOL");
-            
-            Core.Config.RectToolConfig.color = EditorGUILayout.ColorField("Color", Core.Config.RectToolConfig.color);
-            
+
             Core.Config.RectToolConfig.alpha = EditorGUILayout.Slider("Alpha", Core.Config.RectToolConfig.alpha, 0, 1);
 
             Core.Config.RectToolConfig.density = EditorGUILayout.IntField("Density", Core.Config.RectToolConfig.density);
-            
-            Core.Config.RectToolConfig.minimumDistance = EditorGUILayout.FloatField("Minimum Distance", Core.Config.RectToolConfig.minimumDistance);
-            
+
             GUILayout.Space(4);
         }
     }

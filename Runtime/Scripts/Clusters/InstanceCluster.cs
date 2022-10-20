@@ -22,6 +22,9 @@ namespace InstancePainter.Runtime
         public bool enabled = true;
         
         public Material material;
+        public bool useCulling = false;
+        public ComputeShader cullingShader;
+        public float cullingDistance = 10000;
         public Mesh mesh;
         
         public Material fallbackMaterial;
@@ -197,7 +200,7 @@ namespace InstancePainter.Runtime
 
 #region RENDERING
 
-        public void RenderIndirect(Camera p_camera)
+        public void RenderIndirect(Camera p_camera, Matrix4x4 p_cullingMatrix)
         {
             if (!enabled || GetCount() == 0)
                 return;
@@ -222,10 +225,21 @@ namespace InstancePainter.Runtime
             var renderMaterial = IPRuntimeEditorCore.renderingAsUtil
                 ? this == IPRuntimeEditorCore.explicitCluster ? MaterialUtils.ExplicitClusterMaterial : MaterialUtils.NonExplicitClusterMaterial
                 : material;
-            _renderer.RenderIndirect(p_camera, mesh, renderMaterial , _renderMatrixData, _renderColorData);
 #else
-            _renderer.RenderIndirect(p_camera, mesh, material, _renderMatrixData, _renderColorData);
+            var renderMaterial = material;
 #endif
+            bool activeCulling = useCulling && cullingShader != null;
+            if (activeCulling && !renderMaterial.IsKeywordEnabled("ENABLE_CULLING"))
+            {
+                renderMaterial.EnableKeyword("ENABLE_CULLING");
+            }
+
+            if (!activeCulling && renderMaterial.IsKeywordEnabled("ENABLE_CULLING"))
+            {
+                renderMaterial.DisableKeyword("ENABLE_CULLING");
+            }
+            
+            _renderer.RenderIndirect(p_camera, mesh, renderMaterial, _renderMatrixData, _renderColorData, activeCulling, cullingShader, p_cullingMatrix, cullingDistance);
         }
         
         public void RenderFallback(Camera p_camera)
@@ -275,9 +289,14 @@ namespace InstancePainter.Runtime
         
         public bool minimized { get; set; } = false;
 
-        public string GetClusterName()
+        public string GetClusterNameHTML()
         {
             return mesh == null ? "<color=#FF0000>NO MESH</color>" : "<color=#FFFF00>"+mesh.name+"</color>";
+        }
+        
+        public string GetClusterName()
+        {
+            return mesh == null ? "NO MESH" : mesh.name;
         }
 
         public bool HasMesh()

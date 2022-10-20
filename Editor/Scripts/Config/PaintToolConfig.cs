@@ -12,7 +12,6 @@ namespace InstancePainter.Editor
     {
         [Range(1,100)]
         public float brushSize = 1;
-        public Color color = Color.white;
         public float alpha = 1;
         public int density = 1;
         public float minimumDistance;

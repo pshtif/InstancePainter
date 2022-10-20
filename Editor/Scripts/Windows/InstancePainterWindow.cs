@@ -99,6 +99,15 @@ namespace InstancePainter.Editor
             for (int i=0; i<Core.Config.paintDefinitions.Count; i++)
             {
                 var definition = Core.Config.paintDefinitions[i];
+                
+                // Refactoring insurance, will be removed later
+                if (definition == null)
+                {
+                    Core.Config.paintDefinitions.RemoveAt(i);
+                    i--;
+                    break;
+                }
+                
                 if (DrawPaintDefinitionGUI(ref definition, i))
                     break;
 
@@ -112,29 +121,29 @@ namespace InstancePainter.Editor
             int controlId = EditorGUIUtility.GetControlID(FocusType.Passive);
             if (GUILayout.Button("Add Paint Definition", GUILayout.Height(32)))
             {
-                EditorGUIUtility.ShowObjectPicker<InstanceDefinition>(null, false, "", controlId);
+                EditorGUIUtility.ShowObjectPicker<PaintDefinition>(null, false, "", controlId);
             }
             
             string commandName = Event.current.commandName;
             if (Event.current.type == EventType.ExecuteCommand && commandName == "ObjectSelectorClosed" &&
                 controlId == EditorGUIUtility.GetObjectPickerControlID()) 
             {
-                var instanceDefinition = EditorGUIUtility.GetObjectPickerObject () as InstanceDefinition;
-                if (instanceDefinition != null)
+                var paintDefinition = EditorGUIUtility.GetObjectPickerObject () as PaintDefinition;
+                if (paintDefinition != null)
                 {
-                    if (Core.Config.paintDefinitions.Contains(instanceDefinition))
+                    if (Core.Config.paintDefinitions.Contains(paintDefinition))
                     {
                         EditorUtility.DisplayDialog("Duplicate definition", "Cannot add same definition twice!", "Ok");
                     }
                     else
                     {
-                        Core.Config.paintDefinitions.Add(instanceDefinition);
+                        Core.Config.paintDefinitions.Add(paintDefinition);
                     }
                 }
             }
         }
 
-        bool DrawPaintDefinitionGUI(ref InstanceDefinition p_instanceDefinition, int p_index)
+        bool DrawPaintDefinitionGUI(ref PaintDefinition p_paintDefinition, int p_index)
         {
             var style = new GUIStyle();
             style.normal.background = TextureUtils.GetColorTexture(new Color(.15f, .15f, .15f));
@@ -144,7 +153,7 @@ namespace InstancePainter.Editor
             style.fontSize = 12;
             
             GUILayout.BeginHorizontal();
-            GUILayout.Label("                  Paint Definition: <color='#FFFF00'>"+p_instanceDefinition.name+"</color>", style, GUILayout.Height(24));
+            GUILayout.Label("                  Paint Definition: <color='#FFFF00'>"+p_paintDefinition.name+"</color>", style, GUILayout.Height(24));
             var rect = GUILayoutUtility.GetLastRect();
             if (GUI.Button(new Rect(rect.x+4, rect.y+4, 16, 16), IconManager.GetIcon("remove_icon"), Skin.GetStyle("removebutton")))
             {
@@ -152,20 +161,20 @@ namespace InstancePainter.Editor
                         "Yes",
                         "No"))
                 {
-                    Core.Config.paintDefinitions.Remove(p_instanceDefinition);
+                    Core.Config.paintDefinitions.Remove(p_paintDefinition);
                     EditorUtility.SetDirty(Core.Config);
                     GUILayout.EndHorizontal();
                     return true;
                 }
             }
 
-            if (p_instanceDefinition.enabled)
+            if (p_paintDefinition.enabled)
             {
                 if (GUI.Button(new Rect(rect.x + 20, rect.y + 4, 40, 18), IconManager.GetIcon("toggle_right"),
                         Skin.GetStyle("removebutton")))
                 {
-                    p_instanceDefinition.enabled = false;
-                    EditorUtility.SetDirty(p_instanceDefinition);
+                    p_paintDefinition.enabled = false;
+                    EditorUtility.SetDirty(p_paintDefinition);
                 }
             }
             else
@@ -175,37 +184,37 @@ namespace InstancePainter.Editor
                 if (GUI.Button(new Rect(rect.x + 20, rect.y + 4, 40, 18), IconManager.GetIcon("toggle_left"),
                         Skin.GetStyle("removebutton")))
                 {
-                    p_instanceDefinition.enabled = true;
-                    EditorUtility.SetDirty(p_instanceDefinition);
+                    p_paintDefinition.enabled = true;
+                    EditorUtility.SetDirty(p_paintDefinition);
                 }
 
                 GUI.color = Color.white;
             }
 
-            if (p_instanceDefinition.enabled)
+            if (p_paintDefinition.enabled)
             {
                 if (GUI.Button(new Rect(rect.x + rect.width - 18, rect.y + 2, 16, 16),
-                        p_instanceDefinition.minimized ? "+" : "-", Skin.GetStyle("minimizebutton")))
+                        p_paintDefinition.minimized ? "+" : "-", Skin.GetStyle("minimizebutton")))
                 {
-                    p_instanceDefinition.minimized = !p_instanceDefinition.minimized;
-                    EditorUtility.SetDirty(p_instanceDefinition);
+                    p_paintDefinition.minimized = !p_paintDefinition.minimized;
+                    EditorUtility.SetDirty(p_paintDefinition);
                 }
             }
 
             GUILayout.EndHorizontal();
 
-            if (p_instanceDefinition == null || (!p_instanceDefinition.minimized && p_instanceDefinition.enabled))
+            if (p_paintDefinition == null || (!p_paintDefinition.minimized && p_paintDefinition.enabled))
             {
                 GUILayout.BeginHorizontal();
                 int controlId = EditorGUIUtility.GetControlID (FocusType.Passive);
                 if (GUILayout.Button("Change", GUILayout.Height(24)))
                 {
-                    EditorGUIUtility.ShowObjectPicker<InstanceDefinition>(p_instanceDefinition, false, "", controlId);
+                    EditorGUIUtility.ShowObjectPicker<InstanceDefinition>(p_paintDefinition, false, "", controlId);
                 }
                 
                 if (GUILayout.Button("Select", GUILayout.Height(24)))
                 {
-                    EditorGUIUtility.PingObject(p_instanceDefinition);
+                    EditorGUIUtility.PingObject(p_paintDefinition);
                 }
                 GUILayout.EndHorizontal();
                 
@@ -213,11 +222,11 @@ namespace InstancePainter.Editor
                 if (Event.current.type == EventType.ExecuteCommand && commandName == "ObjectSelectorClosed" &&
                     controlId == EditorGUIUtility.GetObjectPickerControlID()) 
                 {
-                    var newDefinition = EditorGUIUtility.GetObjectPickerObject() as InstanceDefinition;
+                    var newDefinition = EditorGUIUtility.GetObjectPickerObject() as PaintDefinition;
                     
                     if (newDefinition == null)
                     {
-                        Core.Config.paintDefinitions.Remove(p_instanceDefinition);
+                        Core.Config.paintDefinitions.Remove(p_paintDefinition);
                         return true;
                     }
                     
@@ -225,54 +234,68 @@ namespace InstancePainter.Editor
                     {
                         EditorUtility.DisplayDialog("Duplicate definition", "Cannot add same definition twice!", "Ok");
                     } else {
-                        p_instanceDefinition = newDefinition;
+                        p_paintDefinition = newDefinition;
                     }
                     
                     EditorUtility.SetDirty(Core.Config);
                 }
                 
-                if (p_instanceDefinition != null)
+                if (p_paintDefinition != null)
                 {
                     EditorGUI.BeginChangeCheck();
                     
-                    p_instanceDefinition.prefab =
-                        (GameObject)EditorGUILayout.ObjectField("Prefab", p_instanceDefinition.prefab, typeof(GameObject),
+                    p_paintDefinition.prefab =
+                        (GameObject)EditorGUILayout.ObjectField("Prefab", p_paintDefinition.prefab, typeof(GameObject),
                             false);
 
-                    p_instanceDefinition.material =
-                        (Material)EditorGUILayout.ObjectField("Material", p_instanceDefinition.material, typeof(Material),
+                    p_paintDefinition.material =
+                        (Material)EditorGUILayout.ObjectField("Material", p_paintDefinition.material, typeof(Material),
                             false);
 
-                    p_instanceDefinition.weight =
-                        EditorGUILayout.FloatField("Weight Probability", p_instanceDefinition.weight);
+                    p_paintDefinition.weight =
+                        EditorGUILayout.FloatField("Weight Probability", p_paintDefinition.weight);
+
+                    p_paintDefinition.colorDistribution =
+                        (ColorDistributionType)EditorGUILayout.EnumPopup("Color Distribution", p_paintDefinition.colorDistribution);
+
+                    switch (p_paintDefinition.colorDistribution)
+                    {
+                        case ColorDistributionType.SINGLE:
+                            p_paintDefinition.color = EditorGUILayout.ColorField("Color", p_paintDefinition.color);
+                            break;
+                        case ColorDistributionType.GRADIENT:
+                            p_paintDefinition.gradient = EditorGUILayout.GradientField("Gradient", p_paintDefinition.gradient);
+                            break;
+                    }
+
+                    // TODO density per definition
+                    //Core.Config.PaintToolConfig.density = EditorGUILayout.IntField("Density", Core.Config.PaintToolConfig.density);
                     
-                    Core.Config.PaintToolConfig.density = EditorGUILayout.IntField("Density", Core.Config.PaintToolConfig.density);
-                    
-                    p_instanceDefinition.maximumSlope = EditorGUILayout.Slider("Maximum Slope", p_instanceDefinition.maximumSlope, 0, 90);
-                    p_instanceDefinition.minimumDistance = EditorGUILayout.FloatField("Minimum Distance", p_instanceDefinition.minimumDistance);
+                    p_paintDefinition.maximumSlope = EditorGUILayout.Slider("Maximum Slope", p_paintDefinition.maximumSlope, 0, 90);
+                    p_paintDefinition.minimumDistance = EditorGUILayout.FloatField("Minimum Distance", p_paintDefinition.minimumDistance);
 
-                    p_instanceDefinition.minScale = EditorGUILayout.FloatField("Min Scale", p_instanceDefinition.minScale);
-                    p_instanceDefinition.maxScale = EditorGUILayout.FloatField("Max Scale", p_instanceDefinition.maxScale);
+                    p_paintDefinition.minScale = EditorGUILayout.FloatField("Min Scale", p_paintDefinition.minScale);
+                    p_paintDefinition.maxScale = EditorGUILayout.FloatField("Max Scale", p_paintDefinition.maxScale);
 
-                    p_instanceDefinition.minRotation =
-                        EditorGUILayout.Vector3Field("Min Rotation", p_instanceDefinition.minRotation);
-                    p_instanceDefinition.maxRotation =
-                        EditorGUILayout.Vector3Field("Max Rotation", p_instanceDefinition.maxRotation);
+                    p_paintDefinition.minRotation =
+                        EditorGUILayout.Vector3Field("Min Rotation", p_paintDefinition.minRotation);
+                    p_paintDefinition.maxRotation =
+                        EditorGUILayout.Vector3Field("Max Rotation", p_paintDefinition.maxRotation);
 
-                    p_instanceDefinition.rotateToNormal =
-                        EditorGUILayout.Toggle("Rotate To Normal", p_instanceDefinition.rotateToNormal);
+                    p_paintDefinition.rotateToNormal =
+                        EditorGUILayout.Toggle("Rotate To Normal", p_paintDefinition.rotateToNormal);
 
-                    p_instanceDefinition.positionOffset =
-                        EditorGUILayout.Vector3Field("Position Offset", p_instanceDefinition.positionOffset);
-                    p_instanceDefinition.rotationOffset =
-                        EditorGUILayout.Vector3Field("Rotation Offset", p_instanceDefinition.rotationOffset);
-                    p_instanceDefinition.scaleOffset =
-                        EditorGUILayout.Vector3Field("Scale Offset", p_instanceDefinition.scaleOffset);
+                    p_paintDefinition.positionOffset =
+                        EditorGUILayout.Vector3Field("Position Offset", p_paintDefinition.positionOffset);
+                    p_paintDefinition.rotationOffset =
+                        EditorGUILayout.Vector3Field("Rotation Offset", p_paintDefinition.rotationOffset);
+                    p_paintDefinition.scaleOffset =
+                        EditorGUILayout.Vector3Field("Scale Offset", p_paintDefinition.scaleOffset);
                     GUI.enabled = true;
 
                     if (EditorGUI.EndChangeCheck())
                     {
-                        EditorUtility.SetDirty(p_instanceDefinition);
+                        EditorUtility.SetDirty(p_paintDefinition);
                     }
                 }
             }

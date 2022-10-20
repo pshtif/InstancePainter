@@ -14,9 +14,9 @@ namespace InstancePainter.Editor
         public Matrix4x4 matrix;
         public Vector4 color;
         public int index;
-        public InstanceDefinition definition;
+        public PaintDefinition definition;
 
-        public PaintedInstance(ICluster p_cluster, Matrix4x4 p_matrix, Vector4 p_color, int p_index, InstanceDefinition p_definition)
+        public PaintedInstance(ICluster p_cluster, Matrix4x4 p_matrix, Vector4 p_color, int p_index, PaintDefinition p_definition)
         {
             cluster = p_cluster;
             matrix = p_matrix;

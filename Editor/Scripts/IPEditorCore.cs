@@ -20,7 +20,7 @@ namespace InstancePainter.Editor
     [InitializeOnLoad]
     public class IPEditorCore
     {
-        public const string VERSION = "0.6.3";
+        public const string VERSION = "0.7.0";
         
         public static IPEditorCore Instance { get; private set; }
         
@@ -67,6 +67,9 @@ namespace InstancePainter.Editor
 
         public ToolBase CurrentTool => _currentTool;
         private ToolBase _currentTool;
+        
+        private static MeshFilter[] _cachedValidMeshes;
+        private static Collider[] _cachedValidColliders;
 
         public IPEditorConfig Config { get; private set; }
 
@@ -83,7 +86,7 @@ namespace InstancePainter.Editor
             Undo.undoRedoPerformed -= UndoRedoCallback;
             Undo.undoRedoPerformed += UndoRedoCallback;
         }
-
+        
         void UndoRedoCallback()
         {
             StageUtility.GetCurrentStageHandle().FindComponentsOfType<InstanceRenderer>().ForEach(r =>
@@ -96,7 +99,17 @@ namespace InstancePainter.Editor
 
         public void ChangeTool<T>(bool p_enable = false) where T : ToolBase
         {
-            _currentTool = (_currentTool == null || _currentTool.GetType() != typeof(T)) ? Activator.CreateInstance<T>() : null;
+            _currentTool?.Unselected();
+            
+            if (_currentTool == null || _currentTool.GetType() != typeof(T))
+            {
+                _currentTool = Activator.CreateInstance<T>();
+                _currentTool.Selected();
+            }
+            else
+            {
+                _currentTool = null;
+            }
 
             InstancePainterWindow.Instance?.Repaint();
         }
@@ -106,7 +119,7 @@ namespace InstancePainter.Editor
             return p_object.transform.GetComponentsInChildren<MeshFilter>().Select(mf => mf.gameObject).ToArray();
         }
 
-        ICluster GetClusterForDefinition(Mesh p_mesh, InstanceDefinition p_definition)
+        ICluster GetClusterForDefinition(Mesh p_mesh, PaintDefinition p_definition)
         {
             var cluster = IPRuntimeEditorCore.explicitCluster != null
                 ? IPRuntimeEditorCore.explicitCluster
@@ -115,7 +128,7 @@ namespace InstancePainter.Editor
             if (cluster == null)
             {
                 cluster = new InstanceCluster(p_mesh, p_definition.material);
-                Renderer.InstanceClusters.Add(cluster);
+                Renderer.AddCluster(cluster);
             }
             
             if (!cluster.IsMesh(p_mesh))
@@ -126,7 +139,7 @@ namespace InstancePainter.Editor
             return cluster;
         }
         
-        public ICluster AddInstance(InstanceDefinition p_definition, Mesh p_mesh, Vector3 p_position, Quaternion p_rotation, Vector3 p_scale, Vector4 p_color)
+        public ICluster AddInstance(PaintDefinition p_definition, Mesh p_mesh, Vector3 p_position, Quaternion p_rotation, Vector3 p_scale, Vector4 p_color)
         {
             var data = GetClusterForDefinition(p_mesh, p_definition);
             
@@ -134,21 +147,52 @@ namespace InstancePainter.Editor
 
             return data;
         }
-        
-        public ICluster[] PlaceInstance(InstanceDefinition p_instanceDefinition, Vector3 p_position, MeshFilter[] p_validMeshes, Collider[] p_validColliders, List<PaintedInstance> p_paintedInstances, float p_minimumDistance, Color p_color)
+
+        // TODO skip caching if no geo changed? Scene change hookup?
+        public void CacheRaycastMeshes()
         {
-            List<ICluster> paintedDatas = new List<ICluster>();
-            
+            if (Config.useMeshRaycasting)
+            {
+                _cachedValidMeshes = Config.includeLayers.Count == 0
+                    ? StageUtility.GetCurrentStageHandle().FindComponentsOfType<MeshFilter>()
+                    : LayerUtils.GetAllComponentsInLayers<MeshFilter>(Config.includeLayers.ToArray());
+            }
+            else
+            {
+                _cachedValidMeshes = null;
+            }
+
+            _cachedValidColliders = Config.includeLayers.Count == 0
+                ? StageUtility.GetCurrentStageHandle().FindComponentsOfType<Collider>()
+                : LayerUtils.GetAllComponentsInLayers<Collider>(Config.includeLayers.ToArray());
+        }
+
+        public bool RaycastValidGeo(Vector3 p_position, out RaycastHit p_hit)
+        {
             p_position += Vector3.up * 100;
             Ray ray = new Ray(p_position, -Vector3.up);
-
+            
             RaycastHit hit;
             
-            if (p_validMeshes == null || !EditorRaycast.Raycast(ray, p_validMeshes, out hit))
+            if (_cachedValidMeshes == null || !EditorRaycast.Raycast(ray, _cachedValidMeshes, out hit))
             {
-                if (p_validColliders == null || !EditorRaycast.Raycast(ray, p_validColliders, out hit))
-                    return paintedDatas.ToArray();
+                if (_cachedValidColliders == null || !EditorRaycast.Raycast(ray, _cachedValidColliders, out hit))
+                {
+                    p_hit = new RaycastHit();
+                    return false;
+                }
             }
+
+            p_hit = hit;
+            return true;
+        }
+        
+        public ICluster[] PlaceInstance(PaintDefinition p_paintDefinition, Vector3 p_position, List<PaintedInstance> p_paintedInstances)
+        {
+            List<ICluster> paintedDatas = new List<ICluster>();
+
+            RaycastHit hit;
+            RaycastValidGeo(p_position, out hit);
             
             p_position = hit.point;
             float slope = 0;
@@ -161,14 +205,14 @@ namespace InstancePainter.Editor
                 slope = 90 - Vector3.Angle(project, hit.normal);
             }
 
-            if (slope > p_instanceDefinition.maximumSlope)
+            if (slope > p_paintDefinition.maximumSlope)
                 return paintedDatas.ToArray();
 
-            MeshFilter[] filters = p_instanceDefinition.prefab.GetComponentsInChildren<MeshFilter>();
+            MeshFilter[] filters = p_paintDefinition.prefab.GetComponentsInChildren<MeshFilter>();
             
             Mesh[] meshes = filters.Select(f => f.sharedMesh).ToArray();
             
-            if (p_instanceDefinition.minimumDistance > 0 || p_minimumDistance > 0)
+            if (p_paintDefinition.minimumDistance > 0 || p_paintDefinition.minimumDistance > 0)
             {
                 foreach (var cluster in Renderer.InstanceClusters)
                 {
@@ -177,14 +221,14 @@ namespace InstancePainter.Editor
 
                     bool sameMeshCluster = meshes.Any(m => cluster.IsMesh(m));
                        
-                    if (!sameMeshCluster && p_minimumDistance == 0)
+                    if (!sameMeshCluster && p_paintDefinition.minimumDistance == 0)
                        continue;
 
                     for (int i = 0; i < cluster.GetCount(); i++)
                     {
                        var matrix = cluster.GetInstanceMatrix(i);
                        var distance = Vector3.Distance(p_position, matrix.GetColumn(3));
-                       if ((sameMeshCluster && distance < p_instanceDefinition.minimumDistance) || distance < p_minimumDistance)
+                       if ((sameMeshCluster && distance < p_paintDefinition.minimumDistance) || distance < p_paintDefinition.minimumDistance)
                        {
                            return paintedDatas.ToArray();
                        }
@@ -194,30 +238,41 @@ namespace InstancePainter.Editor
 
             foreach (var filter in filters)
             {
-                var position = p_position + p_instanceDefinition.positionOffset + filter.transform.position;
+                var position = p_position + p_paintDefinition.positionOffset + filter.transform.position;
 
                 var rotation = filter.transform.rotation *
-                    (p_instanceDefinition.rotateToNormal
+                    (p_paintDefinition.rotateToNormal
                         ? Quaternion.FromToRotation(Vector3.up, hit.normal)
                         : Quaternion.identity) *
-                    Quaternion.Euler(p_instanceDefinition.rotationOffset);
+                    Quaternion.Euler(p_paintDefinition.rotationOffset);
 
                 rotation = rotation * Quaternion.Euler(
-                    Random.Range(p_instanceDefinition.minRotation.x, p_instanceDefinition.maxRotation.x),
-                    Random.Range(p_instanceDefinition.minRotation.y, p_instanceDefinition.maxRotation.y),
-                    Random.Range(p_instanceDefinition.minRotation.z, p_instanceDefinition.maxRotation.z));
+                    Random.Range(p_paintDefinition.minRotation.x, p_paintDefinition.maxRotation.x),
+                    Random.Range(p_paintDefinition.minRotation.y, p_paintDefinition.maxRotation.y),
+                    Random.Range(p_paintDefinition.minRotation.z, p_paintDefinition.maxRotation.z));
 
-                var scale = Vector3.Scale(filter.transform.localScale, p_instanceDefinition.scaleOffset) *
-                            Random.Range(p_instanceDefinition.minScale, p_instanceDefinition.maxScale);
+                var scale = Vector3.Scale(filter.transform.localScale, p_paintDefinition.scaleOffset) *
+                            Random.Range(p_paintDefinition.minScale, p_paintDefinition.maxScale);
+
+                // Move this to paint definition?
+                Color color = Color.white;
+                switch (p_paintDefinition.colorDistribution)
+                {
+                    case ColorDistributionType.SINGLE:
+                        color = p_paintDefinition.color;
+                        break;
+                    case ColorDistributionType.GRADIENT:
+                        color = p_paintDefinition.gradient.Evaluate(Random.Range(0f, 1f));
+                        break;
+                }
 
                 if (filter.sharedMesh != null)
                 {
-                    var data = AddInstance(p_instanceDefinition, filter.sharedMesh, position, rotation,
-                        scale, p_color);
+                    var data = AddInstance(p_paintDefinition, filter.sharedMesh, position, rotation, scale, color);
 
                     var instance = new PaintedInstance(data, data.GetInstanceMatrix(data.GetCount() - 1),
                         data.GetInstanceColor(data.GetCount() - 1),
-                        data.GetCount() - 1, p_instanceDefinition);
+                        data.GetCount() - 1, p_paintDefinition);
                     p_paintedInstances?.Add(instance);
 
                     paintedDatas.Add(data);

@@ -54,6 +54,8 @@ namespace InstancePainter.Editor
                 Undo.SetCurrentGroupName("Modify");
                 Undo.RegisterCompleteObjectUndo(Core.Renderer, "Record Renderers");
                 _undoId = Undo.GetCurrentGroup();
+                
+                Core.CacheRaycastMeshes();
             }
             
             if (Event.current.button == 0 && !Event.current.alt && (Event.current.type == EventType.MouseDrag ||
@@ -75,7 +77,7 @@ namespace InstancePainter.Editor
                 } else if (Event.current.shift)
                 {
                     _state = ModifyToolState.MODIFY_PAINT;
-                    ModifyCluster(p_hit);
+                    ModifyColor(p_hit);
                 }
                 else
                 {
@@ -93,8 +95,6 @@ namespace InstancePainter.Editor
                 }
             }
 
-            IPRuntimeEditorCore.renderingAsUtil = Event.current.shift;
-
             // If we do it in check it will not repaint correctly
             SceneView.RepaintAll();
 
@@ -103,70 +103,6 @@ namespace InstancePainter.Editor
                 _state = ModifyToolState.NONE;
                 Undo.CollapseUndoOperations(_undoId);
             }
-        }
-
-        // public void ModifyCluster(RaycastHit p_hit)
-        // {
-        //     GetHitInstances(p_hit);
-        //     
-        //     List<ICluster> datas = new List<ICluster>();
-        //     foreach (var instance in _modifyInstances)
-        //     {
-        //         if (AlreadyModified.Exists(a => a == instance))
-        //             continue;
-        //
-        //         instance.matrix *= Matrix4x4.Scale(Core.Config.modifyScale);
-        //         instance.matrix *= Matrix4x4.Translate(Core.Config.modifyPosition);
-        //         instance.cluster.SetInstanceMatrix(instance.index, instance.matrix);
-        //         
-        //         datas.AddIfUnique(instance.cluster);
-        //         
-        //         AlreadyModified.Add(instance);
-        //     }
-        //
-        //     datas.ForEach(d => d.UpdateSerializedData());
-        // }
-        
-        public void ModifyCluster(RaycastHit p_hit)
-        {
-            if (IPRuntimeEditorCore.explicitCluster == null)
-                return;
-            
-            GetModifiedInstances(p_hit);
-
-            if (_modifyInstances.Count > 0)
-            {
-                var currentMesh = _modifyInstances[0].cluster.GetMesh();
-                var targetMesh = IPRuntimeEditorCore.explicitCluster.GetMesh();
-                
-                if (currentMesh != targetMesh)
-                {
-                    if (EditorUtility.DisplayDialog("Mesh mismatch",
-                            "You moving this instance to cluster with different mesh, change mesh of target cluster?\n\n" +
-                            "Current cluster mesh: "+(currentMesh != null ? currentMesh.name : "NO MESH")+"\n"+
-                            "Target cluster mesh: "+(targetMesh != null ? targetMesh.name : "NO MESH"),
-                            "Yes", "No"))
-                    {
-                        IPRuntimeEditorCore.explicitCluster.SetMesh(_modifyInstances[0].cluster.GetMesh());
-                    }
-                }
-            }
-            
-            List<ICluster> clusters = new List<ICluster>();
-            foreach (var instance in _modifyInstances)
-            {
-                if (instance.cluster == IPRuntimeEditorCore.explicitCluster)
-                    continue;
-                
-                clusters.AddIfUnique(instance.cluster);
-                
-                instance.cluster.RemoveInstance(instance.index);
-                IPRuntimeEditorCore.explicitCluster.AddInstance(instance.matrix, instance.color);
-                instance.cluster = IPRuntimeEditorCore.explicitCluster;
-            }
-        
-            clusters.ForEach(d => d.UpdateSerializedData());
-            IPRuntimeEditorCore.explicitCluster.UpdateSerializedData();
         }
 
         public void GetModifiedInstances(RaycastHit p_hit)
@@ -189,6 +125,31 @@ namespace InstancePainter.Editor
                 }
             });
         } 
+        
+        void ModifyColor(RaycastHit p_hit)
+        {
+            List<ICluster> invalidateDatas = new List<ICluster>();
+            
+            var datas = Core.Renderer.InstanceClusters;
+            foreach (ICluster data in datas)
+            {
+                for (int i = 0; i<data.GetCount(); i++)
+                {
+                    var position = data.GetInstanceMatrix(i).GetColumn(3);
+                    var distance = Vector3.Distance(position, p_hit.point);
+                    if (distance < Core.Config.PaintToolConfig.brushSize)
+                    {
+                        data.SetInstanceColor(i,
+                            Vector4.Lerp(data.GetInstanceColor(i), Core.Config.ModifyToolConfig.color,
+                                (1 - distance / Core.Config.ModifyToolConfig.brushSize) *
+                                Core.Config.ModifyToolConfig.falloff));
+                        invalidateDatas.AddIfUnique(data);
+                    }
+                }
+            }
+            
+            invalidateDatas.ForEach(d => d.UpdateSerializedData());
+        }
         
         void ModifyInPlace()
         {
@@ -226,7 +187,7 @@ namespace InstancePainter.Editor
         void ModifyPosition(RaycastHit p_hit)
         {
             var offset = p_hit.point - _modifyStartHit.point;
-
+            
             List<ICluster> datas = new List<ICluster>();
             foreach (var instance in _modifyInstances)
             {
@@ -242,6 +203,15 @@ namespace InstancePainter.Editor
                     instance.matrix.GetColumn(1).magnitude,
                     instance.matrix.GetColumn(2).magnitude
                 );
+
+                if (Core.Config.ModifyToolConfig.useRaycasting)
+                {
+                    RaycastHit hit;
+                    if (Core.RaycastValidGeo(position, out hit))
+                    {
+                        position = hit.point;
+                    }
+                }
 
                 instance.cluster.SetInstanceMatrix(instance.index, Matrix4x4.TRS(position, originalRotation, originalScale));
                 
@@ -303,7 +273,7 @@ namespace InstancePainter.Editor
             GUILayout.Space(8);
             
             GUILayout.Label(" Shift + Left Button(DRAG): ", Core.Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
-            GUILayout.Label("Change cluster", Core.Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
+            GUILayout.Label("Modify Color", Core.Config.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
             GUILayout.Space(8);
             
             GUILayout.Label(" Ctrl + Mouse Wheel: ", Core.Config.Skin.GetStyle("keylabel"), GUILayout.Height(16));
@@ -326,6 +296,15 @@ namespace InstancePainter.Editor
             style.fontSize = 14;
         
             Core.Config.ModifyToolConfig.brushSize = EditorGUILayout.Slider("Brush Size", Core.Config.ModifyToolConfig.brushSize, 0.1f, 100);
+
+            Core.Config.ModifyToolConfig.color =
+                EditorGUILayout.ColorField("Color", Core.Config.ModifyToolConfig.color);
+
+            Core.Config.ModifyToolConfig.falloff =
+                EditorGUILayout.Slider("Falloff", Core.Config.ModifyToolConfig.falloff, 0f, 1f);
+
+            Core.Config.ModifyToolConfig.useRaycasting =
+                EditorGUILayout.Toggle("Use Raycasting", Core.Config.ModifyToolConfig.useRaycasting);
 
             Core.Config.modifyPosition = EditorGUILayout.Vector3Field("Modify Position", Core.Config.modifyPosition);
             Core.Config.modifyScale = EditorGUILayout.Vector3Field("Modify Scale", Core.Config.modifyScale);

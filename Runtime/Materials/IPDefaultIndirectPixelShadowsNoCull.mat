@@ -7,9 +7,10 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: IPDefaultIndirectPixelShadows
+  m_Name: IPDefaultIndirectPixelShadowsNoCull
   m_Shader: {fileID: 4800000, guid: 6d08877a5c374c408faf1485a6ffa796, type: 3}
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - ENABLE_CULLING
   m_InvalidKeywords:
   - CULLING
   m_LightmapFlags: 4

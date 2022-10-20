@@ -14,6 +14,7 @@ Shader "Instance Painter/InstancedIndirectPixelShadows"
         _WindTiling ("Wind Tiling", Float) = 0
         _WindTimeScale ("Wind Time Scale", Float) = 1
         
+        [Toggle(ENABLE_CULLING)]_Culling("Enable Culling", Float) = 0
         [Toggle(ENABLE_WIND)] _EnableWind ("Enable Wind", Float) = 0
         [Toggle(ENABLE_BILLBOARD)] _EnableBillboard ("Enable Billboard", Float) = 0
         [Toggle(ENABLE_RECEIVE_SHADOWS)] _EnableReceiveShadows ("Enable Receive Shadows", Float) = 0
@@ -33,14 +34,14 @@ Shader "Instance Painter/InstancedIndirectPixelShadows"
             #pragma target 3.0
             #pragma vertex vert
             #pragma fragment frag
-            #pragma shader_feature CULLING
             
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
             #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
             #pragma multi_compile _ _ADDITIONAL_LIGHT_SHADOWS
             #pragma multi_compile _ _SHADOWS_SOFT
-            
+
+            #pragma multi_compile _ ENABLE_CULLING
             #pragma multi_compile _ ENABLE_WIND
             #pragma multi_compile _ ENABLE_BILLBOARD
             #pragma multi_compile _ ENABLE_RECEIVE_SHADOWS
@@ -75,22 +76,25 @@ Shader "Instance Painter/InstancedIndirectPixelShadows"
 
                 StructuredBuffer<float4> _colorBuffer;
                 StructuredBuffer<float4x4> _matrixBuffer;
-//                StructuredBuffer<uint> _visibleIdBuffer;
+                StructuredBuffer<uint> _visibilityBuffer;
             CBUFFER_END
 
             Varyings vert(Attributes IN, uint instanceID : SV_InstanceID)
             {
                 Varyings OUT;
                 
+                #if ENABLE_CULLING
+                float4x4 instanceMatrix = _matrixBuffer[_visibilityBuffer[instanceID]];
+                float4 instanceColor = _colorBuffer[_visibilityBuffer[instanceID]];
+                #else
                 float4x4 instanceMatrix = _matrixBuffer[instanceID];
                 float4 instanceColor = _colorBuffer[instanceID];
-                //half3 normalWS = normalize(mul((float3x3)Inverse(instanceMatrix), IN.normalOS));
+                #endif
+
+                
                 half3 normalWS = normalize(mul(instanceMatrix, IN.normalOS));
 
                 OUT.shadow.xyz = SampleSHVertex(normalWS);
-
-                // Without billboarding
-                //OUT.positionCS = TransformWorldToHClip(positionWS);
                 
                 float4 position = IN.positionOS;
                 #if ENABLE_WIND
@@ -165,7 +169,6 @@ Shader "Instance Painter/InstancedIndirectPixelShadows"
             #pragma target 3.0
             #pragma vertex vert
             #pragma fragment frag
-            #pragma shader_feature CULLING
             
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
@@ -173,6 +176,7 @@ Shader "Instance Painter/InstancedIndirectPixelShadows"
             #pragma multi_compile _ _ADDITIONAL_LIGHT_SHADOWS
             #pragma multi_compile _ _SHADOWS_SOFT
 
+            #pragma multi_compile _ ENABLE_CULLING
             #pragma multi_compile _ ENABLE_WIND
             #pragma multi_compile _ ENABLE_BILLBOARD
 
@@ -199,13 +203,18 @@ Shader "Instance Painter/InstancedIndirectPixelShadows"
 
                 StructuredBuffer<float4> _colorBuffer;
                 StructuredBuffer<float4x4> _matrixBuffer;
+                StructuredBuffer<uint> _visibilityBuffer;
             CBUFFER_END
 
             Varyings vert(Attributes IN, uint instanceID : SV_InstanceID)
             {
                 Varyings OUT;
-                
+
+                #if ENABLE_CULLING
+                float4x4 instanceMatrix = _matrixBuffer[_visibilityBuffer[instanceID]];
+                #else
                 float4x4 instanceMatrix = _matrixBuffer[instanceID];
+                #endif
 
                 float4 position = IN.positionOS;
                 
@@ -255,7 +264,6 @@ Shader "Instance Painter/InstancedIndirectPixelShadows"
             #pragma target 3.0
             #pragma vertex vert
             #pragma fragment frag
-            #pragma shader_feature CULLING
             
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
@@ -263,6 +271,7 @@ Shader "Instance Painter/InstancedIndirectPixelShadows"
             #pragma multi_compile _ _ADDITIONAL_LIGHT_SHADOWS
             #pragma multi_compile _ _SHADOWS_SOFT
 
+            #pragma multi_compile _ ENABLE_CULLING
             #pragma multi_compile _ ENABLE_WIND
             #pragma multi_compile _ ENABLE_BILLBOARD
 
@@ -289,13 +298,18 @@ Shader "Instance Painter/InstancedIndirectPixelShadows"
 
                 StructuredBuffer<float4> _colorBuffer;
                 StructuredBuffer<float4x4> _matrixBuffer;
+                StructuredBuffer<uint> _visibilityBuffer;
             CBUFFER_END
 
             Varyings vert(Attributes IN, uint instanceID : SV_InstanceID)
             {
                 Varyings OUT;
                 
+                #if ENABLE_CULLING
+                float4x4 instanceMatrix = _matrixBuffer[_visibilityBuffer[instanceID]];
+                #else
                 float4x4 instanceMatrix = _matrixBuffer[instanceID];
+                #endif
 
                 float4 position = IN.positionOS;
                 

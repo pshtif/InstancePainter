@@ -8,6 +8,44 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.7.0 - 18.10.2022 RELEASE CANDIDATE
+
+#### Added
+
+- Added optional raycasting for moving using modify tool
+- Added cluster tool as separate tooling
+- Added generate game objects from instance cluster
+- Added gradient distribution option for color painting
+
+#### Changed
+
+- Changed color and minimum distance now part of paint definition and removed from tool config
+- Changed cluster changes moved from modify tool to cluster tool
+- Changed modifying instance colors moved from paint to modify tool
+- Changed InstanceDefinition made obsolete and migration to PaintDefinition [BREAKING]
+- Changed refactoring on cluster methods
+
+#### Fixed
+
+- Fixed serialization issues on tool configurations
+
+### Release 0.6.5 - 12.9.2022 RELEASE CANDIDATE
+
+#### Changed
+
+- Changed scene view rendering now skipped in play mode to avoid multiple issues in various prefab stages and culling options
+
+#### Fixed
+
+- Fixed on accessing incorrect camera in prefab stage
+- Fixed edit mode execution for prefab stage exit
+
+### Release 0.6.4 - 12.9.2022 RELEASE CANDIDATE
+
+#### Added
+
+- Added frustum and distance GPU culling for indirect rendering
+
 ### Release 0.6.3 - 24.8.2022 RELEASE CANDIDATE
 
 #### Changed

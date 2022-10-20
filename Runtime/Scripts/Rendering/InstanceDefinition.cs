@@ -11,12 +11,10 @@ using UnityEditor;
 
 namespace InstancePainter.Runtime
 {
-    [CreateAssetMenu(fileName = "PaintDefinition", menuName = "Instance Painter/Create Paint Definition", order = 0)]
     [Serializable]
     public class InstanceDefinition : ScriptableObject
     {
         #if UNITY_EDITOR
-        [MenuItem("Tools/Instance Painter/Create Paint Definition")]
         public static void CreateEmpty()
         {
             InstanceDefinition example = ScriptableObject.CreateInstance<InstanceDefinition>();
@@ -34,6 +32,8 @@ namespace InstancePainter.Runtime
         
         public GameObject prefab;
         public Material material;
+
+        public Color color = Color.white;
         
         public float maximumSlope = 90;
         public float minimumDistance = 0;

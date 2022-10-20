@@ -39,7 +39,7 @@ namespace InstancePainter.Editor
 
             var rect = p_sceneView.camera.GetScaledPixelRect();
 
-            GUILayout.BeginArea(new Rect(rect.width / 2 - 150, 5, 300, 55));
+            GUILayout.BeginArea(new Rect(rect.width / 2 - 175, 5, 350, 55));
             GUILayout.BeginHorizontal();
             
             GUI.color = Core.CurrentTool?.GetType() == typeof(PaintTool) ? new Color(1, .5f, .25f) : Color.white;
@@ -76,6 +76,15 @@ namespace InstancePainter.Editor
                 Core.ChangeTool<RectTool>();
             }
             //GUILayout.Label("Rect", Core.Config.Skin.GetStyle("scenegui_tool_label"));
+            GUILayout.EndVertical();
+            
+            GUI.color = Core.CurrentTool?.GetType() == typeof(ClusterTool) ? new Color(1, .5f, .25f) : Color.white;
+            GUILayout.BeginVertical();
+            if (GUILayout.Button(IconManager.GetIcon("cluster_icon"),IPEditorCore.Skin.GetStyle("scenegui_tool_button"),  GUILayout.Height(40), GUILayout.Width(54)))
+            {
+                Core.ChangeTool<ClusterTool>();
+            }
+            //GUILayout.Label("Cluster", Core.Config.Skin.GetStyle("scenegui_tool_label"));
             GUILayout.EndVertical();
 
             GUILayout.FlexibleSpace();

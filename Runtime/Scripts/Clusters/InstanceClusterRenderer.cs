@@ -18,6 +18,8 @@ namespace InstancePainter.Runtime
         [NonSerialized]
         private ComputeBuffer _matrixBuffer;
         [NonSerialized]
+        private ComputeBuffer _visibilityBuffer;
+        [NonSerialized]
         private ComputeBuffer[] _drawIndirectBuffers;
         [NonSerialized]
         private uint[] _indirectArgs;
@@ -50,6 +52,12 @@ namespace InstancePainter.Runtime
 
         private Mesh _lastRenderedMesh = null;
 
+        private int _instanceCount = 0;
+        
+        private ComputeShader _cullingShader;
+
+        private bool _lastCullingState = false;
+
         public void SetGPUDirty()
         {
             _isGPUDirty = true;
@@ -60,30 +68,42 @@ namespace InstancePainter.Runtime
             _isBoundsDirty = true;
         }
         
-        public bool Invalidate(bool p_fallback, NativeList<Matrix4x4> p_matrixData, NativeList<Vector4> p_colorData, Mesh p_mesh)
+        private bool Invalidate(bool p_fallback, NativeList<Matrix4x4> p_matrixData, NativeList<Vector4> p_colorData, Mesh p_mesh, ComputeShader p_cullingShader)
         {
-            int count = p_matrixData.IsCreated ? p_matrixData.Length : 0;
+            _instanceCount = p_matrixData.IsCreated ? p_matrixData.Length : 0;
             
-            if (count == 0)
+            if (_instanceCount == 0)
                 return false;
 
             if (!p_fallback)
             {
+                _cullingShader = p_cullingShader != null ? GameObject.Instantiate(p_cullingShader) : null;
+                
                 _colorBuffer?.Release();
                 _matrixBuffer?.Release();
+                _visibilityBuffer?.Release();
 
                 _drawIndirectBuffers?.ToList().ForEach(cb => cb?.Release());
                 _drawIndirectBuffers = new ComputeBuffer[p_mesh.subMeshCount];
 
-                _colorBuffer = new ComputeBuffer(count, sizeof(float) * 4);
+                _colorBuffer = new ComputeBuffer(_instanceCount, sizeof(float) * 4);
                 _colorBuffer.SetData(p_colorData.AsArray());
+                
+                _visibilityBuffer = new ComputeBuffer(_instanceCount, sizeof(uint), ComputeBufferType.Append);
 
-                _matrixBuffer = new ComputeBuffer(count, sizeof(float) * 16);
+                _matrixBuffer = new ComputeBuffer(_instanceCount, sizeof(float) * 16);
                 _matrixBuffer.SetData(p_matrixData.AsArray());
 
                 _propertyBlock = new MaterialPropertyBlock();
                 _propertyBlock.SetBuffer("_colorBuffer", _colorBuffer);
                 _propertyBlock.SetBuffer("_matrixBuffer", _matrixBuffer);
+                _propertyBlock.SetBuffer("_visibilityBuffer", _visibilityBuffer);
+                
+                if (_cullingShader != null)
+                {
+                    _cullingShader.SetBuffer(0, "_matrixBuffer", _matrixBuffer);
+                    _cullingShader.SetBuffer(0, "_visibilityBuffer", _visibilityBuffer);
+                }
 
                 _indirectArgs = new uint[5] { 0, 0, 0, 0, 0 };
 
@@ -93,7 +113,7 @@ namespace InstancePainter.Runtime
                         ComputeBufferType.IndirectArguments);
 
                     _indirectArgs[0] = (uint)p_mesh.GetIndexCount(i);
-                    _indirectArgs[1] = (uint)count;
+                    _indirectArgs[1] = (uint)_instanceCount;
                     _indirectArgs[2] = (uint)p_mesh.GetIndexStart(i);
                     _indirectArgs[3] = (uint)p_mesh.GetBaseVertex(i);
                     _indirectArgs[4] = 0;
@@ -112,8 +132,11 @@ namespace InstancePainter.Runtime
             _colorBuffer = null;
             _matrixBuffer?.Release();
             _matrixBuffer = null;
+            _visibilityBuffer?.Release();
+            _visibilityBuffer = null;
 
             _lastRenderedMesh = null;
+            _lastCullingState = false;
 
             if (_drawIndirectBuffers != null)
             {
@@ -122,7 +145,8 @@ namespace InstancePainter.Runtime
         }
 
         public void RenderIndirect(Camera p_camera, Mesh p_mesh, Material p_material,
-            NativeList<Matrix4x4> p_matrixData, NativeList<Vector4> p_colorData)
+            NativeList<Matrix4x4> p_matrixData, NativeList<Vector4> p_colorData,
+            bool p_useCulling, ComputeShader p_cullingShader, Matrix4x4 p_cullingMatrix, float p_cullingDistance)
         {
             if (p_mesh == null || p_material == null)
                 return;
@@ -133,17 +157,29 @@ namespace InstancePainter.Runtime
             }
             
             // If someone switched the mesh in cluster for some reason we need to force invalidation
-            if (_isGPUDirty || (_lastRenderedMesh != null && _lastRenderedMesh != p_mesh))
+            if (_isGPUDirty || (_lastRenderedMesh != null && _lastRenderedMesh != p_mesh) || 
+                (_lastCullingState != p_useCulling))
             {
-                if (!Invalidate(false, p_matrixData, p_colorData, p_mesh))
+                if (!Invalidate(false, p_matrixData, p_colorData, p_mesh, p_cullingShader))
                     return;
 
                 _lastRenderedMesh = p_mesh;
+                _lastCullingState = p_useCulling;
                 _isGPUDirty = false;
+            }
+            
+            if (p_useCulling)
+            {
+                DoComputeCulling(p_cullingMatrix, p_cullingDistance);
             }
 
             for (int i = 0; i < p_mesh.subMeshCount; i++)
             {
+                if (p_useCulling)
+                {
+                    ComputeBuffer.CopyCount(_visibilityBuffer, _drawIndirectBuffers[i], 4);
+                }
+                
                 Graphics.DrawMeshInstancedIndirect(p_mesh, i, p_material, _bounds, _drawIndirectBuffers[i], 0,
                     _propertyBlock, ShadowCastingMode.On, true, 0, p_camera);
             }
@@ -315,6 +351,29 @@ namespace InstancePainter.Runtime
             _colorBuffer?.SetData(p_modifiedColorData.AsArray());
 
             binModifiers.Dispose();
+        }
+        
+        private void DoComputeCulling(Matrix4x4 p_cullingMatrix, float p_cullingDistance)
+        {
+            _visibilityBuffer.SetCounterValue(0);
+            
+            _cullingShader.SetMatrix("_cullingMatrix", p_cullingMatrix);
+            // TODO add distance as parameter
+            _cullingShader.SetFloat("_cullingDistance", p_cullingDistance);
+
+            float threadCount = 64;
+            float batchLimit = 65535 * threadCount;
+
+            int subBatchCount = Mathf.CeilToInt(_instanceCount / batchLimit);
+            for (int i = 0; i < subBatchCount; i++)
+            {
+                _cullingShader.SetInt("_batchOffset", i * (int)batchLimit);
+                float current = (_instanceCount < (i + 1) * (int)batchLimit)
+                    ? _instanceCount - i * (int)batchLimit
+                    : batchLimit;
+                
+                _cullingShader.Dispatch(0, Mathf.CeilToInt(current / threadCount), 1, 1);
+            }
         }
     }
 }
