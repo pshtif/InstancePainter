@@ -8,6 +8,12 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.8.0
+
+#### Changed
+
+- Changed multiple UI fixes updates
+
 ### Release 0.7.0 - 18.10.2022 RELEASE CANDIDATE
 
 #### Added
