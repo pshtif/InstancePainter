@@ -19,12 +19,11 @@ namespace InstancePainter.Editor
         
         public static bool DrawMinimizableSectionTitle(string p_title, ref bool p_minimized)
         {
-            GUILayout.BeginHorizontal();
             GUILayout.Label(p_title, Skin.GetStyle("section_title"), GUILayout.Height(28));
-            GUILayout.EndHorizontal();
-            
             var rect = GUILayoutUtility.GetLastRect();
-            if (GUI.Button(new Rect(rect.x+rect.width- (p_minimized ? 24 : 21), rect.y-2, 24, 24), p_minimized ? "+" : "-", IPEditorCore.Skin.GetStyle("minimizebuttonbig")))
+            GUI.Label(new Rect(rect.x+rect.width- (p_minimized ? 24 : 21), rect.y-2, 24, 24), p_minimized ? "+" : "-", Skin.GetStyle("minimizebuttonbig"));
+            
+            if (GUI.Button(new Rect(rect.x, rect.y, rect.width, rect.height), "", GUIStyle.none))
             {
                 p_minimized = !p_minimized;
             }
@@ -41,7 +40,10 @@ namespace InstancePainter.Editor
             GUILayout.EndHorizontal();
             
             var rect = GUILayoutUtility.GetLastRect();
-            if (GUI.Button(new Rect(rect.x+rect.width- (p_minimized ? 24 : 21), rect.y-2, 24, 24), p_minimized ? "+" : "-", IPEditorCore.Skin.GetStyle("minimizebuttonbig")))
+            GUI.Label(new Rect(rect.x+rect.width- (p_minimized ? 24 : 21), rect.y-2, 24, 24), p_minimized ? "+" : "-", Skin.GetStyle("minimizebuttonbig"));
+            
+            
+            if (GUI.Button(new Rect(rect.x, rect.y, rect.width, rect.height), "", GUIStyle.none))
             {
                 p_minimized = !p_minimized;
             }
