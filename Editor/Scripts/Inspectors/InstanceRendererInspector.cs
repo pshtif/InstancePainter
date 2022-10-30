@@ -23,8 +23,10 @@ namespace InstancePainter.Editor
 
         public override void OnInspectorGUI()
         {
-            EditorGUILayout.LabelField("<color=#FF8800>Instance Renderer </color><i><size=10>v"+IPEditorCore.VERSION+"</size></i>", Skin.GetStyle("editor_title"), GUILayout.Height(30));
-            GUILayout.Space(2);
+            //EditorGUILayout.LabelField("<color=#FF8800>Instance Renderer </color><i><size=10>v"+IPEditorCore.VERSION+"</size></i>", Skin.GetStyle("editor_title"), GUILayout.Height(30));
+            GUILayout.Label("<color=#FF8800>INSTANCE PAINTER</color>", Skin.GetStyle("editor_title"), GUILayout.Height(24));
+            GUILayout.Label("VERSION "+IPEditorCore.VERSION, Skin.GetStyle("editor_version"), GUILayout.Height(16));
+            GUILayout.Space(4);
 
             EditorGUI.BeginChangeCheck();
 
@@ -32,11 +34,11 @@ namespace InstancePainter.Editor
 
             DrawSettings();
 
-            GUILayout.Space(4);
+            GUILayout.Space(2);
             
             DrawClusters();
             
-            GUILayout.Space(4);
+            GUILayout.Space(2);
 
             DrawModifiers();
         }

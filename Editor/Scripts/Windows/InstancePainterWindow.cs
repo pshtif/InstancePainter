@@ -40,7 +40,7 @@ namespace InstancePainter.Editor
             _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
             
             EditorGUILayout.LabelField("<color=#FF8800>Instance Painter </color><i><size=10>v"+IPEditorCore.VERSION+"</size></i>", Skin.GetStyle("editor_title"), GUILayout.Height(30));
-            GUILayout.Space(4);
+            GUILayout.Space(2);
 
             DrawWarnings();
             
@@ -50,10 +50,10 @@ namespace InstancePainter.Editor
                 Core.Config.enabled = !Core.Config.enabled;
                 EditorUtility.SetDirty(Core.Config);
             }
-            GUILayout.Space(4);
+            GUILayout.Space(2);
             GUI.color = Color.white;
 
-            GUILayout.Space(4);
+            GUILayout.Space(2);
             
             EditorGUI.BeginChangeCheck();
             
@@ -61,7 +61,7 @@ namespace InstancePainter.Editor
 
             DrawSettingsGUI();
             
-            GUILayout.Space(4);
+            GUILayout.Space(2);
             
             DrawPaintDefinitionsGUI();
 
