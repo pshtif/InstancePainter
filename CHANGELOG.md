@@ -14,6 +14,10 @@ All notable changes to this project will be documented in this file.
 
 - Changed multiple UI fixes updates
 
+#### Fixed
+
+- Fixed correct faceculling for depth and shadow pass
+
 ### Release 0.7.0 - 18.10.2022 RELEASE CANDIDATE
 
 #### Added
