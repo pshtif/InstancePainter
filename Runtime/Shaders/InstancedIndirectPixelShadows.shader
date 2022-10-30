@@ -158,9 +158,7 @@ Shader "Instance Painter/InstancedIndirectPixelShadows"
         Pass
         {
             Tags { "LightMode" = "ShadowCaster" }
-            
-            Cull Off
-            Blend One Zero
+
             ZTest LEqual
             ZWrite On
             ColorMask 0
@@ -254,8 +252,7 @@ Shader "Instance Painter/InstancedIndirectPixelShadows"
         Pass
         {
             Tags { "LightMode" = "DepthOnly" }
-            
-            Cull Off
+
             ZTest LEqual
             ZWrite On
             ColorMask 0

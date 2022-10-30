@@ -161,9 +161,7 @@ Shader "Instance Painter/Fallback/PixelShadowsFallback"
         Pass
         {
             Tags { "LightMode" = "ShadowCaster" }
-            
-            Cull Off
-            Blend One Zero
+
             ZTest LEqual
             ZWrite On
             ColorMask 0

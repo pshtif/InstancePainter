@@ -137,9 +137,7 @@ Shader "Instance Painter/Fallback/VertexShadowsFallback"
         Pass
         {
             Tags { "LightMode" = "ShadowCaster" }
-            
-            Cull Off
-            Blend One Zero
+
             ZTest LEqual
             ZWrite On
             ColorMask 0
