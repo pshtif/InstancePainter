@@ -7,7 +7,7 @@ using System.Linq;
 using Unity.Collections;
 using UnityEngine;
 
-namespace InstancePainter.Runtime
+namespace BinaryEgo.InstancePainter
 {
     [RequireComponent(typeof(InstanceRenderer))]
     public class InstanceUnityRenderer : MonoBehaviour

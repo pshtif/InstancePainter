@@ -4,14 +4,11 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using InstancePainter.Runtime;
 using UnityEditor;
-using UnityEditor.SceneManagement;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-namespace InstancePainter.Editor
+namespace BinaryEgo.InstancePainter.Editor
 {
     public enum RectToolState
     {
@@ -164,7 +161,7 @@ namespace InstancePainter.Editor
                 if (paintDefinition != null)
                 {
                     var datas = Core.PlaceInstance(paintDefinition,
-                        new Vector3(Random.Range(minX, maxX), p_startPoint.y, Random.Range(minZ, maxZ)), _paintedInstances);
+                        new Vector3(Random.Range(minX, maxX), p_startPoint.y, Random.Range(minZ, maxZ)), Vector3.zero, Vector3.zero, _paintedInstances);
 
                     foreach (var data in datas)
                     {

@@ -3,12 +3,10 @@
  */
 
 using System.Collections.Generic;
-using InstancePainter.Runtime;
 using UnityEditor;
-using UnityEditor.SceneManagement;
 using UnityEngine;
 
-namespace InstancePainter.Editor
+namespace BinaryEgo.InstancePainter.Editor
 {
     public enum PaintToolState
     {
@@ -25,9 +23,12 @@ namespace InstancePainter.Editor
         private Vector3 _lastPaintPosition;
         private Vector2 _paintStartMousePosition;
         private RaycastHit _paintStartHit;
-        
+        private bool _paintStart = true;
+
         private List<PaintedInstance> _paintedInstances = new List<PaintedInstance>();
         private PaintToolState _state = PaintToolState.NONE;
+
+        private PhysicsScene _physicsScene;
 
         protected override void HandleMouseHitInternal(RaycastHit p_hit)
         {
@@ -49,6 +50,7 @@ namespace InstancePainter.Editor
                 Undo.RegisterCompleteObjectUndo(Core.Renderer, "Record Renderer");
                 _undoId = Undo.GetCurrentGroup();
 
+                _paintStart = true;
                 Core.CacheRaycastMeshes();
             }
             
@@ -59,7 +61,7 @@ namespace InstancePainter.Editor
                 {
                     if (_state != PaintToolState.UPDATE) {
                         _state = PaintToolState.UPDATE;
-                    
+                        
                         _paintStartHit = p_hit;
                         _paintStartMousePosition = Event.current.mousePosition;
                         _paintedInstances.Clear();
@@ -76,6 +78,7 @@ namespace InstancePainter.Editor
                     
                     if (Event.current.shift)
                     {
+                        
                     }
                     else
                     {
@@ -95,7 +98,7 @@ namespace InstancePainter.Editor
         {
             var offset = Event.current.mousePosition - _paintStartMousePosition;
 
-            List<ICluster> datas = new List<ICluster>();
+            List<ICluster> clusters = new List<ICluster>();
             foreach (var instance in _paintedInstances)
             {
                 Quaternion originalRotation = Quaternion.LookRotation(
@@ -117,25 +120,31 @@ namespace InstancePainter.Editor
 
                 instance.cluster.SetInstanceMatrix(instance.index, Matrix4x4.TRS(_paintStartHit.point + position + instance.definition.positionOffset, rotation * originalRotation, originalScale + scale));
                 
-                datas.AddIfUnique(instance.cluster);
+                clusters.AddIfUnique(instance.cluster);
             }
 
-            datas.ForEach(data => data.UpdateSerializedData());
+            clusters.ForEach(data => data.UpdateSerializedData());
         }
         
         void Paint(RaycastHit p_hit)
         {
             if (Vector3.Distance(_lastPaintPosition, p_hit.point) <= 0.1f)
                 return;
-
+            
+            var paintVector = (p_hit.point - _lastPaintPosition).normalized;
             _lastPaintPosition = p_hit.point;
+            if (_paintStart)
+            {
+                _paintStart = false;
+                return;
+            }
 
             List<ICluster> invalidateClusters = new List<ICluster>();
 
             if (Core.Config.PaintToolConfig.density == 1)
             {
                 PaintDefinition paintDefinition = Core.Config.GetWeightedDefinition();
-                var datas = Core.PlaceInstance(paintDefinition, p_hit.point, _paintedInstances);
+                var datas = Core.PlaceInstance(paintDefinition, p_hit.point, paintVector, Vector3.zero, _paintedInstances);
                 invalidateClusters.AddRangeIfUnique(datas);
             }
             else
@@ -146,11 +155,10 @@ namespace InstancePainter.Editor
 
                     if (paintDefinition != null)
                     {
-
                         Vector3 direction = Quaternion.AngleAxis(Random.Range(0, 360), Vector3.up) * Vector3.right;
                         Vector3 position = direction * Random.Range(0, Core.Config.PaintToolConfig.brushSize) + p_hit.point;
 
-                        var datas = Core.PlaceInstance(paintDefinition, position, _paintedInstances);
+                        var datas = Core.PlaceInstance(paintDefinition, position, paintVector, Vector3.zero, _paintedInstances);
                         invalidateClusters.AddRangeIfUnique(datas);
                     }
                 }

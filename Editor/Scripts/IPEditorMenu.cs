@@ -4,7 +4,7 @@
 
 using UnityEditor;
 
-namespace InstancePainter.Editor
+namespace BinaryEgo.InstancePainter.Editor
 {
     public class IPEditorMenu
     {

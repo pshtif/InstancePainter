@@ -2,11 +2,11 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
-using InstancePainter;
+using BinaryEgo.InstancePainter;
 using UnityEditor;
 using UnityEngine;
 
-namespace InstancePainter.Editor
+namespace BinaryEgo.InstancePainter.Editor
 {
     public class IPSceneGUI
     {
@@ -39,7 +39,7 @@ namespace InstancePainter.Editor
 
             var rect = p_sceneView.camera.GetScaledPixelRect();
 
-            GUILayout.BeginArea(new Rect(rect.width / 2 - 175, 5, 350, 55));
+            GUILayout.BeginArea(new Rect(rect.width / 2 - 175, 5, 410, 55));
             GUILayout.BeginHorizontal();
             
             GUI.color = Core.CurrentTool?.GetType() == typeof(PaintTool) ? new Color(1, .5f, .25f) : Color.white;
@@ -74,6 +74,15 @@ namespace InstancePainter.Editor
             if (GUILayout.Button(IconManager.GetIcon("rect_icon"),IPEditorCore.Skin.GetStyle("scenegui_tool_button"),  GUILayout.Height(40), GUILayout.Width(54)))
             {
                 Core.ChangeTool<RectTool>();
+            }
+            //GUILayout.Label("Rect", Core.Config.Skin.GetStyle("scenegui_tool_label"));
+            GUILayout.EndVertical();
+            
+            GUI.color = Core.CurrentTool?.GetType() == typeof(CurveTool) ? new Color(1, .5f, .25f) : Color.white;
+            GUILayout.BeginVertical();
+            if (GUILayout.Button(IconManager.GetIcon("curve_icon"),IPEditorCore.Skin.GetStyle("scenegui_tool_button"),  GUILayout.Height(40), GUILayout.Width(54)))
+            {
+                Core.ChangeTool<CurveTool>();
             }
             //GUILayout.Label("Rect", Core.Config.Skin.GetStyle("scenegui_tool_label"));
             GUILayout.EndVertical();

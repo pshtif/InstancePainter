@@ -11,7 +11,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 #endif
 
-namespace InstancePainter.Runtime
+namespace BinaryEgo.InstancePainter
 {
     [ExecuteInEditMode]
     public class InstanceRenderer : MonoBehaviour, ISerializationCallbackReceiver
@@ -265,6 +265,11 @@ namespace InstancePainter.Runtime
 
                 if (camera == null)
                      return;
+                
+                if (autoApplyModifiers)
+                {
+                    InstanceClusters.ForEach(id => id?.ApplyModifiers(modifiers, binSize));
+                }
                 
                 Render(p_sceneView.camera, camera.projectionMatrix * camera.worldToCameraMatrix);    
             }

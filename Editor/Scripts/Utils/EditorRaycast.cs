@@ -5,7 +5,7 @@
 using UnityEditor.SceneManagement;
 using UnityEngine.Profiling;
 
-namespace InstancePainter.Editor
+namespace BinaryEgo.InstancePainter.Editor
 {
     using System.Linq;
     using System.Reflection;

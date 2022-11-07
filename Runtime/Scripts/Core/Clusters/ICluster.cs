@@ -3,10 +3,9 @@
  */
 
 using System.Collections.Generic;
-using Mono.Collections.Generic;
 using UnityEngine;
 
-namespace InstancePainter.Runtime
+namespace BinaryEgo.InstancePainter
 {
     public interface ICluster
     {

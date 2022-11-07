@@ -5,7 +5,7 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace InstancePainter.Editor
+namespace BinaryEgo.InstancePainter.Editor
 {
     public class MeshUtils
     {

@@ -5,7 +5,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace InstancePainter.Editor
+namespace BinaryEgo.InstancePainter.Editor
 {
     #if UNITY_EDITOR
     public static class CameraExtensions

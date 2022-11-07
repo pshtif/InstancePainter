@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace InstancePainter.Runtime
+namespace BinaryEgo.InstancePainter
 {
     public class InstanceClusterAsset : ScriptableObject, ICluster
     {

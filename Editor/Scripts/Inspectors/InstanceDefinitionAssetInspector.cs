@@ -2,11 +2,10 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
-using InstancePainter.Runtime;
 using UnityEditor;
 using UnityEngine;
 
-namespace InstancePainter.Editor
+namespace BinaryEgo.InstancePainter.Editor
 {
     [CustomEditor(typeof(InstanceDefinition))]
     public class InstanceDefinitionAssetInspector : UnityEditor.Editor

@@ -7,7 +7,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-namespace InstancePainter
+namespace BinaryEgo.InstancePainter
 {
     public class MaterialUtils
     {

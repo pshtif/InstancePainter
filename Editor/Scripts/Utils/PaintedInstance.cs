@@ -2,11 +2,9 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
-using InstancePainter;
-using InstancePainter.Runtime;
 using UnityEngine;
 
-namespace InstancePainter.Editor
+namespace BinaryEgo.InstancePainter.Editor
 {
     public class PaintedInstance
     {

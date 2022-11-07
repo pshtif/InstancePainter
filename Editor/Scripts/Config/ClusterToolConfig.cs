@@ -3,11 +3,8 @@
  */
 
 using System;
-using System.Collections.Generic;
-using InstancePainter.Runtime;
-using UnityEngine;
 
-namespace InstancePainter.Editor
+namespace BinaryEgo.InstancePainter.Editor
 {
     [Serializable]
     public class ClusterToolConfig

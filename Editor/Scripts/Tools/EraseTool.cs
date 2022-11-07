@@ -4,11 +4,10 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using InstancePainter.Runtime;
 using UnityEditor;
 using UnityEngine;
 
-namespace InstancePainter.Editor
+namespace BinaryEgo.InstancePainter.Editor
 {
     public class EraseTool : ToolBase
     {

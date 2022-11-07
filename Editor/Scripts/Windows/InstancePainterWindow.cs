@@ -2,12 +2,10 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
-using System.Linq;
-using InstancePainter.Runtime;
 using UnityEditor;
 using UnityEngine;
 
-namespace InstancePainter.Editor
+namespace BinaryEgo.InstancePainter.Editor
 {
     public class InstancePainterWindow : EditorWindow
     {
@@ -39,7 +37,8 @@ namespace InstancePainter.Editor
             
             _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
             
-            EditorGUILayout.LabelField("<color=#FF8800>Instance Painter </color><i><size=10>v"+IPEditorCore.VERSION+"</size></i>", Skin.GetStyle("editor_title"), GUILayout.Height(30));
+            GUILayout.Label("<color=#FF8800>INSTANCE PAINTER</color>", Skin.GetStyle("editor_title"), GUILayout.Height(24));
+            GUILayout.Label("VERSION "+IPEditorCore.VERSION, Skin.GetStyle("editor_version"), GUILayout.Height(16));
             GUILayout.Space(2);
 
             DrawWarnings();
@@ -282,15 +281,18 @@ namespace InstancePainter.Editor
                     p_paintDefinition.maxRotation =
                         EditorGUILayout.Vector3Field("Max Rotation", p_paintDefinition.maxRotation);
 
-                    p_paintDefinition.rotateToNormal =
-                        EditorGUILayout.Toggle("Rotate To Normal", p_paintDefinition.rotateToNormal);
-
                     p_paintDefinition.positionOffset =
                         EditorGUILayout.Vector3Field("Position Offset", p_paintDefinition.positionOffset);
                     p_paintDefinition.rotationOffset =
                         EditorGUILayout.Vector3Field("Rotation Offset", p_paintDefinition.rotationOffset);
                     p_paintDefinition.scaleOffset =
                         EditorGUILayout.Vector3Field("Scale Offset", p_paintDefinition.scaleOffset);
+                    
+                    p_paintDefinition.upToNormal =
+                        EditorGUILayout.Toggle("Rotate To Normal", p_paintDefinition.upToNormal);
+                    
+                    p_paintDefinition.rightToPaintDirection =
+                        EditorGUILayout.Toggle("Right To Paint Direction", p_paintDefinition.rightToPaintDirection);
                     GUI.enabled = true;
 
                     if (EditorGUI.EndChangeCheck())

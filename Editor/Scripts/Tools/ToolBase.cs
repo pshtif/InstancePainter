@@ -5,7 +5,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace InstancePainter.Editor
+namespace BinaryEgo.InstancePainter.Editor
 {
     public abstract class ToolBase
     {
