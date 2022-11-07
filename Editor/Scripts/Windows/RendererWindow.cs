@@ -2,12 +2,11 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
-using InstancePainter.Runtime;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-namespace InstancePainter.Editor
+namespace BinaryEgo.InstancePainter.Editor
 {
     public class RendererWindow : EditorWindow
     {

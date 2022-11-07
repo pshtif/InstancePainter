@@ -4,12 +4,11 @@
 
 using System;
 using System.Collections.Generic;
-using InstancePainter.Runtime;
 using UnityEditor;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-namespace InstancePainter.Editor
+namespace BinaryEgo.InstancePainter.Editor
 {
     [Serializable]
     public class IPEditorConfig : ScriptableObject
@@ -37,6 +36,9 @@ namespace InstancePainter.Editor
         private RectToolConfig _rectToolConfig = new RectToolConfig();
         public RectToolConfig RectToolConfig => _rectToolConfig;
         
+        [SerializeField]
+        private CurveToolConfig _curveToolConfig = new CurveToolConfig();
+        public CurveToolConfig CurveToolConfig => _curveToolConfig;
         
         public bool minimizePaintDefinitions = false;
         public bool minimizeSettings = false;

@@ -5,7 +5,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using InstancePainter.Runtime;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -15,12 +14,12 @@ using Random = UnityEngine.Random;
 using UnityEditor.Experimental.SceneManagement;
 #endif
 
-namespace InstancePainter.Editor
+namespace BinaryEgo.InstancePainter.Editor
 {
     [InitializeOnLoad]
     public class IPEditorCore
     {
-        public const string VERSION = "0.7.0";
+        public const string VERSION = "0.8.0";
         
         public static IPEditorCore Instance { get; private set; }
         
@@ -170,6 +169,7 @@ namespace InstancePainter.Editor
         public bool RaycastValidGeo(Vector3 p_position, out RaycastHit p_hit)
         {
             p_position += Vector3.up * 100;
+
             Ray ray = new Ray(p_position, -Vector3.up);
             
             RaycastHit hit;
@@ -182,12 +182,12 @@ namespace InstancePainter.Editor
                     return false;
                 }
             }
-
+            
             p_hit = hit;
             return true;
         }
         
-        public ICluster[] PlaceInstance(PaintDefinition p_paintDefinition, Vector3 p_position, List<PaintedInstance> p_paintedInstances)
+        public ICluster[] PlaceInstance(PaintDefinition p_paintDefinition, Vector3 p_position, Vector3 p_direction, Vector3 p_offset, List<PaintedInstance> p_paintedInstances)
         {
             List<ICluster> paintedDatas = new List<ICluster>();
 
@@ -235,14 +235,27 @@ namespace InstancePainter.Editor
                     }
                }
             }
-
+            
             foreach (var filter in filters)
             {
                 var position = p_position + p_paintDefinition.positionOffset + filter.transform.position;
+                
+                // Todo maybe a setting separated?
+                if (p_paintDefinition.upToNormal)
+                {
+                    position += Quaternion.FromToRotation(Vector3.up, hit.normal) * p_offset;
+                }
+                else
+                {
+                    position += p_offset;
+                }
 
                 var rotation = filter.transform.rotation *
-                    (p_paintDefinition.rotateToNormal
+                    (p_paintDefinition.upToNormal
                         ? Quaternion.FromToRotation(Vector3.up, hit.normal)
+                        : Quaternion.identity) *
+                    (p_paintDefinition.rightToPaintDirection && p_direction != Vector3.zero
+                        ? Quaternion.FromToRotation(Vector3.right, p_direction)
                         : Quaternion.identity) *
                     Quaternion.Euler(p_paintDefinition.rotationOffset);
 
@@ -274,7 +287,7 @@ namespace InstancePainter.Editor
                         data.GetInstanceColor(data.GetCount() - 1),
                         data.GetCount() - 1, p_paintDefinition);
                     p_paintedInstances?.Add(instance);
-
+                    
                     paintedDatas.Add(data);
                 }
             }
