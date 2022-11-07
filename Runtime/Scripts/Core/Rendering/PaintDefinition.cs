@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 using UnityEditor;
+using UnityEngine.Serialization;
 
 
 namespace InstancePainter.Runtime
@@ -49,7 +50,7 @@ namespace InstancePainter.Runtime
             definition.minRotation = p_instanceDefinition.minRotation;
             definition.maxRotation = p_instanceDefinition.maxRotation;
             definition.weight = p_instanceDefinition.weight;
-            definition.rotateToNormal = p_instanceDefinition.rotateToNormal;
+            definition.upToNormal = p_instanceDefinition.rotateToNormal;
             definition.positionOffset = p_instanceDefinition.positionOffset;
             definition.rotationOffset = p_instanceDefinition.rotationOffset;
             definition.scaleOffset = p_instanceDefinition.scaleOffset;
@@ -89,7 +90,9 @@ namespace InstancePainter.Runtime
 
         public float weight = 1;
 
-        public bool rotateToNormal = false;
+        [FormerlySerializedAs("rotateToNormal")] 
+        public bool upToNormal = false;
+        public bool rightToPaintDirection = false;
 
         public Vector3 positionOffset = Vector3.zero;
         public Vector3 rotationOffset = Vector3.zero;
