@@ -10,13 +10,18 @@ All notable changes to this project will be documented in this file.
 
 ### Release 0.8.0
 
+#### Added
+
+- Added curve tool [EXPERIMENTAL]
+
 #### Changed
 
-- Changed multiple UI fixes updates
+- Changed multiple UI changes and updates
 
 #### Fixed
 
 - Fixed correct faceculling for depth and shadow pass
+- Fixed deserialization issues when disabling/enabling whole gameobject in editor
 
 ### Release 0.7.0 - 18.10.2022 RELEASE CANDIDATE
 
