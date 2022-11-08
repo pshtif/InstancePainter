@@ -222,6 +222,11 @@ namespace BinaryEgo.InstancePainter
 
         public void OnAfterDeserialize()
         {
+            DeserializeClusters();
+        }
+
+        private void DeserializeClusters()
+        {
             _instanceClusters.Clear();
             _instanceClusters.AddRange(_serializedInstanceClusters);
             _instanceClusters.AddRange(_serializedInstanceClusterAssets);
@@ -234,6 +239,7 @@ namespace BinaryEgo.InstancePainter
             {
                 SceneView.duringSceneGui += OnSceneGUI;
             }
+            DeserializeClusters();
 #endif
         }
 
@@ -254,7 +260,7 @@ namespace BinaryEgo.InstancePainter
                 SceneView.duringSceneGui -= OnSceneGUI;
                 return;
             }
-
+            
             if (Application.isPlaying || !enabled)
                 return;
 
