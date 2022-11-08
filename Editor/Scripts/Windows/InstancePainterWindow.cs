@@ -324,6 +324,13 @@ namespace BinaryEgo.InstancePainter.Editor
             
             Core.Config.useMeshRaycasting = EditorGUILayout.Toggle("Use Mesh Raycasting", Core.Config.useMeshRaycasting);
 
+            Core.Config.enableExperimental = EditorGUILayout.Toggle("Enable Experimental", Core.Config.enableExperimental);
+
+            if (Core.Config.enableExperimental)
+            {
+                EditorGUILayout.HelpBox("Experimental features may result in unexpected crashes or serialization issues do not use in production.", MessageType.Warning);
+            }
+
             if (EditorGUI.EndChangeCheck())
             {
                 EditorUtility.SetDirty(Core.Config);

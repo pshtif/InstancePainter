@@ -39,7 +39,7 @@ namespace BinaryEgo.InstancePainter.Editor
 
             var rect = p_sceneView.camera.GetScaledPixelRect();
 
-            GUILayout.BeginArea(new Rect(rect.width / 2 - 175, 5, 410, 55));
+            GUILayout.BeginArea(new Rect(rect.width / 2 - 175, 5, IPEditorCore.Instance.Config.enableExperimental ? 410 : 360, 55));
             GUILayout.BeginHorizontal();
             
             GUI.color = Core.CurrentTool?.GetType() == typeof(PaintTool) ? new Color(1, .5f, .25f) : Color.white;
@@ -77,16 +77,21 @@ namespace BinaryEgo.InstancePainter.Editor
             }
             //GUILayout.Label("Rect", Core.Config.Skin.GetStyle("scenegui_tool_label"));
             GUILayout.EndVertical();
-            
-            GUI.color = Core.CurrentTool?.GetType() == typeof(CurveTool) ? new Color(1, .5f, .25f) : Color.white;
-            GUILayout.BeginVertical();
-            if (GUILayout.Button(IconManager.GetIcon("curve_icon"),IPEditorCore.Skin.GetStyle("scenegui_tool_button"),  GUILayout.Height(40), GUILayout.Width(54)))
+
+            if (IPEditorCore.Instance.Config.enableExperimental)
             {
-                Core.ChangeTool<CurveTool>();
+                GUI.color = Core.CurrentTool?.GetType() == typeof(CurveTool) ? new Color(1, .5f, .25f) : Color.white;
+                GUILayout.BeginVertical();
+                if (GUILayout.Button(IconManager.GetIcon("curve_icon"),
+                        IPEditorCore.Skin.GetStyle("scenegui_tool_button"), GUILayout.Height(40), GUILayout.Width(54)))
+                {
+                    Core.ChangeTool<CurveTool>();
+                }
+
+                //GUILayout.Label("Rect", Core.Config.Skin.GetStyle("scenegui_tool_label"));
+                GUILayout.EndVertical();
             }
-            //GUILayout.Label("Rect", Core.Config.Skin.GetStyle("scenegui_tool_label"));
-            GUILayout.EndVertical();
-            
+
             GUI.color = Core.CurrentTool?.GetType() == typeof(ClusterTool) ? new Color(1, .5f, .25f) : Color.white;
             GUILayout.BeginVertical();
             if (GUILayout.Button(IconManager.GetIcon("cluster_icon"),IPEditorCore.Skin.GetStyle("scenegui_tool_button"),  GUILayout.Height(40), GUILayout.Width(54)))

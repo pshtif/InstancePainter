@@ -63,6 +63,8 @@ namespace BinaryEgo.InstancePainter.Editor
         
         public List<LayerMask> includeLayers = new List<LayerMask>();
         public List<LayerMask> excludeLayers = new List<LayerMask>();
+
+        public bool enableExperimental = false;
         
         static public IPEditorConfig Create()
         {
