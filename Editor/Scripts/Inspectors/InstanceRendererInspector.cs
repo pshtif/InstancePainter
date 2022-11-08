@@ -47,7 +47,7 @@ namespace BinaryEgo.InstancePainter.Editor
             if (!Renderer.enableModifiers)
                 return;
             
-            if (!GUIUtils.DrawMinimizableSectionTitleWCount("MODIFIERS: ", Renderer.modifiers.Count, ref Renderer.modifiersMinimized))
+            if (!GUIUtils.DrawMinimizableSectionTitleWCount("Modifiers: ", Renderer.modifiers.Count, ref Renderer.modifiersMinimized))
                 return;
             
             Renderer.autoApplyModifiers = EditorGUILayout.Toggle("Auto Apply Modifiers", Renderer.autoApplyModifiers);
@@ -61,7 +61,7 @@ namespace BinaryEgo.InstancePainter.Editor
 
         void DrawClusters()
         {
-            if (!GUIUtils.DrawMinimizableSectionTitleWCount("CLUSTERS: ", Renderer.InstanceClusters.Count, ref Renderer.clusterSectionMinimized))
+            if (!GUIUtils.DrawMinimizableSectionTitleWCount("Clusters: ", Renderer.InstanceClusters.Count, ref Renderer.clusterSectionMinimized))
                 return;
 
             for (int i = 0; i < Renderer.InstanceClusters.Count; i++)
@@ -327,7 +327,7 @@ namespace BinaryEgo.InstancePainter.Editor
 
         void DrawSettings()
         {
-            if (!GUIUtils.DrawMinimizableSectionTitle("SETTINGS", ref Renderer.settingsMinimized))
+            if (!GUIUtils.DrawMinimizableSectionTitle("Settings", ref Renderer.settingsMinimized))
                 return;
             
             Renderer.enableModifiers = EditorGUILayout.Toggle("Enable Modifiers", Renderer.enableModifiers);
