@@ -287,8 +287,15 @@ namespace BinaryEgo.InstancePainter
             }
             else
             {
-                _matrixBuffer?.SetData(p_modifiedMatrixData.AsArray());
-                _colorBuffer?.SetData(p_modifiedColorData.AsArray());
+                if (_isGPUDirty)
+                {
+                    Invalidate(false, p_modifiedMatrixData, p_modifiedColorData, _lastRenderedMesh, _cullingShader);
+                }
+                else
+                {
+                    _matrixBuffer?.SetData(p_modifiedMatrixData.AsArray());
+                    _colorBuffer?.SetData(p_modifiedColorData.AsArray());
+                }
             }
         }
 
@@ -347,8 +354,15 @@ namespace BinaryEgo.InstancePainter
                 binModifiers.Clear();
             }
             
-            _matrixBuffer?.SetData(p_modifiedMatrixData.AsArray());
-            _colorBuffer?.SetData(p_modifiedColorData.AsArray());
+            if (_isGPUDirty)
+            {
+                Invalidate(false, p_modifiedMatrixData, p_modifiedColorData, _lastRenderedMesh, _cullingShader);
+            }
+            else
+            {
+                _matrixBuffer?.SetData(p_modifiedMatrixData.AsArray());
+                _colorBuffer?.SetData(p_modifiedColorData.AsArray());
+            }
 
             binModifiers.Dispose();
         }
