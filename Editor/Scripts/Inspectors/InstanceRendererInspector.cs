@@ -128,9 +128,13 @@ namespace BinaryEgo.InstancePainter.Editor
                     SceneView.RepaintAll();
                     return false;
                 }
+
+                GUI.Label(
+                    new Rect(rect.x + rect.width - 14 + (Renderer.IsClusterMinimized(p_index) ? 0 : 2), rect.y + 2, 16,
+                        16), Renderer.IsClusterMinimized(p_index) ? "+" : "-",
+                    IPEditorCore.Skin.GetStyle("minimizebutton"));
                 
-                if (GUI.Button(new Rect(rect.x + rect.width - 14, rect.y + 2, 16, 16), Renderer.IsClusterMinimized(p_index) ? "+" : "-",
-                        IPEditorCore.Skin.GetStyle("minimizebutton")))
+                if (GUI.Button(new Rect(rect.x + 60, rect.y + 2, rect.width - 40, 16), "", IPEditorCore.Skin.GetStyle("minimizebutton")))
                 {
                     Renderer.SetClusterMinimized(p_index, !Renderer.IsClusterMinimized(p_index));
                 }
@@ -153,7 +157,21 @@ namespace BinaryEgo.InstancePainter.Editor
             if (Renderer.IsClusterMinimized(p_index) || !cluster.IsEnabled())
                 return false;
 
-            GUILayout.BeginHorizontal();
+            bool modified = false;
+            if (cluster == null || cluster is InstanceClusterAsset)
+                modified = DrawInstanceClusterAsset(p_index);
+            
+            if (cluster is InstanceCluster) 
+                modified = DrawInstanceCluster(p_index);
+
+            GUILayout.Space(2);
+
+            if (GUILayout.Button("Generate Game Objects", GUILayout.Height(24)))
+            {
+                GenerateGameObjectsFromCluster(cluster);
+            }
+            
+            GUILayout.Space(2);
             
             if (cluster != null)
             {
@@ -177,22 +195,6 @@ namespace BinaryEgo.InstancePainter.Editor
                         SceneView.RepaintAll();
                     }
                 }
-            }
-            
-            GUILayout.EndHorizontal();
-
-            bool modified = false;
-            if (cluster == null || cluster is InstanceClusterAsset)
-                modified = DrawInstanceClusterAsset(p_index);
-            
-            if (cluster is InstanceCluster) 
-                modified = DrawInstanceCluster(p_index);
-
-            GUILayout.Space(4);
-
-            if (GUILayout.Button("Generate Game Objects"))
-            {
-                GenerateGameObjectsFromCluster(cluster);
             }
             
             return modified;

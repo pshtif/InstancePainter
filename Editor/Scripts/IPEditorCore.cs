@@ -259,7 +259,7 @@ namespace BinaryEgo.InstancePainter.Editor
                         : Quaternion.identity) *
                     Quaternion.Euler(p_paintDefinition.rotationOffset);
 
-                rotation = rotation * Quaternion.Euler(
+                rotation *= Quaternion.Euler(
                     Random.Range(p_paintDefinition.minRotation.x, p_paintDefinition.maxRotation.x),
                     Random.Range(p_paintDefinition.minRotation.y, p_paintDefinition.maxRotation.y),
                     Random.Range(p_paintDefinition.minRotation.z, p_paintDefinition.maxRotation.z));
