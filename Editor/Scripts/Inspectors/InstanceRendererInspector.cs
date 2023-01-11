@@ -1,12 +1,13 @@
 /*
  *	Created by:  Peter @sHTiF Stefcek
  */
+#if UNITY_EDITOR
 
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-namespace BinaryEgo.InstancePainter.Editor
+namespace InstancePainter.Editor
 {
     [CustomEditor(typeof(InstanceRenderer))]
     public class InstanceRendererInspector : UnityEditor.Editor
@@ -93,7 +94,7 @@ namespace BinaryEgo.InstancePainter.Editor
         {
             var cluster = Renderer.InstanceClusters[p_index];
             GUILayout.Label(
-                (cluster is InstanceClusterAsset
+                (cluster is InstanceClusterAsset || cluster == null
                     ? "<color=#0088FF>[ASSET]</color>"
                     : "<color=#00FF88>[INSTANCE]</color>") + " Cluster: " +
                 (cluster == null ? "<color=#FF0000>NULL</color>" : cluster.GetClusterNameHTML()), Skin.GetStyle("cluster_title"),
@@ -114,48 +115,50 @@ namespace BinaryEgo.InstancePainter.Editor
             
             GUI.Label(new Rect(rect.x + rect.width - 220, rect.y + 4, 200, 16),  (cluster == null ? 0 : cluster.GetCount()).ToString(),
                 Skin.GetStyle("cluster_count"));
-            
-            if (cluster == null)
-                return false;
-            
-            if (cluster.IsEnabled())
+
+            if (cluster != null)
             {
-                if (GUI.Button(new Rect(rect.x + 20, rect.y + 4, 40, 18), IconManager.GetIcon("toggle_right"),
-                        Skin.GetStyle("removebutton")))
+                if (cluster.IsEnabled())
                 {
-                    cluster.SetEnabled(false);
-                    EditorUtility.SetDirty(cluster is InstanceCluster ? Renderer : cluster as InstanceClusterAsset);
-                    SceneView.RepaintAll();
+                    if (GUI.Button(new Rect(rect.x + 20, rect.y + 4, 40, 18), IconManager.GetIcon("toggle_right"),
+                            Skin.GetStyle("removebutton")))
+                    {
+                        cluster.SetEnabled(false);
+                        EditorUtility.SetDirty(cluster is InstanceCluster ? Renderer : cluster as InstanceClusterAsset);
+                        SceneView.RepaintAll();
+                        return false;
+                    }
+
+                    GUI.Label(
+                        new Rect(rect.x + rect.width - 14 + (Renderer.IsClusterMinimized(p_index) ? 0 : 2), rect.y + 2,
+                            16,
+                            16), Renderer.IsClusterMinimized(p_index) ? "+" : "-",
+                        IPEditorCore.Skin.GetStyle("minimizebutton"));
+
+                    if (GUI.Button(new Rect(rect.x + 60, rect.y + 2, rect.width - 40, 16), "",
+                            IPEditorCore.Skin.GetStyle("minimizebutton")))
+                    {
+                        Renderer.SetClusterMinimized(p_index, !Renderer.IsClusterMinimized(p_index));
+                    }
+                }
+                else
+                {
+                    GUI.color = new Color(.5f, .5f, .5f);
+
+                    if (GUI.Button(new Rect(rect.x + 20, rect.y + 4, 40, 18), IconManager.GetIcon("toggle_left"),
+                            Skin.GetStyle("removebutton")))
+                    {
+                        cluster.SetEnabled(true);
+                        EditorUtility.SetDirty(cluster is InstanceCluster ? Renderer : cluster as InstanceClusterAsset);
+                        SceneView.RepaintAll();
+                    }
+
+                    GUI.color = Color.white;
+                }
+
+                if (Renderer.IsClusterMinimized(p_index) || !cluster.IsEnabled())
                     return false;
-                }
-
-                GUI.Label(
-                    new Rect(rect.x + rect.width - 14 + (Renderer.IsClusterMinimized(p_index) ? 0 : 2), rect.y + 2, 16,
-                        16), Renderer.IsClusterMinimized(p_index) ? "+" : "-",
-                    IPEditorCore.Skin.GetStyle("minimizebutton"));
-                
-                if (GUI.Button(new Rect(rect.x + 60, rect.y + 2, rect.width - 40, 16), "", IPEditorCore.Skin.GetStyle("minimizebutton")))
-                {
-                    Renderer.SetClusterMinimized(p_index, !Renderer.IsClusterMinimized(p_index));
-                }
             }
-            else
-            {
-                GUI.color = new Color(.5f, .5f, .5f);
-                    
-                if (GUI.Button(new Rect(rect.x + 20, rect.y + 4, 40, 18), IconManager.GetIcon("toggle_left"),
-                        Skin.GetStyle("removebutton")))
-                {
-                    cluster.SetEnabled(true);
-                    EditorUtility.SetDirty(cluster is InstanceCluster ? Renderer : cluster as InstanceClusterAsset);
-                    SceneView.RepaintAll();
-                }
-                    
-                GUI.color = Color.white;
-            }
-
-            if (Renderer.IsClusterMinimized(p_index) || !cluster.IsEnabled())
-                return false;
 
             bool modified = false;
             if (cluster == null || cluster is InstanceClusterAsset)
@@ -272,6 +275,7 @@ namespace BinaryEgo.InstancePainter.Editor
                     asset = newAsset;
                     
                     asset?.Dispose();
+                    Renderer.SerializeNative();
                 }
             }
 
@@ -402,3 +406,4 @@ namespace BinaryEgo.InstancePainter.Editor
         }
     }
 }
+#endif
