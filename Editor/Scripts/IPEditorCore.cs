@@ -1,6 +1,7 @@
 /*
  *	Created by:  Peter @sHTiF Stefcek
  */
+#if UNITY_EDITOR
 
 using System;
 using System.Collections.Generic;
@@ -14,7 +15,7 @@ using Random = UnityEngine.Random;
 using UnityEditor.Experimental.SceneManagement;
 #endif
 
-namespace BinaryEgo.InstancePainter.Editor
+namespace InstancePainter.Editor
 {
     [InitializeOnLoad]
     public class IPEditorCore
@@ -296,3 +297,4 @@ namespace BinaryEgo.InstancePainter.Editor
         }
     }
 }
+#endif

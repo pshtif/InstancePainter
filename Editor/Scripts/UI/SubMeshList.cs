@@ -1,6 +1,7 @@
 /*
  *	Created by:  Peter @sHTiF Stefcek
  */
+#if UNITY_EDITOR
 
 using System;
 using System.Collections.Generic;
@@ -9,7 +10,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace BinaryEgo.InstancePainter.Editor
+namespace InstancePainter.Editor
 {
     public class SubMeshList : PopupWindowContent
     {
@@ -72,3 +73,4 @@ namespace BinaryEgo.InstancePainter.Editor
         }
     }
 }
+#endif

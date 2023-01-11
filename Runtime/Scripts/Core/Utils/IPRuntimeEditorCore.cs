@@ -4,7 +4,7 @@
 
 #if UNITY_EDITOR
 
-namespace BinaryEgo.InstancePainter
+namespace InstancePainter
 {
     public class IPRuntimeEditorCore
     {

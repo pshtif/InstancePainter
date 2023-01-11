@@ -9,7 +9,7 @@ using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace BinaryEgo.InstancePainter
+namespace InstancePainter
 {
     public class InstanceClusterRenderer
     {

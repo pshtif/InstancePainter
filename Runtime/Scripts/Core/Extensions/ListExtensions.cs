@@ -5,7 +5,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace BinaryEgo.InstancePainter
+namespace InstancePainter
 {
     public static class ListExtensions
     {

@@ -4,7 +4,7 @@ using Unity.Collections;
 using Unity.Collections.NotBurstCompatible;
 using UnityEngine;
 
-namespace BinaryEgo.InstancePainter
+namespace InstancePainter
 {
     [Serializable]
     public class InstanceCluster : ICluster

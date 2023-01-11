@@ -1,11 +1,12 @@
 /*
  *	Created by:  Peter @sHTiF Stefcek
  */
+#if UNITY_EDITOR
 
 using UnityEditor;
 using UnityEngine;
 
-namespace BinaryEgo.InstancePainter.Editor
+namespace InstancePainter.Editor
 {
     public class InstancePainterWindow : EditorWindow
     {
@@ -348,3 +349,4 @@ namespace BinaryEgo.InstancePainter.Editor
         
     }
 }
+#endif

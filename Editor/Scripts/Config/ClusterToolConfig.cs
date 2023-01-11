@@ -2,9 +2,10 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
+#if UNITY_EDITOR
 using System;
 
-namespace BinaryEgo.InstancePainter.Editor
+namespace InstancePainter.Editor
 {
     [Serializable]
     public class ClusterToolConfig
@@ -12,3 +13,4 @@ namespace BinaryEgo.InstancePainter.Editor
         
     }
 }
+#endif

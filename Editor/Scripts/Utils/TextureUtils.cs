@@ -1,11 +1,12 @@
 /*
  *	Created by:  Peter @sHTiF Stefcek
  */
+#if UNITY_EDITOR
 
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace BinaryEgo.InstancePainter.Editor
+namespace InstancePainter.Editor
 {
     public class TextureUtils
     {
@@ -38,3 +39,4 @@ namespace BinaryEgo.InstancePainter.Editor
         }
     }
 }
+#endif

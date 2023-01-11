@@ -1,12 +1,13 @@
 /*
  *	Created by:  Peter @sHTiF Stefcek
  */
+#if UNITY_EDITOR
 
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace BinaryEgo.InstancePainter.Editor
+namespace InstancePainter.Editor
 {
     public enum PaintToolState
     {
@@ -248,3 +249,4 @@ namespace BinaryEgo.InstancePainter.Editor
         }
     }
 }
+#endif

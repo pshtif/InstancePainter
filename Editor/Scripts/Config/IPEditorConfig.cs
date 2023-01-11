@@ -1,6 +1,7 @@
 /*
  *	Created by:  Peter @sHTiF Stefcek
  */
+#if UNITY_EDITOR
 
 using System;
 using System.Collections.Generic;
@@ -8,7 +9,7 @@ using UnityEditor;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-namespace BinaryEgo.InstancePainter.Editor
+namespace InstancePainter.Editor
 {
     [Serializable]
     public class IPEditorConfig : ScriptableObject
@@ -129,3 +130,4 @@ namespace BinaryEgo.InstancePainter.Editor
         }
     }
 }
+#endif

@@ -1,11 +1,12 @@
 ﻿/*
  *	Created by:  Peter @sHTiF Stefcek
  */
+#if UNITY_EDITOR
 
 using System;
 using UnityEngine;
 
-namespace BinaryEgo.InstancePainter.Editor
+namespace InstancePainter.Editor
 {
     [Serializable]
     public class PaintToolConfig
@@ -18,3 +19,4 @@ namespace BinaryEgo.InstancePainter.Editor
         public float interpolatePosition = 0;
     }
 }
+#endif

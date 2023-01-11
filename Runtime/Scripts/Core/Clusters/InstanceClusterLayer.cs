@@ -4,7 +4,7 @@
 
 using System;
 
-namespace BinaryEgo.InstancePainter
+namespace InstancePainter
 {
     public struct InstanceClusterLayer
     {

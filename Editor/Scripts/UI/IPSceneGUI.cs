@@ -1,12 +1,12 @@
 /*
  *	Created by:  Peter @sHTiF Stefcek
  */
+#if UNITY_EDITOR
 
-using BinaryEgo.InstancePainter;
 using UnityEditor;
 using UnityEngine;
 
-namespace BinaryEgo.InstancePainter.Editor
+namespace InstancePainter.Editor
 {
     public class IPSceneGUI
     {
@@ -121,3 +121,4 @@ namespace BinaryEgo.InstancePainter.Editor
         }
     }
 }
+#endif

@@ -1,10 +1,11 @@
 /*
  *	Created by:  Peter @sHTiF Stefcek
  */
+#if UNITY_EDITOR
 
 using UnityEditor;
 
-namespace BinaryEgo.InstancePainter.Editor
+namespace InstancePainter.Editor
 {
     public class IPEditorMenu
     {
@@ -29,3 +30,4 @@ namespace BinaryEgo.InstancePainter.Editor
         }
     }
 }
+#endif

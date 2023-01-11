@@ -1,10 +1,11 @@
 ﻿/*
  *	Created by:  Peter @sHTiF Stefcek
  */
+#if UNITY_EDITOR
 
 using System;
 
-namespace BinaryEgo.InstancePainter.Editor
+namespace InstancePainter.Editor
 {
     [Serializable]
     public class RectToolConfig
@@ -13,3 +14,4 @@ namespace BinaryEgo.InstancePainter.Editor
         public int density = 1;
     }
 }
+#endif

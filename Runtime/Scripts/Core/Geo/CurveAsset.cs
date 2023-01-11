@@ -4,7 +4,7 @@
 
 using UnityEngine;
 
-namespace BinaryEgo.InstancePainter
+namespace InstancePainter
 {
     [CreateAssetMenu(fileName = "Curve", menuName = "Curve/CurveAsset")]
     public class CurveAsset : ScriptableObject

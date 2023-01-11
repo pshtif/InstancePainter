@@ -1,12 +1,13 @@
 /*
  *	Created by:  Peter @sHTiF Stefcek
  */
+#if UNITY_EDITOR
 
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-namespace BinaryEgo.InstancePainter.Editor
+namespace InstancePainter.Editor
 {
     public class RendererWindow : EditorWindow
     {
@@ -101,3 +102,4 @@ namespace BinaryEgo.InstancePainter.Editor
         }
     }
 }
+#endif

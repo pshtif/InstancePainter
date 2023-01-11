@@ -1,11 +1,12 @@
 ﻿/*
  *	Created by:  Peter @sHTiF Stefcek
  */
+#if UNITY_EDITOR
 
 using System;
 using UnityEngine;
 
-namespace BinaryEgo.InstancePainter.Editor
+namespace InstancePainter.Editor
 {
     [Serializable]
     public class CurveToolConfig
@@ -31,3 +32,4 @@ namespace BinaryEgo.InstancePainter.Editor
         public bool interlaceVCurveOffset = false;
     }
 }
+#endif

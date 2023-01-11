@@ -4,7 +4,7 @@
 
 using UnityEngine;
 
-namespace BinaryEgo.InstancePainter
+namespace InstancePainter
 {
     public static class Vector3Utils
     {

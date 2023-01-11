@@ -1,11 +1,12 @@
 /*
  *	Created by:  Peter @sHTiF Stefcek
  */
+#if UNITY_EDITOR
 
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace BinaryEgo.InstancePainter.Editor
+namespace InstancePainter.Editor
 {
     public class MeshUtils
     {
@@ -77,3 +78,4 @@ namespace BinaryEgo.InstancePainter.Editor
         }
     }
 }
+#endif
