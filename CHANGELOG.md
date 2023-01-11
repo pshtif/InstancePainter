@@ -8,20 +8,35 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.9.0
+
+#### Changed
+
+- changed now merget editor/runtime to single assembly definition
+- changed namespaces to match other tooling
+
+#### Fixed
+
+- fixed null clusters are now valid Asset clusters and get serialized as such
+- fixed on cluster asset change now correctly force native serialization
+
 ### Release 0.8.0
 
 #### Added
 
-- Added curve tool [EXPERIMENTAL]
+- added curve tool [EXPERIMENTAL]
+- added enable experimental in settings
+- added modifiers volume RECT/SPHERE 
 
 #### Changed
 
-- Changed multiple UI changes and updates
+- changed multiple UI changes and updates
 
 #### Fixed
 
-- Fixed correct faceculling for depth and shadow pass
-- Fixed deserialization issues when disabling/enabling whole gameobject in editor
+- fixed correct faceculling for depth and shadow pass
+- fixed deserialization issues when disabling/enabling whole gameobject in editor
+- fixed gpu invalidation on data change before modifiers
 
 ### Release 0.7.0 - 18.10.2022 RELEASE CANDIDATE
 
