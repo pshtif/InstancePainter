@@ -2,7 +2,7 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
-namespace BinaryEgo.InstancePainter
+namespace InstancePainter
 {
     public enum CurveDistributionType
     {

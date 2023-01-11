@@ -1,13 +1,12 @@
 /*
  *	Created by:  Peter @sHTiF Stefcek
  */
+#if UNITY_EDITOR
 
-using System;
 using System.Linq;
 using System.Reflection;
-using UnityEditor;
 
-namespace BinaryEgo.InstancePainter.Editor
+namespace InstancePainter.Editor
 {
     public class AnnotationUtilityUtil
     {
@@ -33,3 +32,4 @@ namespace BinaryEgo.InstancePainter.Editor
         }
     }
 }
+#endif

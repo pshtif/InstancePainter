@@ -4,7 +4,7 @@
 
 using UnityEngine;
 
-namespace BinaryEgo.InstancePainter
+namespace InstancePainter
 {
     public class IPScaleModifier : InstanceModifierBase
     {

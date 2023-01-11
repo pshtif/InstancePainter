@@ -1,6 +1,7 @@
 /*
  *	Created by:  Peter @sHTiF Stefcek
  */
+#if UNITY_EDITOR
 
 using System;
 using System.Collections.Generic;
@@ -14,7 +15,7 @@ using Random = UnityEngine.Random;
 using UnityEditor.Experimental.SceneManagement;
 #endif
 
-namespace BinaryEgo.InstancePainter.Editor
+namespace InstancePainter.Editor
 {
     [InitializeOnLoad]
     public class IPEditorCore
@@ -259,7 +260,7 @@ namespace BinaryEgo.InstancePainter.Editor
                         : Quaternion.identity) *
                     Quaternion.Euler(p_paintDefinition.rotationOffset);
 
-                rotation = rotation * Quaternion.Euler(
+                rotation *= Quaternion.Euler(
                     Random.Range(p_paintDefinition.minRotation.x, p_paintDefinition.maxRotation.x),
                     Random.Range(p_paintDefinition.minRotation.y, p_paintDefinition.maxRotation.y),
                     Random.Range(p_paintDefinition.minRotation.z, p_paintDefinition.maxRotation.z));
@@ -296,3 +297,4 @@ namespace BinaryEgo.InstancePainter.Editor
         }
     }
 }
+#endif

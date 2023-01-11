@@ -11,7 +11,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 #endif
 
-namespace BinaryEgo.InstancePainter
+namespace InstancePainter
 {
     [ExecuteInEditMode]
     public class InstanceRenderer : MonoBehaviour, ISerializationCallbackReceiver
@@ -206,12 +206,12 @@ namespace BinaryEgo.InstancePainter
             SerializeNative();
         }
         
-        private void SerializeNative()
+        internal void SerializeNative()
         {
             _serializedInstanceClusters = _instanceClusters.FindAll(id => id is InstanceCluster).Select(id => (InstanceCluster)id)
                 .ToList();
             
-            _serializedInstanceClusterAssets = _instanceClusters.FindAll(id => id is InstanceClusterAsset)
+            _serializedInstanceClusterAssets = _instanceClusters.FindAll(id => id is InstanceClusterAsset || id == null)
                 .Select(id => (InstanceClusterAsset)id).ToList();
         }
 
@@ -221,6 +221,11 @@ namespace BinaryEgo.InstancePainter
         }
 
         public void OnAfterDeserialize()
+        {
+            DeserializeClusters();
+        }
+
+        private void DeserializeClusters()
         {
             _instanceClusters.Clear();
             _instanceClusters.AddRange(_serializedInstanceClusters);
@@ -234,6 +239,7 @@ namespace BinaryEgo.InstancePainter
             {
                 SceneView.duringSceneGui += OnSceneGUI;
             }
+            DeserializeClusters();
 #endif
         }
 
@@ -254,7 +260,7 @@ namespace BinaryEgo.InstancePainter
                 SceneView.duringSceneGui -= OnSceneGUI;
                 return;
             }
-
+            
             if (Application.isPlaying || !enabled)
                 return;
 

@@ -6,11 +6,10 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 #if UNITY_EDITOR
-using BinaryEgo.InstancePainter;
 using UnityEditor;
 #endif
 
-namespace BinaryEgo.InstancePainter
+namespace InstancePainter
 {
     [Serializable]
     public class Curve

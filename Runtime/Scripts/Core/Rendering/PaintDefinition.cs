@@ -10,7 +10,7 @@ using UnityEditor;
 using UnityEngine.Serialization;
 
 
-namespace BinaryEgo.InstancePainter
+namespace InstancePainter
 {
     public enum ColorDistributionType
     {

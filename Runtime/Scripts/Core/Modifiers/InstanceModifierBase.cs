@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace BinaryEgo.InstancePainter
+namespace InstancePainter
 {
     // Would be better as Interface but we need it serializable to drag into unity objects
     [Serializable]

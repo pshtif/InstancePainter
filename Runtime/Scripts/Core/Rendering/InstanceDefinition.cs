@@ -9,7 +9,7 @@ using UnityEngine;
 using UnityEditor;
 
 
-namespace BinaryEgo.InstancePainter
+namespace InstancePainter
 {
     [Serializable]
     public class InstanceDefinition : ScriptableObject

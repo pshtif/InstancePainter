@@ -1,11 +1,12 @@
 /*
  *	Created by:  Peter @sHTiF Stefcek
  */
+#if UNITY_EDITOR
 
 using UnityEditor.SceneManagement;
 using UnityEngine.Profiling;
 
-namespace BinaryEgo.InstancePainter.Editor
+namespace InstancePainter.Editor
 {
     using System.Linq;
     using System.Reflection;
@@ -326,3 +327,4 @@ namespace BinaryEgo.InstancePainter.Editor
         }
     }
 }
+#endif

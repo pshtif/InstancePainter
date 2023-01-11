@@ -1,13 +1,14 @@
 /*
  *	Created by:  Peter @sHTiF Stefcek
  */
+#if UNITY_EDITOR
 
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-namespace BinaryEgo.InstancePainter.Editor
+namespace InstancePainter.Editor
 {
     public class EraseTool : ToolBase
     {
@@ -144,3 +145,4 @@ namespace BinaryEgo.InstancePainter.Editor
         }
     }
 }
+#endif

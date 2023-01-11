@@ -1,11 +1,12 @@
 ﻿/*
  *	Created by:  Peter @sHTiF Stefcek
  */
+#if UNITY_EDITOR
 
 using UnityEditor;
 using UnityEngine;
 
-namespace BinaryEgo.InstancePainter.Editor
+namespace InstancePainter.Editor
 {
     [CustomEditor(typeof(InstanceDefinition))]
     public class InstanceDefinitionAssetInspector : UnityEditor.Editor
@@ -21,3 +22,4 @@ namespace BinaryEgo.InstancePainter.Editor
         }
     }
 }
+#endif

@@ -1,14 +1,15 @@
 /*
  *	Created by:  Peter @sHTiF Stefcek
  */
+#if UNITY_EDITOR
 
 using UnityEditor;
 using UnityEngine;
 
-namespace BinaryEgo.InstancePainter.Editor
+namespace InstancePainter.Editor
 {
     [CustomEditor(typeof(CurveAsset))]
-    public class CurveEditor : UnityEditor.Editor
+    public class CurveInspector : UnityEditor.Editor
     {
         public override void OnInspectorGUI()
         {
@@ -60,3 +61,4 @@ namespace BinaryEgo.InstancePainter.Editor
         }
     }
 }
+#endif

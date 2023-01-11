@@ -1,11 +1,12 @@
 ﻿/*
  *	Created by:  Peter @sHTiF Stefcek
  */
+#if UNITY_EDITOR
 
 using System;
 using UnityEngine;
 
-namespace BinaryEgo.InstancePainter.Editor
+namespace InstancePainter.Editor
 {
     [Serializable]
     public class EraseToolConfig
@@ -14,3 +15,4 @@ namespace BinaryEgo.InstancePainter.Editor
         public float brushSize = 1;
     }
 }
+#endif
