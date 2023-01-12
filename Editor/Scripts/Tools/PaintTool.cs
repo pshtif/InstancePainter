@@ -66,7 +66,7 @@ namespace InstancePainter.Editor
                         _paintStartHit = p_hit;
                         _paintStartMousePosition = Event.current.mousePosition;
                         _paintedInstances.Clear();
-                        Paint(p_hit);
+                        Paint(p_hit, false);
                     }
                     else
                     {
@@ -83,7 +83,7 @@ namespace InstancePainter.Editor
                     }
                     else
                     {
-                        Paint(p_hit);
+                        Paint(p_hit, true);
                     }
                 }
             }
@@ -127,14 +127,14 @@ namespace InstancePainter.Editor
             clusters.ForEach(data => data.UpdateSerializedData());
         }
         
-        void Paint(RaycastHit p_hit)
+        void Paint(RaycastHit p_hit, bool p_skipStart = true)
         {
             if (Vector3.Distance(_lastPaintPosition, p_hit.point) <= 0.1f)
                 return;
             
             var paintVector = (p_hit.point - _lastPaintPosition).normalized;
             _lastPaintPosition = p_hit.point;
-            if (_paintStart)
+            if (_paintStart && p_skipStart && Core.Config.PaintToolConfig.useDirection)
             {
                 _paintStart = false;
                 return;
@@ -244,6 +244,8 @@ namespace InstancePainter.Editor
             Core.Config.PaintToolConfig.density = EditorGUILayout.IntField("Density", Core.Config.PaintToolConfig.density);
             
             Core.Config.PaintToolConfig.minimumDistance = EditorGUILayout.FloatField("Minimum Distance", Core.Config.PaintToolConfig.minimumDistance);
+            
+            Core.Config.PaintToolConfig.useDirection = EditorGUILayout.Toggle("Use Direction", Core.Config.PaintToolConfig.useDirection);
 
             GUILayout.Space(4);
         }

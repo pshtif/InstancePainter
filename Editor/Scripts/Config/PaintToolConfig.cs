@@ -17,6 +17,7 @@ namespace InstancePainter.Editor
         public int density = 1;
         public float minimumDistance;
         public float interpolatePosition = 0;
+        public bool useDirection = false;
     }
 }
 #endif
