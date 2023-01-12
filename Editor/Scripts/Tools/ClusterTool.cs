@@ -97,7 +97,7 @@ namespace InstancePainter.Editor
         {
             _modifyInstances.Clear();
             
-            Core.Renderer.InstanceClusters.ForEach(c =>
+            Core.Renderer.ForEachCluster(c =>
             {
                 if (c.IsEnabled())
                 {

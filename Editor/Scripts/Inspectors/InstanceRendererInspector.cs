@@ -62,15 +62,18 @@ namespace InstancePainter.Editor
 
         void DrawClusters()
         {
-            if (!GUIUtils.DrawMinimizableSectionTitleWCount("Clusters: ", Renderer.InstanceClusters.Count, ref Renderer.clusterSectionMinimized))
+            if (!GUIUtils.DrawMinimizableSectionTitleWCount("Clusters: ", Renderer.GetClusterCount(), ref Renderer.clusterSectionMinimized))
                 return;
-
-            for (int i = 0; i < Renderer.InstanceClusters.Count; i++)
+            
+            Renderer.ForEachCluster(cluster =>
             {
-                if (DrawICluster(i))
-                    break;
-            }
-
+                if (DrawICluster(cluster))
+                {
+                    return true;
+                }
+                return false;
+            });
+            
             GUI.color = new Color(0.9f, .5f, 0);
             GUILayout.Space(8);
             
@@ -90,14 +93,13 @@ namespace InstancePainter.Editor
             GUI.color = Color.white;
         }
 
-        bool DrawICluster(int p_index)
+        bool DrawICluster(ICluster p_cluster)
         {
-            var cluster = Renderer.InstanceClusters[p_index];
             GUILayout.Label(
-                (cluster is InstanceClusterAsset || cluster == null
+                (p_cluster is InstanceClusterAsset || p_cluster == null
                     ? "<color=#0088FF>[ASSET]</color>"
                     : "<color=#00FF88>[INSTANCE]</color>") + " Cluster: " +
-                (cluster == null ? "<color=#FF0000>NULL</color>" : cluster.GetClusterNameHTML()), Skin.GetStyle("cluster_title"),
+                (p_cluster == null ? "<color=#FF0000>NULL</color>" : p_cluster.GetClusterNameHTML()), Skin.GetStyle("cluster_title"),
                 GUILayout.Height(24));
 
             var rect = GUILayoutUtility.GetLastRect();
@@ -107,38 +109,38 @@ namespace InstancePainter.Editor
                 if (EditorUtility.DisplayDialog("Cluster Deletion", "Are you sure you want to delete this cluster?", "Yes",
                         "No"))
                 {
-                    Renderer.RemoveClusterAt(p_index);
+                    Renderer.RemoveCluster(p_cluster);
                     SceneView.RepaintAll();
                     return true;
                 }
             }
             
-            GUI.Label(new Rect(rect.x + rect.width - 220, rect.y + 4, 200, 16),  (cluster == null ? 0 : cluster.GetCount()).ToString(),
+            GUI.Label(new Rect(rect.x + rect.width - 220, rect.y + 4, 200, 16),  (p_cluster == null ? 0 : p_cluster.GetCount()).ToString(),
                 Skin.GetStyle("cluster_count"));
 
-            if (cluster != null)
+            if (p_cluster != null)
             {
-                if (cluster.IsEnabled())
+                if (p_cluster.IsEnabled())
                 {
                     if (GUI.Button(new Rect(rect.x + 20, rect.y + 4, 40, 18), IconManager.GetIcon("toggle_right"),
                             Skin.GetStyle("removebutton")))
                     {
-                        cluster.SetEnabled(false);
-                        EditorUtility.SetDirty(cluster is InstanceCluster ? Renderer : cluster as InstanceClusterAsset);
+                        p_cluster.SetEnabled(false);
+                        EditorUtility.SetDirty(p_cluster is InstanceCluster ? Renderer : p_cluster as InstanceClusterAsset);
                         SceneView.RepaintAll();
                         return false;
                     }
 
                     GUI.Label(
-                        new Rect(rect.x + rect.width - 14 + (Renderer.IsClusterMinimized(p_index) ? 0 : 2), rect.y + 2,
+                        new Rect(rect.x + rect.width - 14 + (p_cluster != null && p_cluster.minimized ? 0 : 2), rect.y + 2,
                             16,
-                            16), Renderer.IsClusterMinimized(p_index) ? "+" : "-",
+                            16), p_cluster != null && p_cluster.minimized ? "+" : "-",
                         IPEditorCore.Skin.GetStyle("minimizebutton"));
 
                     if (GUI.Button(new Rect(rect.x + 60, rect.y + 2, rect.width - 40, 16), "",
                             IPEditorCore.Skin.GetStyle("minimizebutton")))
                     {
-                        Renderer.SetClusterMinimized(p_index, !Renderer.IsClusterMinimized(p_index));
+                        if (p_cluster != null) p_cluster.minimized = !p_cluster.minimized;
                     }
                 }
                 else
@@ -148,37 +150,41 @@ namespace InstancePainter.Editor
                     if (GUI.Button(new Rect(rect.x + 20, rect.y + 4, 40, 18), IconManager.GetIcon("toggle_left"),
                             Skin.GetStyle("removebutton")))
                     {
-                        cluster.SetEnabled(true);
-                        EditorUtility.SetDirty(cluster is InstanceCluster ? Renderer : cluster as InstanceClusterAsset);
+                        p_cluster.SetEnabled(true);
+                        EditorUtility.SetDirty(p_cluster is InstanceCluster ? Renderer : p_cluster as InstanceClusterAsset);
                         SceneView.RepaintAll();
                     }
 
                     GUI.color = Color.white;
                 }
 
-                if (Renderer.IsClusterMinimized(p_index) || !cluster.IsEnabled())
+                if (p_cluster != null && (p_cluster.minimized || !p_cluster.IsEnabled()))
                     return false;
             }
 
             bool modified = false;
-            if (cluster == null || cluster is InstanceClusterAsset)
-                modified = DrawInstanceClusterAsset(p_index);
-            
-            if (cluster is InstanceCluster) 
-                modified = DrawInstanceCluster(p_index);
+            if (p_cluster == null || p_cluster is InstanceClusterAsset)
+            {
+                modified = DrawInstanceClusterAsset(p_cluster as InstanceClusterAsset);
+            }
+
+            if (p_cluster is InstanceCluster)
+            {
+                modified = DrawInstanceCluster(p_cluster as InstanceCluster);
+            }
 
             GUILayout.Space(2);
 
             if (GUILayout.Button("Generate Game Objects", GUILayout.Height(24)))
             {
-                GenerateGameObjectsFromCluster(cluster);
+                GenerateGameObjectsFromCluster(p_cluster);
             }
             
             GUILayout.Space(2);
             
-            if (cluster != null)
+            if (p_cluster != null)
             {
-                if (IPRuntimeEditorCore.explicitCluster == cluster.GetCluster())
+                if (IPRuntimeEditorCore.explicitCluster == p_cluster.GetCluster())
                 {
                     GUI.color = new Color(0.9f, 0.5f, 0);
                     
@@ -194,7 +200,7 @@ namespace InstancePainter.Editor
                 {
                     if (GUILayout.Button("Set as Explicit Cluster", GUILayout.Height(24)))
                     {
-                        IPRuntimeEditorCore.explicitCluster = cluster.GetCluster();
+                        IPRuntimeEditorCore.explicitCluster = p_cluster.GetCluster();
                         SceneView.RepaintAll();
                     }
                 }
@@ -203,28 +209,26 @@ namespace InstancePainter.Editor
             return modified;
         }
 
-        bool DrawInstanceCluster(int p_index)
+        bool DrawInstanceCluster(InstanceCluster p_cluster)
         {
-            var cluster = Renderer.InstanceClusters[p_index] as InstanceCluster;
-            
-            GUILayout.Label("Count: "+cluster.GetCount());
+            GUILayout.Label("Count: "+p_cluster.GetCount());
 
             EditorGUI.BeginChangeCheck();
 
-            cluster.mesh = (Mesh)EditorGUILayout.ObjectField(new GUIContent("Mesh"), cluster.mesh, typeof(Mesh), false);
+            p_cluster.mesh = (Mesh)EditorGUILayout.ObjectField(new GUIContent("Mesh"), p_cluster.mesh, typeof(Mesh), false);
             
-            cluster.material = (Material)EditorGUILayout.ObjectField(new GUIContent("Material"), cluster.material, typeof(Material), false);
+            p_cluster.material = (Material)EditorGUILayout.ObjectField(new GUIContent("Material"), p_cluster.material, typeof(Material), false);
             
-            cluster.fallbackMaterial = (Material)EditorGUILayout.ObjectField(new GUIContent("FallbackMaterial"), cluster.fallbackMaterial, typeof(Material), false);
+            p_cluster.fallbackMaterial = (Material)EditorGUILayout.ObjectField(new GUIContent("FallbackMaterial"), p_cluster.fallbackMaterial, typeof(Material), false);
 
-            cluster.useCulling = EditorGUILayout.Toggle("Use Culling", cluster.useCulling);
+            p_cluster.useCulling = EditorGUILayout.Toggle("Use Culling", p_cluster.useCulling);
 
-            if (cluster.useCulling)
+            if (p_cluster.useCulling)
             {
-                cluster.cullingShader = (ComputeShader)EditorGUILayout.ObjectField(new GUIContent("CullingShader"),
-                    cluster.cullingShader, typeof(ComputeShader), false);
+                p_cluster.cullingShader = (ComputeShader)EditorGUILayout.ObjectField(new GUIContent("CullingShader"),
+                    p_cluster.cullingShader, typeof(ComputeShader), false);
 
-                cluster.cullingDistance = EditorGUILayout.FloatField("Culling Distance", cluster.cullingDistance);
+                p_cluster.cullingDistance = EditorGUILayout.FloatField("Culling Distance", p_cluster.cullingDistance);
             }
 
             if (EditorGUI.EndChangeCheck())
@@ -235,64 +239,61 @@ namespace InstancePainter.Editor
 
             if (GUILayout.Button("Save to Asset", GUILayout.Height(24)))
             {
-                if (cluster.material == null || cluster.mesh == null)
+                if (p_cluster.material == null || p_cluster.mesh == null)
                 {
                     EditorUtility.DisplayDialog("Cannot create asset",
                         "Mesh and material instance cluster cannot be null.", "Ok");
-                } else if (!AssetDatabase.Contains(cluster.material) || (cluster.fallbackMaterial != null && !AssetDatabase.Contains(cluster.material)))
+                } else if (!AssetDatabase.Contains(p_cluster.material) || (p_cluster.fallbackMaterial != null && !AssetDatabase.Contains(p_cluster.material)))
                 {
                     EditorUtility.DisplayDialog("Cannot create asset",
                         "Materials in this instance cluster needs to be assets.", "Ok");
                 }
                 else
                 {
-                    var asset = InstanceClusterAsset.CreateAssetWithPanel(cluster);
-                    Renderer.InstanceClusters.RemoveAt(p_index);
+                    var asset = InstanceClusterAsset.CreateAssetWithPanel(p_cluster);
+                    Renderer.RemoveCluster(p_cluster);
                     Renderer.AddCluster(asset);
                 }
-
+                
                 return true;
             }
 
             return false;
         }
 
-        bool DrawInstanceClusterAsset(int p_index)
+        bool DrawInstanceClusterAsset(InstanceClusterAsset p_clusterAsset)
         {
-            var asset = Renderer.InstanceClusters[p_index] as InstanceClusterAsset;
-            
-            var newAsset = (InstanceClusterAsset)EditorGUILayout.ObjectField(new GUIContent("Cluster Asset"), asset, typeof(InstanceClusterAsset), false);
+            var newClusterAsset = (InstanceClusterAsset)EditorGUILayout.ObjectField(new GUIContent("Cluster Asset"), p_clusterAsset, typeof(InstanceClusterAsset), false);
 
-            if (newAsset != asset)
+            if (newClusterAsset != p_clusterAsset)
             {
-                if (Renderer.InstanceClusters.Contains(newAsset))
+                if (Renderer.HasCluster(newClusterAsset))
                 {
                     EditorUtility.DisplayDialog("Cluster Duplicity", "You cannot render the same cluster twice.", "Ok");
                 }
                 else
                 {
-                    Renderer.InstanceClusters[p_index] = newAsset;
-                    asset = newAsset;
-                    
-                    asset?.Dispose();
-                    Renderer.SerializeNative();
+                    Renderer.RemoveCluster(p_clusterAsset);
+                    Renderer.AddCluster(newClusterAsset);
+                    p_clusterAsset?.Dispose();
+                    return true;
                 }
             }
 
-            if (asset == null)
-                return true;
+            if (newClusterAsset == null)
+                return false;
             
             EditorGUI.BeginChangeCheck();
 
-            asset.cluster.mesh = (Mesh)EditorGUILayout.ObjectField(new GUIContent("Mesh"), asset.cluster.mesh, typeof(Mesh), false);
+            newClusterAsset.cluster.mesh = (Mesh)EditorGUILayout.ObjectField(new GUIContent("Mesh"), newClusterAsset.cluster.mesh, typeof(Mesh), false);
             
-            asset.cluster.material = (Material)EditorGUILayout.ObjectField(new GUIContent("Material"), asset.cluster.material, typeof(Material), false);
+            newClusterAsset.cluster.material = (Material)EditorGUILayout.ObjectField(new GUIContent("Material"), newClusterAsset.cluster.material, typeof(Material), false);
             
-            asset.cluster.fallbackMaterial = (Material)EditorGUILayout.ObjectField(new GUIContent("FallbackMaterial"), asset.cluster.fallbackMaterial, typeof(Material), false);
+            newClusterAsset.cluster.fallbackMaterial = (Material)EditorGUILayout.ObjectField(new GUIContent("FallbackMaterial"), newClusterAsset.cluster.fallbackMaterial, typeof(Material), false);
 
             if (EditorGUI.EndChangeCheck())
             {
-                EditorUtility.SetDirty(asset);
+                EditorUtility.SetDirty(newClusterAsset);
                 SceneView.RepaintAll();
             }
 

@@ -91,7 +91,7 @@ namespace InstancePainter.Editor
         {
             StageUtility.GetCurrentStageHandle().FindComponentsOfType<InstanceRenderer>().ForEach(r =>
             {
-                r.InstanceClusters.ForEach(cluster => cluster?.UndoRedoPerformed());
+                r.ForEachCluster(cluster => cluster?.UndoRedoPerformed());
             });
             
             SceneView.RepaintAll();
@@ -123,7 +123,7 @@ namespace InstancePainter.Editor
         {
             var cluster = IPRuntimeEditorCore.explicitCluster != null
                 ? IPRuntimeEditorCore.explicitCluster
-                : Renderer.InstanceClusters.Find(id => id.IsMesh(p_mesh));
+                : Renderer.FindCluster(id => id.IsMesh(p_mesh));
 
             if (cluster == null)
             {
@@ -215,28 +215,31 @@ namespace InstancePainter.Editor
             
             if (p_paintDefinition.minimumDistance > 0 || p_paintDefinition.minimumDistance > 0)
             {
-                foreach (var cluster in Renderer.InstanceClusters)
-                {
-                    if (cluster == null)
-                        continue;
-
-                    bool sameMeshCluster = meshes.Any(m => cluster.IsMesh(m));
-                       
-                    if (!sameMeshCluster && p_paintDefinition.minimumDistance == 0)
-                       continue;
-
-                    for (int i = 0; i < cluster.GetCount(); i++)
+                if (Renderer.ClusterExists(cluster =>
                     {
-                       var matrix = cluster.GetInstanceMatrix(i);
-                       var distance = Vector3.Distance(p_position, matrix.GetColumn(3));
-                       if ((sameMeshCluster && distance < p_paintDefinition.minimumDistance) || distance < p_paintDefinition.minimumDistance)
-                       {
-                           return paintedDatas.ToArray();
-                       }
-                    }
-               }
+                        if (cluster != null)
+                        {
+                            bool sameMeshCluster = meshes.Any(m => cluster.IsMesh(m));
+
+                            if (sameMeshCluster || p_paintDefinition.minimumDistance != 0)
+                            {
+                                for (int i = 0; i < cluster.GetCount(); i++)
+                                {
+                                    var matrix = cluster.GetInstanceMatrix(i);
+                                    var distance = Vector3.Distance(p_position, matrix.GetColumn(3));
+                                    if ((sameMeshCluster && distance < p_paintDefinition.minimumDistance) ||
+                                        distance < p_paintDefinition.minimumDistance)
+                                    {
+                                        return true;
+                                    }
+                                }
+                            }
+                        }
+
+                        return false;
+                    })) return paintedDatas.ToArray();
             }
-            
+
             foreach (var filter in filters)
             {
                 var position = p_position + p_paintDefinition.positionOffset + filter.transform.position;
@@ -292,7 +295,7 @@ namespace InstancePainter.Editor
                     paintedDatas.Add(data);
                 }
             }
-
+            
             return paintedDatas.ToArray();
         }
     }

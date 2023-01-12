@@ -107,16 +107,16 @@ namespace InstancePainter.Editor
         {
             _modifyInstances.Clear();
             
-            Core.Renderer.InstanceClusters.ForEach(c =>
+            Core.Renderer.ForEachCluster(cluster=>
             {
-                if (c.IsEnabled())
+                if (cluster.IsEnabled())
                 {
-                    for (int i = 0; i < c.GetCount(); i++)
+                    for (int i = 0; i < cluster.GetCount(); i++)
                     {
-                        var matrix = c.GetInstanceMatrix(i);
+                        var matrix = cluster.GetInstanceMatrix(i);
                         if (Vector3.Distance(p_hit.point, matrix.GetColumn(3)) < Core.Config.ModifyToolConfig.brushSize)
                         {
-                            var instance = new PaintedInstance(c, matrix, c.GetInstanceColor(i), i, null);
+                            var instance = new PaintedInstance(cluster, matrix, cluster.GetInstanceColor(i), i, null);
                             _modifyInstances.Add(instance);
                         }
                     }
@@ -127,24 +127,23 @@ namespace InstancePainter.Editor
         void ModifyColor(RaycastHit p_hit)
         {
             List<ICluster> invalidateDatas = new List<ICluster>();
-            
-            var datas = Core.Renderer.InstanceClusters;
-            foreach (ICluster data in datas)
+
+            Core.Renderer.ForEachCluster(cluster =>
             {
-                for (int i = 0; i<data.GetCount(); i++)
+                for (int i = 0; i < cluster.GetCount(); i++)
                 {
-                    var position = data.GetInstanceMatrix(i).GetColumn(3);
+                    var position = cluster.GetInstanceMatrix(i).GetColumn(3);
                     var distance = Vector3.Distance(position, p_hit.point);
                     if (distance < Core.Config.PaintToolConfig.brushSize)
                     {
-                        data.SetInstanceColor(i,
-                            Vector4.Lerp(data.GetInstanceColor(i), Core.Config.ModifyToolConfig.color,
+                        cluster.SetInstanceColor(i,
+                            Vector4.Lerp(cluster.GetInstanceColor(i), Core.Config.ModifyToolConfig.color,
                                 (1 - distance / Core.Config.ModifyToolConfig.brushSize) *
                                 Core.Config.ModifyToolConfig.falloff));
-                        invalidateDatas.AddIfUnique(data);
+                        invalidateDatas.AddIfUnique(cluster);
                     }
                 }
-            }
+            });
             
             invalidateDatas.ForEach(d => d.UpdateSerializedData());
         }

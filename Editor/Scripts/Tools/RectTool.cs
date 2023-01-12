@@ -120,24 +120,23 @@ namespace InstancePainter.Editor
             
             List<ICluster> invalidateDatas = new List<ICluster>();
 
-            var datas = Core.Renderer.InstanceClusters;
-            foreach (ICluster data in datas)
+            Core.Renderer.ForEachCluster(cluster =>
             {
-                for (int i = 0; i<data.GetCount(); i++)
+                for (int i = 0; i < cluster.GetCount(); i++)
                 {
-                    var position = data.GetInstanceMatrix(i).GetColumn(3);
-                    Vector2 position2d = new Vector2(position.x, position.z); 
+                    var position = cluster.GetInstanceMatrix(i).GetColumn(3);
+                    Vector2 position2d = new Vector2(position.x, position.z);
                     if (rect.Contains(position2d))
                     {
-                        data.RemoveInstance(i);
+                        cluster.RemoveInstance(i);
 
-                        if (data != null && !invalidateDatas.Contains(data))
-                            invalidateDatas.Add(data);
-                        
+                        if (cluster != null && !invalidateDatas.Contains(cluster))
+                            invalidateDatas.Add(cluster);
+
                         i--;
                     }
                 }
-            }
+            });
 
             invalidateDatas.ForEach(d => d.UpdateSerializedData());
         }

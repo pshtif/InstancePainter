@@ -55,28 +55,29 @@ namespace InstancePainter.Editor
             List<ICluster> invalidateDatas = new List<ICluster>();
 
             var sizeSq = Core.Config.EraseToolConfig.brushSize * Core.Config.EraseToolConfig.brushSize;
-            var clusters = Core.Renderer.InstanceClusters;
-            foreach (ICluster cluster in clusters)
+            
+            Core.Renderer.ForEachCluster(cluster =>
             {
-                if (cluster.GetCount() == 0 || (!_validEraseMeshes.Any(m=>cluster.IsMesh(m)) && Core.Config.eraseActiveDefinition))
-                    continue;
-
-                var modified = false;
-                for (int i = cluster.GetCount() - 1; i>=0; i--)
+                if (cluster.GetCount() != 0 &&
+                    (_validEraseMeshes.Any(m => cluster.IsMesh(m)) || !Core.Config.eraseActiveDefinition))
                 {
-                    var position = cluster.GetInstanceMatrix(i).GetColumn(3);
-                    if (Vector3Utils.DistanceSq(position, p_hit.point) < sizeSq)
+                    var modified = false;
+                    for (int i = cluster.GetCount() - 1; i >= 0; i--)
                     {
-                        cluster.RemoveInstance(i);
-                        modified = true;
+                        var position = cluster.GetInstanceMatrix(i).GetColumn(3);
+                        if (Vector3Utils.DistanceSq(position, p_hit.point) < sizeSq)
+                        {
+                            cluster.RemoveInstance(i);
+                            modified = true;
+                        }
+                    }
+
+                    if (modified)
+                    {
+                        invalidateDatas.AddIfUnique(cluster);
                     }
                 }
-
-                if (modified)
-                {
-                    invalidateDatas.AddIfUnique(cluster);
-                }
-            }
+            });
             
             invalidateDatas.ForEach(r =>
             {
