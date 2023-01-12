@@ -8,6 +8,12 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.9.1
+
+#### Changed
+
+- reworked interface serialization to avoid serialization callbacks and splitting
+
 ### Release 0.9.0
 
 #### Changed
