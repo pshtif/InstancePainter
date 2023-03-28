@@ -324,6 +324,8 @@ namespace InstancePainter.Editor
             Core.Config.showTooltips = EditorGUILayout.Toggle("Show Tooltips", Core.Config.showTooltips, GUILayout.ExpandWidth(true));
             
             Core.Config.useMeshRaycasting = EditorGUILayout.Toggle("Use Mesh Raycasting", Core.Config.useMeshRaycasting);
+            
+            Core.Config.raycastInactive = EditorGUILayout.Toggle("Raycast Inactive", Core.Config.raycastInactive);
 
             Core.Config.enableExperimental = EditorGUILayout.Toggle("Enable Experimental", Core.Config.enableExperimental);
 

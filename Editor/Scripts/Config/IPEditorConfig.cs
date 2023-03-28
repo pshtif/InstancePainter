@@ -59,6 +59,8 @@ namespace InstancePainter.Editor
         #endregion
 
         public bool useMeshRaycasting = false;
+        
+        public bool raycastInactive = true;
 
         public bool showTooltips = true;
         

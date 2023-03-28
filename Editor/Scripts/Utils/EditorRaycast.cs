@@ -40,6 +40,9 @@ namespace InstancePainter.Editor
                 Mesh mesh = filter.sharedMesh;
                 if (!mesh)
                     continue;
+
+                if (!filter.gameObject.activeSelf && !IPEditorCore.Instance.Config.raycastInactive)
+                    continue;
                 
                 RaycastHit localHit;
 
@@ -66,6 +69,9 @@ namespace InstancePainter.Editor
 
             foreach (Collider collider in p_colliders)
             {
+                if (collider.gameObject.activeSelf && !IPEditorCore.Instance.Config.raycastInactive)
+                    continue;
+                
                 RaycastHit localHit;
                 
                 if (collider.Raycast(p_ray, out localHit, Mathf.Infinity))
@@ -245,6 +251,7 @@ namespace InstancePainter.Editor
             if (p_filter != null)
             {
                 meshes = new MeshFilter[0];
+                
                 foreach (var gameObject in p_filter)
                 {
                     meshes = meshes.Concat(gameObject.GetComponentsInChildren<MeshFilter>()).ToArray();
@@ -262,9 +269,14 @@ namespace InstancePainter.Editor
             float minT = Mathf.Infinity;
             foreach (MeshFilter mf in meshes)
             {
+                if (!mf.gameObject.activeSelf && !IPEditorCore.Instance.Config.raycastInactive)
+                    continue;
+                
                 Mesh mesh = mf.sharedMesh;
+                
                 if (!mesh)
                     continue;
+                
                 RaycastHit localHit;
 
                 if (Raycast(mouseRay, mesh, mf.transform.localToWorldMatrix, out localHit))
