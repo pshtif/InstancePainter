@@ -45,7 +45,7 @@ namespace InstancePainter
         private int _binCountX;
         [NonSerialized]
         private int _binCountZ;
-
+        [NonSerialized]
         private bool _isGPUDirty = true;
 
         private bool _isBoundsDirty = true;
@@ -107,7 +107,7 @@ namespace InstancePainter
 
                 _indirectArgs = new uint[5] { 0, 0, 0, 0, 0 };
 
-                for (int i = 0; i < p_mesh.subMeshCount; i++)
+                for (int i = 0; i < _drawIndirectBuffers.Length; i++)
                 {
                     var drawIndirectBuffer = new ComputeBuffer(1, _indirectArgs.Length * sizeof(uint),
                         ComputeBufferType.IndirectArguments);
@@ -158,7 +158,7 @@ namespace InstancePainter
             
             // If someone switched the mesh in cluster for some reason we need to force invalidation
             if (_isGPUDirty || (_lastRenderedMesh != null && _lastRenderedMesh != p_mesh) || 
-                (_lastCullingState != p_useCulling))
+                (_lastCullingState != p_useCulling) || (p_cullingShader != null && _cullingShader == null))
             {
                 if (!Invalidate(false, p_matrixData, p_colorData, p_mesh, p_cullingShader))
                     return;
@@ -173,11 +173,13 @@ namespace InstancePainter
                 DoComputeCulling(p_cullingMatrix, p_cullingDistance);
             }
 
-            for (int i = 0; i < p_mesh.subMeshCount; i++)
+            for (int i = 0; i < _drawIndirectBuffers.Length; i++)
             {
                 if (p_useCulling)
                 {
                     ComputeBuffer.CopyCount(_visibilityBuffer, _drawIndirectBuffers[i], 4);
+
+                    //AsyncGPUReadback.Request(_visibilityBuffer, r => Debug.Log(r.GetData<uint>().Length));
                 }
                 
                 Graphics.DrawMeshInstancedIndirect(p_mesh, i, p_material, _bounds, _drawIndirectBuffers[i], 0,
@@ -372,7 +374,6 @@ namespace InstancePainter
             _visibilityBuffer.SetCounterValue(0);
             
             _cullingShader.SetMatrix("_cullingMatrix", p_cullingMatrix);
-            // TODO add distance as parameter
             _cullingShader.SetFloat("_cullingDistance", p_cullingDistance);
 
             float threadCount = 64;
@@ -385,6 +386,7 @@ namespace InstancePainter
                 float current = (_instanceCount < (i + 1) * (int)batchLimit)
                     ? _instanceCount - i * (int)batchLimit
                     : batchLimit;
+                _cullingShader.SetInt("_maxIndex", (int)current);
                 
                 _cullingShader.Dispatch(0, Mathf.CeilToInt(current / threadCount), 1, 1);
             }
