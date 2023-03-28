@@ -8,11 +8,29 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.9.3
+
+#### Added
+
+- added option to enable/disable inactive gameobject raycasting
+
+### Release 0.9.2
+
+#### Fixed
+
+- fixed added explicit max value of instances per batch for culling shader so it avoids working on data outside of valid buffer in additional GPU threads
+- fixed invalidate culling shader instance when exiting play mode
+
 ### Release 0.9.1
 
 #### Changed
 
-- reworked interface serialization to avoid serialization callbacks and splitting
+- changed reworked interface serialization to avoid serialization callbacks and splitting
+- changed PaintTool now needs to enable use direction explicitly for directional drawing, for using single click painting without direction
+
+#### Changed
+
+- fixed when using directional drawing Painting with Updates using Control wasn't working
 
 ### Release 0.9.0
 
