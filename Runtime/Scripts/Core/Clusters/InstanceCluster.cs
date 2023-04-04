@@ -65,10 +65,11 @@ namespace InstancePainter
         {
         }
         
-        public InstanceCluster(Mesh p_mesh, Material p_material)
+        public InstanceCluster(Mesh p_mesh, Material p_material, Material p_fallbackMaterial)
         {
             mesh = p_mesh;
             material = p_material;
+            fallbackMaterial = p_fallbackMaterial;
         }
         
         public InstanceCluster(Mesh p_mesh, Material p_material, Material p_fallbackMaterial, Matrix4x4[] p_matrixData, Vector4[] p_colorData)

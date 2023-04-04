@@ -127,7 +127,7 @@ namespace InstancePainter.Editor
 
             if (cluster == null)
             {
-                cluster = new InstanceCluster(p_mesh, p_definition.material);
+                cluster = new InstanceCluster(p_mesh, p_definition.material, p_definition.fallbackMaterial);
                 Renderer.AddCluster(cluster);
             }
             

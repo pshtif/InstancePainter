@@ -72,6 +72,7 @@ namespace InstancePainter
         
         public GameObject prefab;
         public Material material;
+        public Material fallbackMaterial;
 
         public ColorDistributionType colorDistribution;
 

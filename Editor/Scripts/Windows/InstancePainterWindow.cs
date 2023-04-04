@@ -251,6 +251,10 @@ namespace InstancePainter.Editor
                     p_paintDefinition.material =
                         (Material)EditorGUILayout.ObjectField("Material", p_paintDefinition.material, typeof(Material),
                             false);
+                            
+                    p_paintDefinition.fallbackMaterial =
+                        (Material)EditorGUILayout.ObjectField("Fallback Material", p_paintDefinition.fallbackMaterial, typeof(Material),
+                            false);
 
                     p_paintDefinition.weight =
                         EditorGUILayout.FloatField("Weight Probability", p_paintDefinition.weight);
