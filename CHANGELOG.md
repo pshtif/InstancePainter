@@ -8,6 +8,12 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.9.4
+
+#### Added
+
+- added fallback material property for paint definition so it will create cluster with both material and fallback material in place
+
 ### Release 0.9.3
 
 #### Added
