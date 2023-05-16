@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
 namespace InstancePainter.Editor
@@ -69,31 +70,44 @@ namespace InstancePainter.Editor
 
         public bool enableExperimental = false;
         
+        public string gameObjectNameSeparator = "";
+        
         static public IPEditorConfig Create()
         {
-            var config = (IPEditorConfig)AssetDatabase.LoadAssetAtPath(
+            // Old path to handle migration
+            var oldConfig = (IPEditorConfig)AssetDatabase.LoadAssetAtPath(
                 "Assets/Resources/Editor/InstancePainterEditorConfig.asset",
+                typeof(IPEditorConfig));
+            
+            var config = (IPEditorConfig)AssetDatabase.LoadAssetAtPath(
+                "Assets/Editor/Resources/InstancePainterEditorConfig.asset",
                 typeof(IPEditorConfig));
 
             if (config == null)
             {
-                config = CreateInstance<IPEditorConfig>();
+                config = oldConfig == null ? CreateInstance<IPEditorConfig>() : Instantiate(oldConfig);
                 if (config != null)
                 {
-                    if (!AssetDatabase.IsValidFolder("Assets/Resources"))
+                    if (!AssetDatabase.IsValidFolder("Assets/Editor"))
                     {
-                        AssetDatabase.CreateFolder("Assets", "Resources");
+                        AssetDatabase.CreateFolder("Assets", "Editor");
                     }
 
-                    if (!AssetDatabase.IsValidFolder("Assets/Resources/Editor"))
+                    if (!AssetDatabase.IsValidFolder("Assets/Editor/Resources"))
                     {
-                        AssetDatabase.CreateFolder("Assets/Resources", "Editor");
+                        AssetDatabase.CreateFolder("Assets/Editor", "Resources");
+                        Debug.Log("here");
                     }
 
-                    AssetDatabase.CreateAsset(config, "Assets/Resources/Editor/InstancePainterEditorConfig.asset");
+                    AssetDatabase.CreateAsset(config, "Assets/Editor/Resources/InstancePainterEditorConfig.asset");
                     AssetDatabase.SaveAssets();
                     AssetDatabase.Refresh();
                 }
+            }
+
+            if (oldConfig != null)
+            {
+                AssetDatabase.DeleteAsset("Assets/Resources/Editor/InstancePainterEditorConfig.asset");
             }
 
             return config;
