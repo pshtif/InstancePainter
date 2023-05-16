@@ -20,9 +20,6 @@ namespace InstancePainter
         [SerializeField]
         private List<InstanceClusterAsset> _serializedInstanceClusterAssets = new List<InstanceClusterAsset>();
         
-        // [NonSerialized]
-        // private List<ICluster> _instanceClusters = new List<ICluster>();
-        //
         public int GetClusterCount()
         {
             int count = _serializedInstanceClusters == null ? 0 : _serializedInstanceClusters.Count;
@@ -178,6 +175,11 @@ namespace InstancePainter
             Render(camera, currentCullingMatrix);
         }
 
+        private void OnDestroy()
+        {
+            ForEachCluster(cluster => cluster.Dispose());
+        }
+
         public void Render(Camera p_camera, Matrix4x4 p_cullingMatrix)
         {
             if (IsFallback)
@@ -287,6 +289,7 @@ namespace InstancePainter
         {
             if (!Application.isPlaying)
             {
+                ForEachCluster(cluster => cluster.Dispose());
                 SceneView.duringSceneGui -= OnSceneGUI;
             }
         }
