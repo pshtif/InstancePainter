@@ -8,6 +8,12 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.9.6
+
+#### Changed
+
+- changed disposing approach to eliminate NativeCollection allocation hangups on assembly reloads
+
 ### Release 0.9.5
 
 #### Changed
