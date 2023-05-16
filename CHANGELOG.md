@@ -8,6 +8,12 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.9.5
+
+#### Changed
+
+- changed InstancePainterConfig now saves to Assets/Editor/Resources instead of Assets/Resources/Editor to avoid build embedding, migration of old configs to new path is also implemented
+
 ### Release 0.9.4
 
 #### Added
