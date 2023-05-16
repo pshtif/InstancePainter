@@ -332,6 +332,8 @@ namespace InstancePainter.Editor
             Core.Config.raycastInactive = EditorGUILayout.Toggle("Raycast Inactive", Core.Config.raycastInactive);
 
             Core.Config.enableExperimental = EditorGUILayout.Toggle("Enable Experimental", Core.Config.enableExperimental);
+            
+            Core.Config.gameObjectNameSeparator = EditorGUILayout.TextField("GameObject Name Separator", Core.Config.gameObjectNameSeparator);
 
             if (Core.Config.enableExperimental)
             {

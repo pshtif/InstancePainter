@@ -384,7 +384,7 @@ namespace InstancePainter.Editor
                 var mr = filter.gameObject.AddComponent<MeshRenderer>();
                 mr.materials = Enumerable.Repeat(material, p_cluster.GetMesh().subMeshCount).ToArray();
                 filter.sharedMesh = p_cluster.GetMesh();
-                filter.name = p_cluster.GetMesh().name + i;
+                filter.name = p_cluster.GetMesh().name + IPEditorCore.Instance.Config.gameObjectNameSeparator + i;
                 filter.transform.localPosition = matrix.GetColumn(3);
                 filter.transform.rotation = ExtractRotation(matrix);
                 filter.transform.localScale = ExtractScaleFromMatrix(matrix);
