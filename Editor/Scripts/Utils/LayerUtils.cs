@@ -11,58 +11,22 @@ namespace InstancePainter.Editor
 {
     public class LayerUtils
     {
+        public static bool IsGameObjectInLayerMask(GameObject p_gameObject, LayerMask p_layerMask)
+        {
+            return (p_layerMask.value & (1 << p_gameObject.layer)) != 0;
+        }
         
-        
-        public static GameObject[] GetAllGameObjectsInLayer(LayerMask p_layer)
+        public static GameObject[] GetAllGameObjectsInLayerMask(LayerMask p_layer)
         {
             var filters = StageUtility.GetCurrentStageHandle().FindComponentsOfType<Transform>();
             var result = new List<GameObject>();
             
             foreach (var filter in filters)
             {
-                if (1 << filter.gameObject.layer == p_layer)
+                //if (1 << filter.gameObject.layer == p_layer)
+                if (IsGameObjectInLayerMask(filter.gameObject, p_layer))
                 {
                     result.Add(filter.gameObject);
-                }
-            }
-
-            return result.ToArray();
-        }
-        
-        public static GameObject[] GetAllGameObjectsInLayers(LayerMask[] p_layers)
-        {
-            var filters = StageUtility.GetCurrentStageHandle().FindComponentsOfType<Transform>();
-            var result = new List<GameObject>();
-            
-            foreach (var filter in filters)
-            {
-                foreach (var layer in p_layers)
-                {
-                    if (1 << filter.gameObject.layer == layer)
-                    {
-                        result.Add(filter.gameObject);
-                        break;
-                    }
-                }
-            }
-
-            return result.ToArray();
-        }
-        
-        public static T[] GetAllComponentsInLayers<T>(LayerMask[] p_layers) where T : Component
-        {
-            var filters = StageUtility.GetCurrentStageHandle().FindComponentsOfType<T>();
-            var result = new List<T>();
-            
-            foreach (var filter in filters)
-            {
-                foreach (var layer in p_layers)
-                {
-                    if (1 << filter.gameObject.layer == layer)
-                    {
-                        result.Add(filter);
-                        break;
-                    }
                 }
             }
 

@@ -168,6 +168,10 @@ namespace InstancePainter
 
             Camera camera = renderCamera == null ? Camera.main : renderCamera;
 
+            // All cameras are hidden/inactive
+            if (camera == null)
+                return;
+
             Matrix4x4 currentCullingMatrix = _customCullingMatrix != Matrix4x4.zero
                 ? _customCullingMatrix
                 : camera.projectionMatrix * camera.worldToCameraMatrix;

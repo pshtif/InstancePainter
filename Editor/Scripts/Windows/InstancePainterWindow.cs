@@ -4,6 +4,7 @@
 #if UNITY_EDITOR
 
 using UnityEditor;
+using UnityEditorInternal;
 using UnityEngine;
 
 namespace InstancePainter.Editor
@@ -334,6 +335,13 @@ namespace InstancePainter.Editor
             Core.Config.enableExperimental = EditorGUILayout.Toggle("Enable Experimental", Core.Config.enableExperimental);
             
             Core.Config.gameObjectNameSeparator = EditorGUILayout.TextField("GameObject Name Separator", Core.Config.gameObjectNameSeparator);
+
+            EditorGUI.BeginChangeCheck();
+            LayerMask cullingMask = EditorGUILayout.MaskField("Culling Mask", InternalEditorUtility.LayerMaskToConcatenatedLayersMask(Core.Config.includeLayerMask), InternalEditorUtility.layers);
+            if (EditorGUI.EndChangeCheck())
+            {
+                Core.Config.includeLayerMask = InternalEditorUtility.ConcatenatedLayersMaskToLayerMask(cullingMask);
+            }
 
             if (Core.Config.enableExperimental)
             {

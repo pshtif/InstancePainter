@@ -64,9 +64,8 @@ namespace InstancePainter.Editor
         public bool raycastInactive = true;
 
         public bool showTooltips = true;
-        
-        public List<LayerMask> includeLayers = new List<LayerMask>();
-        public List<LayerMask> excludeLayers = new List<LayerMask>();
+
+        public LayerMask includeLayerMask = new LayerMask();
 
         public bool enableExperimental = false;
         

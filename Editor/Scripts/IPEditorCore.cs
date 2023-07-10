@@ -153,18 +153,14 @@ namespace InstancePainter.Editor
         {
             if (Config.useMeshRaycasting)
             {
-                _cachedValidMeshes = Config.includeLayers.Count == 0
-                    ? StageUtility.GetCurrentStageHandle().FindComponentsOfType<MeshFilter>()
-                    : LayerUtils.GetAllComponentsInLayers<MeshFilter>(Config.includeLayers.ToArray());
+                _cachedValidMeshes = StageUtility.GetCurrentStageHandle().FindComponentsOfType<MeshFilter>();
             }
             else
             {
                 _cachedValidMeshes = null;
             }
 
-            _cachedValidColliders = Config.includeLayers.Count == 0
-                ? StageUtility.GetCurrentStageHandle().FindComponentsOfType<Collider>()
-                : LayerUtils.GetAllComponentsInLayers<Collider>(Config.includeLayers.ToArray());
+            _cachedValidColliders = StageUtility.GetCurrentStageHandle().FindComponentsOfType<Collider>();
         }
 
         public bool RaycastValidGeo(Vector3 p_position, out RaycastHit p_hit)

@@ -145,8 +145,13 @@ namespace InstancePainter.Editor
             if (Core.Config.PaintToolConfig.density == 1)
             {
                 PaintDefinition paintDefinition = Core.Config.GetWeightedDefinition();
-                var datas = Core.PlaceInstance(paintDefinition, p_hit.point, paintVector, Vector3.zero, _paintedInstances);
-                invalidateClusters.AddRangeIfUnique(datas);
+
+                if (paintDefinition != null)
+                {
+                    var datas = Core.PlaceInstance(paintDefinition, p_hit.point, paintVector, Vector3.zero,
+                        _paintedInstances);
+                    invalidateClusters.AddRangeIfUnique(datas);
+                }
             }
             else
             {

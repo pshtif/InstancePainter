@@ -55,12 +55,17 @@ namespace InstancePainter.Editor
         bool HandleMouseHit()
         {
             RaycastHit hit;
-
-            var include = LayerUtils.GetAllGameObjectsInLayers(Core.Config.includeLayers.ToArray());
-            var exclude = LayerUtils.GetAllGameObjectsInLayers(Core.Config.excludeLayers.ToArray());
             
+            // var include = LayerUtils.GetAllGameObjectsInLayerMask(Core.Config.includeLayerMask);
+            // if (include.Length == 0)
+            //     return false;
+            
+            //var exclude = LayerUtils.GetAllGameObjectsInLayers(Core.Config.excludeLayerMask);
+
+            // if (EditorRaycast.RaycastWorld(Event.current.mousePosition, out hit, out _mouseHitTransform,
+            //         out _mouseHitMesh, exclude.Length == 0 ? null : exclude, include.Length == 0 ? null : include))
             if (EditorRaycast.RaycastWorld(Event.current.mousePosition, out hit, out _mouseHitTransform,
-                out _mouseHitMesh, exclude.Length == 0 ? null : exclude, include.Length == 0 ? null : include))
+                    out _mouseHitMesh, Core.Config.includeLayerMask))
             {
                 _mouseRaycastHit = hit;
                 return true;

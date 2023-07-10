@@ -37,6 +37,9 @@ namespace InstancePainter.Editor
             float minT = Mathf.Infinity;
             foreach (MeshFilter filter in p_meshFilters)
             {
+                if (!LayerUtils.IsGameObjectInLayerMask(filter.gameObject, IPEditorCore.Instance.Config.includeLayerMask))
+                    continue;
+                
                 Mesh mesh = filter.sharedMesh;
                 if (!mesh)
                     continue;
@@ -69,6 +72,9 @@ namespace InstancePainter.Editor
 
             foreach (Collider collider in p_colliders)
             {
+                if (!LayerUtils.IsGameObjectInLayerMask(collider.gameObject, IPEditorCore.Instance.Config.includeLayerMask))
+                    continue;
+            
                 if (collider.gameObject.activeSelf && !IPEditorCore.Instance.Config.raycastInactive)
                     continue;
                 
@@ -178,152 +184,152 @@ namespace InstancePainter.Editor
         // }
 
         // Taken from Unity codebase for object raycasting in sceneview - sHTiF
-        public static bool RaycastWorld_OBSOLETE(Vector2 p_position, out RaycastHit p_hit, out Transform p_transform,
-            out Mesh p_mesh, GameObject[] p_ignore, GameObject[] p_filter)
+        // public static bool RaycastWorld_OBSOLETE(Vector2 p_position, out RaycastHit p_hit, out Transform p_transform,
+        //     out Mesh p_mesh, GameObject[] p_ignore, GameObject[] p_filter)
+        // {
+        //     p_hit = new RaycastHit();
+        //     p_transform = null;
+        //     p_mesh = null;
+        //
+        //     GameObject picked = HandleUtility.PickGameObject(p_position, false, p_ignore, p_filter);
+        //
+        //     if (!picked)
+        //         return false;
+        //
+        //     Ray mouseRay = HandleUtility.GUIPointToWorldRay(p_position);
+        //
+        //     MeshFilter[] meshFil = picked.GetComponentsInChildren<MeshFilter>();
+        //     float minT = Mathf.Infinity;
+        //     foreach (MeshFilter mf in meshFil)
+        //     {
+        //         Mesh mesh = mf.sharedMesh;
+        //         if (!mesh)
+        //             continue;
+        //         RaycastHit localHit;
+        //
+        //         if (Raycast(mouseRay, mesh, mf.transform.localToWorldMatrix, out localHit))
+        //         {
+        //             if (localHit.distance < minT)
+        //             {
+        //                 p_hit = localHit;
+        //                 p_transform = mf.transform;
+        //                 p_mesh = mesh;
+        //                 minT = p_hit.distance;
+        //             }
+        //         }
+        //     }
+        //     
+        //     if (minT == Mathf.Infinity)
+        //     {
+        //         Collider[] colliders = picked.GetComponentsInChildren<Collider>();
+        //         foreach (Collider col in colliders)
+        //         {
+        //             RaycastHit localHit;
+        //             if (col.Raycast(mouseRay, out localHit, Mathf.Infinity))
+        //             {
+        //                 if (localHit.distance < minT)
+        //                 {
+        //                     p_hit = localHit;
+        //                     p_transform = col.transform;
+        //                     minT = p_hit.distance;
+        //                 }
+        //             }
+        //         }
+        //     }
+        //
+        //     if (minT == Mathf.Infinity)
+        //     {
+        //         //p_hit.point = Vector3.Project(picked.transform.position - mouseRay.origin, mouseRay.direction) + mouseRay.origin;
+        //         return false;
+        //     }
+        //
+        //     return true;
+        // }
+        
+        public static bool RaycastWorld(Vector2 p_position, out RaycastHit p_hit, out Transform p_transform,
+            out Mesh p_mesh, LayerMask p_layerMask)
         {
             p_hit = new RaycastHit();
             p_transform = null;
             p_mesh = null;
-
-            GameObject picked = HandleUtility.PickGameObject(p_position, false, p_ignore, p_filter);
-
-            if (!picked)
-                return false;
+            float minT = Mathf.Infinity;
 
             Ray mouseRay = HandleUtility.GUIPointToWorldRay(p_position);
 
-            MeshFilter[] meshFil = picked.GetComponentsInChildren<MeshFilter>();
-            float minT = Mathf.Infinity;
-            foreach (MeshFilter mf in meshFil)
+            if (IPEditorCore.Instance.Config.useMeshRaycasting)
             {
-                Mesh mesh = mf.sharedMesh;
-                if (!mesh)
-                    continue;
-                RaycastHit localHit;
+                MeshFilter[] meshes = StageUtility.GetCurrentStageHandle().FindComponentsOfType<MeshFilter>();
+                
+                foreach (MeshFilter mf in meshes)
+                {
+                    if (!LayerUtils.IsGameObjectInLayerMask(mf.gameObject, p_layerMask))
+                        continue;
 
-                if (Raycast(mouseRay, mesh, mf.transform.localToWorldMatrix, out localHit))
-                {
-                    if (localHit.distance < minT)
-                    {
-                        p_hit = localHit;
-                        p_transform = mf.transform;
-                        p_mesh = mesh;
-                        minT = p_hit.distance;
-                    }
-                }
-            }
-            
-            if (minT == Mathf.Infinity)
-            {
-                Collider[] colliders = picked.GetComponentsInChildren<Collider>();
-                foreach (Collider col in colliders)
-                {
+                    if (!mf.gameObject.activeSelf && !IPEditorCore.Instance.Config.raycastInactive)
+                        continue;
+
+                    Mesh mesh = mf.sharedMesh;
+
+                    if (!mesh)
+                        continue;
+
                     RaycastHit localHit;
-                    if (col.Raycast(mouseRay, out localHit, Mathf.Infinity))
+
+                    if (Raycast(mouseRay, mesh, mf.transform.localToWorldMatrix, out localHit))
                     {
                         if (localHit.distance < minT)
                         {
                             p_hit = localHit;
-                            p_transform = col.transform;
+                            p_transform = mf.transform;
+                            p_mesh = mesh;
+                            minT = p_hit.distance;
+                        }
+                    }
+                }
+
+                SkinnedMeshRenderer[] skinnedMeshes =
+                    StageUtility.GetCurrentStageHandle().FindComponentsOfType<SkinnedMeshRenderer>();
+                foreach (SkinnedMeshRenderer sm in skinnedMeshes)
+                {
+                    if (!LayerUtils.IsGameObjectInLayerMask(sm.gameObject, p_layerMask))
+                        continue;
+
+                    Mesh mesh = sm.sharedMesh;
+                    if (!mesh)
+                        continue;
+                    RaycastHit localHit;
+
+                    if (Raycast(mouseRay, mesh, sm.transform.localToWorldMatrix, out localHit))
+                    {
+                        if (localHit.distance < minT)
+                        {
+                            p_hit = localHit;
+                            p_transform = sm.transform;
+                            p_mesh = mesh;
                             minT = p_hit.distance;
                         }
                     }
                 }
             }
-
-            if (minT == Mathf.Infinity)
-            {
-                //p_hit.point = Vector3.Project(picked.transform.position - mouseRay.origin, mouseRay.direction) + mouseRay.origin;
-                return false;
-            }
-
-            return true;
-        }
-        
-         public static bool RaycastWorld(Vector2 p_position, out RaycastHit p_hit, out Transform p_transform,
-            out Mesh p_mesh, GameObject[] p_ignore, GameObject[] p_filter)
-        {
-            p_hit = new RaycastHit();
-            p_transform = null;
-            p_mesh = null;
-
-            MeshFilter[] meshes;
-            if (p_filter != null)
-            {
-                meshes = new MeshFilter[0];
-                
-                foreach (var gameObject in p_filter)
-                {
-                    meshes = meshes.Concat(gameObject.GetComponentsInChildren<MeshFilter>()).ToArray();
-                }
-
-                meshes = p_filter[0].GetComponentsInChildren<MeshFilter>();
-            }
             else
             {
-                meshes = StageUtility.GetCurrentStageHandle().FindComponentsOfType<MeshFilter>();
-            }
-
-            Ray mouseRay = HandleUtility.GUIPointToWorldRay(p_position);
-
-            float minT = Mathf.Infinity;
-            foreach (MeshFilter mf in meshes)
-            {
-                if (!mf.gameObject.activeSelf && !IPEditorCore.Instance.Config.raycastInactive)
-                    continue;
-                
-                Mesh mesh = mf.sharedMesh;
-                
-                if (!mesh)
-                    continue;
-                
-                RaycastHit localHit;
-
-                if (Raycast(mouseRay, mesh, mf.transform.localToWorldMatrix, out localHit))
+                if (minT == Mathf.Infinity)
                 {
-                    if (localHit.distance < minT)
+                    Collider[] colliders = StageUtility.GetCurrentStageHandle().FindComponentsOfType<Collider>();
+                    foreach (Collider col in colliders)
                     {
-                        p_hit = localHit;
-                        p_transform = mf.transform;
-                        p_mesh = mesh;
-                        minT = p_hit.distance;
-                    }
-                }
-            }
-            
-            SkinnedMeshRenderer[] skinnedMeshes = StageUtility.GetCurrentStageHandle().FindComponentsOfType<SkinnedMeshRenderer>();
-            foreach (SkinnedMeshRenderer sm in skinnedMeshes)
-            {
-                Mesh mesh = sm.sharedMesh;
-                if (!mesh)
-                    continue;
-                RaycastHit localHit;
+                        if (!LayerUtils.IsGameObjectInLayerMask(col.gameObject, p_layerMask))
+                            continue;
 
-                if (Raycast(mouseRay, mesh, sm.transform.localToWorldMatrix, out localHit))
-                {
-                    if (localHit.distance < minT)
-                    {
-                        p_hit = localHit;
-                        p_transform = sm.transform;
-                        p_mesh = mesh;
-                        minT = p_hit.distance;
-                    }
-                }
-            }
-            
-            if (minT == Mathf.Infinity)
-            {
-                Collider[] colliders = StageUtility.GetCurrentStageHandle().FindComponentsOfType<Collider>();
-                foreach (Collider col in colliders)
-                {
-                    RaycastHit localHit;
-                    if (col.Raycast(mouseRay, out localHit, Mathf.Infinity))
-                    {
-                        if (localHit.distance < minT)
+                        RaycastHit localHit;
+                        if (col.Raycast(mouseRay, out localHit, Mathf.Infinity))
                         {
-                            p_hit = localHit;
-                            p_transform = col.transform;
-                            minT = p_hit.distance;
+                            if (localHit.distance < minT)
+                            {
+                                p_hit = localHit;
+                                p_transform = col.transform;
+                                minT = p_hit.distance;
+                            }
                         }
                     }
                 }
