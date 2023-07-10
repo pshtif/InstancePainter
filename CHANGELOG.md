@@ -8,6 +8,24 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.9.8
+
+#### Added
+
+- settings to specify include raycast layer mask
+
+#### Changed
+
+- changed started refactoring on merging all the different raycast approaches, will continue to merge it into unified raycast pipeline and clean the experiments
+
+#### Changec
+
+### Release 0.9.7
+
+#### Fixed
+
+- fixed skip rendering if all cameras are hidden/inactive for some reason
+
 ### Release 0.9.6
 
 #### Changed
