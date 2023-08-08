@@ -264,15 +264,15 @@ namespace InstancePainter.Editor
 
             GUIUtils.DrawSectionTitle("Manual Transform");
             var pivot = EditorGUILayout.Vector3Field("Pivot", p_cluster.GetPivot());
-            p_cluster.SetPivot(pivot);
-            _transformingDirectTranslation = EditorGUILayout.Vector3Field("Translate", _transformingDirectTranslation);
             _transformingDirectRotation = EditorGUILayout.Vector3Field("Rotate", _transformingDirectRotation);
+            _transformingDirectTranslation = EditorGUILayout.Vector3Field("Translate", _transformingDirectTranslation);
             if (GUILayout.Button("Apply Transform", GUILayout.Height(24)))
             {
                 RotateAndTranslateCluster(p_cluster, _transformingDirectTranslation, Quaternion.Euler(_transformingDirectRotation), p_cluster.GetPivot());
+                pivot += _transformingDirectTranslation;
                 EditorUtility.SetDirty(target);
             }
-            
+            p_cluster.SetPivot(pivot);
             return modified;
         }
 
@@ -496,9 +496,11 @@ namespace InstancePainter.Editor
                         _transformingCluster.SetPivot(pivot);
                         break;
                     case TransformingType.TRANSLATE:
-                        var previousPosition = _transformingTranslation;
-                        _transformingTranslation = Handles.PositionHandle(_transformingTranslation + _transformingCluster.GetPivot(), Quaternion.identity) - _transformingCluster.GetPivot();
-                        TranslateCluster(_transformingCluster, _transformingTranslation-previousPosition);
+                        _transformingTranslation =
+                            Handles.PositionHandle(_transformingCluster.GetPivot(), Quaternion.identity) -
+                            _transformingCluster.GetPivot();
+                        TranslateCluster(_transformingCluster, _transformingTranslation);
+                        _transformingCluster.SetPivot(_transformingCluster.GetPivot() + _transformingTranslation);
                         break;
                     case TransformingType.ROTATE:
                         var previousRotation = _transformingRotation;
