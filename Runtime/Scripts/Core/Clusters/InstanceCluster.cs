@@ -30,6 +30,9 @@ namespace InstancePainter
         public Material fallbackMaterial;
 
         [SerializeField]
+        private Vector3 _pivot = Vector3.zero;
+        
+        [SerializeField]
         private Matrix4x4[] _matrixData;
         public Matrix4x4[] MatrixData => _matrixData;
         
@@ -328,6 +331,16 @@ namespace InstancePainter
         public bool HasFallbackMaterial()
         {
             return fallbackMaterial != null;
+        }
+
+        public Vector3 GetPivot()
+        {
+            return _pivot;
+        }
+
+        public void SetPivot(Vector3 p_pivot)
+        {
+            _pivot = p_pivot;
         }
 #endif
     }

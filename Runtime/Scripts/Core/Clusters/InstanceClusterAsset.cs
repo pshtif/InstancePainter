@@ -193,6 +193,16 @@ namespace InstancePainter
         {
             return cluster.HasFallbackMaterial();
         }
+
+        public Vector3 GetPivot()
+        {
+            return cluster.GetPivot();
+        }
+
+        public void SetPivot(Vector3 p_pivot)
+        {
+            cluster.SetPivot(p_pivot);
+        }
 #endif
     }
 }

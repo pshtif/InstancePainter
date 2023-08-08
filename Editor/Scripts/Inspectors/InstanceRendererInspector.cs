@@ -9,6 +9,13 @@ using UnityEngine;
 
 namespace InstancePainter.Editor
 {
+    enum TransformingType
+    {
+        PIVOT,
+        TRANSLATE,
+        ROTATE
+    }
+    
     [CustomEditor(typeof(InstanceRenderer))]
     public class InstanceRendererInspector : UnityEditor.Editor
     {
@@ -16,9 +23,26 @@ namespace InstancePainter.Editor
         
         public GUISkin Skin => (GUISkin)Resources.Load("Skins/InstancePainterSkin");
 
+        private TransformingType _transformingType;
+        private ICluster _transformingCluster;
+        private Vector3 _transformingTranslation = Vector3.zero;
+        private Quaternion _transformingRotation = Quaternion.identity;
+        private Vector3 _transformingScale = Vector3.one;
+        private Tool _previousTool = Tool.None;
+        private Vector3 _transformingDirectTranslation = Vector3.zero;
+        private Vector3 _transformingDirectRotation = Vector3.zero;
+
         private void OnEnable()
         {
-            
+            Tools.hidden = true;
+            /*_previousTool = Tools.current;
+            Tools.current = Tool.None;*/
+        }
+
+        private void OnDisable()
+        {
+            Tools.hidden = false;
+            //Tools.current = _previousTool;
         }
 
         public override void OnInspectorGUI()
@@ -204,6 +228,49 @@ namespace InstancePainter.Editor
                         SceneView.RepaintAll();
                     }
                 }
+            }
+
+            GUILayout.Space(6);
+            GUILayout.BeginHorizontal();
+            GUI.color = (_transformingCluster == p_cluster && _transformingType == TransformingType.TRANSLATE) ? Color.green : Color.white;
+            if (GUILayout.Button("Translate", GUILayout.Height(24)))
+            {
+                _transformingCluster = _transformingCluster == p_cluster && _transformingType == TransformingType.TRANSLATE ? null : p_cluster;
+                _transformingTranslation = Vector3.zero;
+                _transformingType = TransformingType.TRANSLATE;
+                EditorUtility.SetDirty(target);
+            }
+            GUI.color = Color.white;
+            
+            GUI.color = (_transformingCluster == p_cluster && _transformingType == TransformingType.ROTATE) ? Color.green : Color.white;
+            if (GUILayout.Button("Rotate", GUILayout.Height(24)))
+            {
+                _transformingCluster = _transformingCluster == p_cluster && _transformingType == TransformingType.ROTATE ? null : p_cluster;
+                _transformingRotation = Quaternion.identity;
+                _transformingType = TransformingType.ROTATE;
+                EditorUtility.SetDirty(target);
+            }
+            GUI.color = Color.white;
+            
+            GUI.color = (_transformingCluster == p_cluster && _transformingType == TransformingType.PIVOT) ? Color.green : Color.white;
+            if (GUILayout.Button("Pivot", GUILayout.Height(24)))
+            {
+                _transformingCluster = _transformingCluster == p_cluster && _transformingType == TransformingType.PIVOT ? null : p_cluster;
+                _transformingType = TransformingType.PIVOT;
+                EditorUtility.SetDirty(target);
+            }
+            GUI.color = Color.white;
+            GUILayout.EndHorizontal();
+
+            GUIUtils.DrawSectionTitle("Manual Transform");
+            var pivot = EditorGUILayout.Vector3Field("Pivot", p_cluster.GetPivot());
+            p_cluster.SetPivot(pivot);
+            _transformingDirectTranslation = EditorGUILayout.Vector3Field("Translate", _transformingDirectTranslation);
+            _transformingDirectRotation = EditorGUILayout.Vector3Field("Rotate", _transformingDirectRotation);
+            if (GUILayout.Button("Apply Transform", GUILayout.Height(24)))
+            {
+                RotateAndTranslateCluster(p_cluster, _transformingDirectTranslation, Quaternion.Euler(_transformingDirectRotation), p_cluster.GetPivot());
+                EditorUtility.SetDirty(target);
             }
             
             return modified;
@@ -414,6 +481,105 @@ namespace InstancePainter.Editor
             upwards.z = matrix.m21;
  
             return Quaternion.LookRotation(forward, upwards);
+        }
+        
+        public void OnSceneGUI()
+        {
+            if (_transformingCluster != null)
+            {
+                HandleUtility.AddDefaultControl(GUIUtility.GetControlID(FocusType.Passive));
+
+                switch (_transformingType)
+                {
+                    case TransformingType.PIVOT:
+                        var pivot = Handles.PositionHandle(_transformingCluster.GetPivot(), Quaternion.identity);
+                        _transformingCluster.SetPivot(pivot);
+                        break;
+                    case TransformingType.TRANSLATE:
+                        var previousPosition = _transformingTranslation;
+                        _transformingTranslation = Handles.PositionHandle(_transformingTranslation + _transformingCluster.GetPivot(), Quaternion.identity) - _transformingCluster.GetPivot();
+                        TranslateCluster(_transformingCluster, _transformingTranslation-previousPosition);
+                        break;
+                    case TransformingType.ROTATE:
+                        var previousRotation = _transformingRotation;
+                        _transformingRotation = Handles.RotationHandle(_transformingRotation, _transformingCluster.GetPivot());
+                        RotateCluster(_transformingCluster, _transformingRotation*Quaternion.Inverse(previousRotation), _transformingCluster.GetPivot());
+                        break;
+                }
+            }
+        }
+
+        private void TranslateCluster(ICluster p_cluster, Vector3 p_translate)
+        {
+            for (int i = 0; i < p_cluster.GetCount(); i++)
+            {
+                var matrix = p_cluster.GetInstanceMatrix(i);
+                
+                Quaternion originalRotation = matrix.rotation;
+
+                var position = (Vector3)matrix.GetColumn(3);
+
+                Vector3 originalScale = new Vector3(
+                    matrix.GetColumn(0).magnitude,
+                    matrix.GetColumn(1).magnitude,
+                    matrix.GetColumn(2).magnitude
+                );
+
+                p_cluster.SetInstanceMatrix(i, Matrix4x4.TRS(position+p_translate, originalRotation, originalScale));
+            }
+
+            p_cluster.UpdateSerializedData();
+        }
+        
+        private void RotateCluster(ICluster p_cluster, Quaternion p_rotation, Vector3 p_pivot)
+        {
+            for (int i = 0; i < p_cluster.GetCount(); i++)
+            {
+                var matrix = p_cluster.GetInstanceMatrix(i);
+                
+                Quaternion originalRotation = matrix.rotation;
+
+                var position = (Vector3)matrix.GetColumn(3);
+                position -= p_pivot;
+                position = p_rotation * position;
+                position += p_pivot;
+
+                Vector3 originalScale = new Vector3(
+                    matrix.GetColumn(0).magnitude,
+                    matrix.GetColumn(1).magnitude,
+                    matrix.GetColumn(2).magnitude
+                );
+
+                p_cluster.SetInstanceMatrix(i, Matrix4x4.TRS(position, originalRotation*p_rotation, originalScale));
+            }
+
+            p_cluster.UpdateSerializedData();
+        }
+        
+        private void RotateAndTranslateCluster(ICluster p_cluster, Vector3 p_translate, Quaternion p_rotation, Vector3 p_pivot)
+        {
+            Debug.Log(p_translate);
+            for (int i = 0; i < p_cluster.GetCount(); i++)
+            {
+                var matrix = p_cluster.GetInstanceMatrix(i);
+                
+                Quaternion originalRotation = matrix.rotation;
+
+                var position = (Vector3)matrix.GetColumn(3);
+                position -= p_pivot;
+                position = p_rotation * position;
+                position += p_pivot;
+
+                Vector3 originalScale = new Vector3(
+                    matrix.GetColumn(0).magnitude,
+                    matrix.GetColumn(1).magnitude,
+                    matrix.GetColumn(2).magnitude
+                );
+                
+                p_cluster.SetInstanceMatrix(i, Matrix4x4.TRS(position + p_translate, originalRotation*p_rotation, originalScale));
+            }
+
+            p_cluster.UpdateSerializedData();
         }
     }
 }

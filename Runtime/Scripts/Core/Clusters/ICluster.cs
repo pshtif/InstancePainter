@@ -61,6 +61,10 @@ namespace InstancePainter
         bool HasMaterial();
         
         bool HasFallbackMaterial();
+
+        Vector3 GetPivot();
+
+        void SetPivot(Vector3 p_pivot);
 #endif
     }
 }
