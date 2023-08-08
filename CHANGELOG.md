@@ -8,6 +8,12 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.9.9
+
+#### Added
+
+- option to tranform whole clusters using handles or direct transform
+
 ### Release 0.9.8
 
 #### Added
