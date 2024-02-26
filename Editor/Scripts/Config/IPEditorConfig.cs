@@ -98,9 +98,16 @@ namespace InstancePainter.Editor
                         Debug.Log("here");
                     }
 
-                    AssetDatabase.CreateAsset(config, "Assets/Editor/Resources/InstancePainterEditorConfig.asset");
-                    AssetDatabase.SaveAssets();
-                    AssetDatabase.Refresh();
+                    try
+                    {
+                        AssetDatabase.CreateAsset(config, "Assets/Editor/Resources/InstancePainterEditorConfig.asset");
+                        AssetDatabase.SaveAssets();
+                        AssetDatabase.Refresh();
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.Log(e);
+                    }
                 }
             }
 
