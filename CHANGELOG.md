@@ -8,6 +8,17 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.9.10
+
+#### Fixed
+
+- fixed tags for Unity 2022
+- try catch editor asset creation to crash silently if Unity misbehaves
+
+#### Changed
+
+- allocate and work with visibility buffer only when culling is enabled
+
 ### Release 0.9.9
 
 #### Added
@@ -24,7 +35,7 @@ All notable changes to this project will be documented in this file.
 
 - changed started refactoring on merging all the different raycast approaches, will continue to merge it into unified raycast pipeline and clean the experiments
 
-#### Changec
+#### Changed
 
 ### Release 0.9.7
 
