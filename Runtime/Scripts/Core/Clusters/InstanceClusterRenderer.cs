@@ -88,8 +88,6 @@ namespace InstancePainter
 
                 _colorBuffer = new ComputeBuffer(_instanceCount, sizeof(float) * 4);
                 _colorBuffer.SetData(p_colorData.AsArray());
-                
-                _visibilityBuffer = new ComputeBuffer(_instanceCount, sizeof(uint), ComputeBufferType.Append);
 
                 _matrixBuffer = new ComputeBuffer(_instanceCount, sizeof(float) * 16);
                 _matrixBuffer.SetData(p_matrixData.AsArray());
@@ -97,10 +95,13 @@ namespace InstancePainter
                 _propertyBlock = new MaterialPropertyBlock();
                 _propertyBlock.SetBuffer("_colorBuffer", _colorBuffer);
                 _propertyBlock.SetBuffer("_matrixBuffer", _matrixBuffer);
-                _propertyBlock.SetBuffer("_visibilityBuffer", _visibilityBuffer);
                 
                 if (_cullingShader != null)
                 {
+                    _visibilityBuffer = new ComputeBuffer(_instanceCount, sizeof(uint), ComputeBufferType.Append);
+                    
+                    _propertyBlock.SetBuffer("_visibilityBuffer", _visibilityBuffer);
+                    
                     _cullingShader.SetBuffer(0, "_matrixBuffer", _matrixBuffer);
                     _cullingShader.SetBuffer(0, "_visibilityBuffer", _visibilityBuffer);
                 }
