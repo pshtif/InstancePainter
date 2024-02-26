@@ -22,7 +22,7 @@ Shader "Instance Painter/InstancedIndirectPixelShadows"
 
     SubShader
     {
-        Tags { "RenderType" = "Opaque" "RenderPipeline" = "UniversalRenderPipeline"}
+        Tags { "RenderType" = "Opaque" "RenderPipeline" = "UniversalPipeline"}
 
         Pass
         {
@@ -76,7 +76,9 @@ Shader "Instance Painter/InstancedIndirectPixelShadows"
 
                 StructuredBuffer<float4> _colorBuffer;
                 StructuredBuffer<float4x4> _matrixBuffer;
+                #if ENABLE_CULLING
                 StructuredBuffer<uint> _visibilityBuffer;
+                #endif
             CBUFFER_END
 
             Varyings vert(Attributes IN, uint instanceID : SV_InstanceID)
@@ -201,7 +203,9 @@ Shader "Instance Painter/InstancedIndirectPixelShadows"
 
                 StructuredBuffer<float4> _colorBuffer;
                 StructuredBuffer<float4x4> _matrixBuffer;
+                #if ENABLE_CULLING
                 StructuredBuffer<uint> _visibilityBuffer;
+                #endif
             CBUFFER_END
 
             Varyings vert(Attributes IN, uint instanceID : SV_InstanceID)
@@ -295,7 +299,9 @@ Shader "Instance Painter/InstancedIndirectPixelShadows"
 
                 StructuredBuffer<float4> _colorBuffer;
                 StructuredBuffer<float4x4> _matrixBuffer;
+                #if ENABLE_CULLING
                 StructuredBuffer<uint> _visibilityBuffer;
+                #endif
             CBUFFER_END
 
             Varyings vert(Attributes IN, uint instanceID : SV_InstanceID)
