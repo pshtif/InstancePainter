@@ -20,7 +20,7 @@ Shader "Instance Painter/Fallback/PixelShadowsFallback"
 
     SubShader
     {
-        Tags { "RenderType" = "Opaque" "RenderPipeline" = "UniversalRenderPipeline"}
+        Tags { "RenderType" = "Opaque" "RenderPipeline" = "UniversalPipeline"}
 
         Pass
         {
@@ -86,7 +86,7 @@ Shader "Instance Painter/Fallback/PixelShadowsFallback"
                 Varyings OUT = (Varyings)0;
 
                 UNITY_SETUP_INSTANCE_ID(IN);
-                UNITY_TRANSFER_INSTANCE_ID(OUT, IN);
+                UNITY_TRANSFER_INSTANCE_ID(IN, OUT);
                 
                 half3 normalWS = TransformObjectToWorldNormal(IN.normalOS);
 
@@ -212,7 +212,7 @@ Shader "Instance Painter/Fallback/PixelShadowsFallback"
                 Varyings OUT;
 
                 UNITY_SETUP_INSTANCE_ID(IN);
-                UNITY_TRANSFER_INSTANCE_ID(OUT, IN);
+                UNITY_TRANSFER_INSTANCE_ID(IN, OUT);
 
                 float4 position = IN.positionOS;
                 
