@@ -8,6 +8,13 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.9.11
+
+#### Changed
+
+- bumped Native Collections dependency to 2.4.3 (preparing for Unity 6)
+- fixed ToArray to ToArrayNBC for compatibility with latest Native Collection
+
 ### Release 0.9.10
 
 #### Fixed
