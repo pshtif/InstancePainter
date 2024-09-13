@@ -282,8 +282,8 @@ namespace InstancePainter
         // Yep we need to do this explicitly because native collections are freed before OnBeforeSerialized which would be the obvious way to do this
         public void UpdateSerializedData()
         {
-            _matrixData = _originalMatrixData.ToArray();
-            _colorData = _originalColorData.ToArray();
+            _matrixData = _originalMatrixData.ToArrayNBC();
+            _colorData = _originalColorData.ToArrayNBC();
             
             _renderMatrixData.CopyFrom(_originalMatrixData);
             _renderColorData.CopyFrom(_originalColorData);
