@@ -86,7 +86,7 @@ namespace InstancePainter
         public bool renderOnUpdate = true;
         public Camera renderCamera;
 
-        public bool IsFallback => SystemInfo.maxComputeBufferInputsVertex < 2 || forceFallback;
+        public bool IsFallback => SystemInfo.maxComputeBufferInputsVertex < 2 || !SystemInfo.supportsIndirectArgumentsBuffer || forceFallback;
 
 #if UNITY_EDITOR
         public bool enableEditorPreview = true;
