@@ -9,6 +9,8 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: IPDefaultIndirectPixelShadows
   m_Shader: {fileID: 4800000, guid: 6d08877a5c374c408faf1485a6ffa796, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords:
   - CULLING
@@ -18,6 +20,7 @@ Material:
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
+  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -66,7 +69,7 @@ Material:
     - _BoundSizeZ: 1
     - _BumpScale: 1
     - _Cull: 2
-    - _Culling: 1
+    - _Culling: 0
     - _Cutoff: 0.5
     - _DrawDistance: 125
     - _DstBlend: 0
