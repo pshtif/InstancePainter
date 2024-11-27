@@ -8,6 +8,12 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.9.12
+
+#### Changed
+
+- added additional check for indirect arguments support for gpus/drivers that incorrectly return number of arguments supported 
+
 ### Release 0.9.11
 
 #### Changed
