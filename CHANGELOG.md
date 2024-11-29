@@ -8,6 +8,12 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.9.13
+
+#### Fixed
+
+- fixed malformed meta files
+
 ### Release 0.9.12
 
 #### Changed
